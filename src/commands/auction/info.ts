@@ -1,5 +1,5 @@
 import { Args, Command, Flags } from '@oclif/core';
-import { EchoClient } from '../../lib/api/echo-client.js';
+import { EchoClient, type Auction } from '../../lib/api/echo-client.js';
 import { formatAuction, output } from '../../lib/formatting/output.js';
 import { formatError } from '../../lib/formatting/error.js';
 
@@ -25,7 +25,16 @@ export default class AuctionInfo extends Command {
     const client = new EchoClient();
 
     try {
-      const auction = await client.getAuction(args.id);
+      let auction: Auction = await client.getAuction(args.id);
+
+      if (auction.buyerAddress) {
+        try {
+          const buyer = await client.getUserByAddress(auction.buyerAddress);
+          auction = { ...auction, buyerUser: { displayName: buyer.displayName, username: buyer.username } };
+        } catch {
+          auction = { ...auction, buyerUser: null };
+        }
+      }
 
       if (flags.json) {
         this.log(output(auction));

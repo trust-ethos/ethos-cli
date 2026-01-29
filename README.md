@@ -113,28 +113,20 @@ Follow the printed instructions to add completions to your shell.
 
 ## Configuration
 
-Create `~/.config/ethos/config.json` to set defaults:
+Configure the CLI using the `config` command:
 
-```json
-{
-  "environment": "prod",
-  "apiUrl": "https://api.ethos.network",
-  "defaultOutput": "text"
-}
+```bash
+# Show current configuration
+ethos config get
+
+# Set the API URL
+ethos config set apiUrl=https://api.ethos.network
+
+# Show config file path
+ethos config path
 ```
 
-All fields are optional. Environment variables override config file settings.
-
-## Environment Variables
-
-- `ETHOS_ENV` - Override environment (prod|staging|dev)
-- `ETHOS_API_URL` - Override API endpoint for testing
-- `ETHOS_OUTPUT` - Output format (json|text)
-
-**Priority order** (highest to lowest):
-1. Environment variables
-2. Config file (`~/.config/ethos/config.json`)
-3. Defaults (prod environment, standard API URL)
+The config file is stored at `~/.config/ethos/config.json`.
 
 ## Exit Codes
 
@@ -214,6 +206,9 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 * [Bash](#bash)
 * [Zsh](#zsh)
 * [Fish](#fish)
+* [Show current configuration](#show-current-configuration)
+* [Set the API URL](#set-the-api-url)
+* [Show config file path](#show-config-file-path)
 <!-- tocstop -->
 <!-- usage -->
 ```sh-session
@@ -235,6 +230,9 @@ USAGE
 * [`ethos autocomplete [SHELL]`](#ethos-autocomplete-shell)
 * [`ethos broker info ID`](#ethos-broker-info-id)
 * [`ethos broker list`](#ethos-broker-list)
+* [`ethos config get`](#ethos-config-get)
+* [`ethos config path`](#ethos-config-path)
+* [`ethos config set VALUE`](#ethos-config-set-value)
 * [`ethos help [COMMAND]`](#ethos-help-command)
 * [`ethos listing info IDENTIFIER`](#ethos-listing-info-identifier)
 * [`ethos listing list`](#ethos-listing-list)
@@ -244,7 +242,6 @@ USAGE
 * [`ethos market info IDENTIFIER`](#ethos-market-info-identifier)
 * [`ethos market list`](#ethos-market-list)
 * [`ethos nft list USERKEY`](#ethos-nft-list-userkey)
-* [`ethos nft validators`](#ethos-nft-validators)
 * [`ethos score lookup IDENTIFIER`](#ethos-score-lookup-identifier)
 * [`ethos score status IDENTIFIER`](#ethos-score-status-identifier)
 * [`ethos slash info ID`](#ethos-slash-info-id)
@@ -252,6 +249,9 @@ USAGE
 * [`ethos user activity IDENTIFIER`](#ethos-user-activity-identifier)
 * [`ethos user info IDENTIFIER`](#ethos-user-info-identifier)
 * [`ethos user search QUERY`](#ethos-user-search-query)
+* [`ethos validator info TOKENID`](#ethos-validator-info-tokenid)
+* [`ethos validator list`](#ethos-validator-list)
+* [`ethos validator sales`](#ethos-validator-sales)
 * [`ethos vote list ID`](#ethos-vote-list-id)
 * [`ethos vote stats ID`](#ethos-vote-stats-id)
 * [`ethos vouch info ID`](#ethos-vouch-info-id)
@@ -315,11 +315,12 @@ List validator NFT auctions
 
 ```
 USAGE
-  $ ethos auction list [-j] [-v] [--status pending|active|ended|settled] [-l <value>]
+  $ ethos auction list [-j] [-v] [--status pending|active|ended|settled] [-l <value>] [-o <value>]
 
 FLAGS
   -j, --json             Output as JSON
-  -l, --limit=<value>    [default: 10] Max results
+  -l, --limit=<value>    [default: 10] Max results per request
+  -o, --offset=<value>   Number of results to skip
   -v, --verbose          Show detailed error information
       --status=<option>  Filter by status
                          <options: pending|active|ended|settled>
@@ -401,11 +402,12 @@ List broker posts (jobs, services, bounties)
 ```
 USAGE
   $ ethos broker list [-j] [-v] [-t sell|buy|hire|for-hire|bounty] [-s <value>] [--sort newest|top|hot] [-l
-    <value>]
+    <value>] [-o <value>]
 
 FLAGS
   -j, --json            Output as JSON
-  -l, --limit=<value>   [default: 10] Max results
+  -l, --limit=<value>   [default: 10] Max results per request
+  -o, --offset=<value>  Number of results to skip
   -s, --search=<value>  Search in title/description
   -t, --type=<option>   Filter by post type
                         <options: sell|buy|hire|for-hire|bounty>
@@ -427,6 +429,67 @@ EXAMPLES
 ```
 
 _See code: [src/commands/broker/list.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/broker/list.ts)_
+
+## `ethos config get`
+
+Show current configuration
+
+```
+USAGE
+  $ ethos config get [-j]
+
+FLAGS
+  -j, --json  Output as JSON
+
+DESCRIPTION
+  Show current configuration
+
+EXAMPLES
+  $ ethos config get
+
+  $ ethos config get --json
+```
+
+_See code: [src/commands/config/get.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/config/get.ts)_
+
+## `ethos config path`
+
+Show config file path
+
+```
+USAGE
+  $ ethos config path
+
+DESCRIPTION
+  Show config file path
+
+EXAMPLES
+  $ ethos config path
+```
+
+_See code: [src/commands/config/path.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/config/path.ts)_
+
+## `ethos config set VALUE`
+
+Set configuration value
+
+```
+USAGE
+  $ ethos config set VALUE
+
+ARGUMENTS
+  VALUE  Configuration in format: apiUrl=<url>
+
+DESCRIPTION
+  Set configuration value
+
+EXAMPLES
+  $ ethos config set apiUrl=https://api.ethos.network
+
+  $ ethos config set apiUrl=https://api.dev.ethos.network
+```
+
+_See code: [src/commands/config/set.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/config/set.ts)_
 
 ## `ethos help [COMMAND]`
 
@@ -482,11 +545,12 @@ List projects on Ethos Listings
 
 ```
 USAGE
-  $ ethos listing list [-j] [-v] [--status active|pending|archived] [-l <value>]
+  $ ethos listing list [-j] [-v] [--status active|pending|archived] [-l <value>] [-o <value>]
 
 FLAGS
   -j, --json             Output as JSON
-  -l, --limit=<value>    [default: 10] Max results
+  -l, --limit=<value>    [default: 10] Max results per request
+  -o, --offset=<value>   Number of results to skip
   -v, --verbose          Show detailed error information
       --status=<option>  [default: active] Filter by status
                          <options: active|pending|archived>
@@ -510,14 +574,15 @@ Show voters for a listing/project
 
 ```
 USAGE
-  $ ethos listing voters PROJECTID [-j] [-v] [--sentiment bullish|bearish] [-l <value>]
+  $ ethos listing voters PROJECTID [-j] [-v] [--sentiment bullish|bearish] [-l <value>] [-o <value>]
 
 ARGUMENTS
   PROJECTID  Project ID
 
 FLAGS
   -j, --json                Output as JSON
-  -l, --limit=<value>       [default: 10] Max results
+  -l, --limit=<value>       [default: 10] Max results per request
+  -o, --offset=<value>      Number of results to skip
   -v, --verbose             Show detailed error information
       --sentiment=<option>  Filter by sentiment
                             <options: bullish|bearish>
@@ -620,11 +685,12 @@ List trust markets
 ```
 USAGE
   $ ethos market list [-j] [-v] [--sort marketCapWei|volume24hWei|priceChange24hPercent|score|createdAt] [--order
-    asc|desc] [-s <value>] [-l <value>]
+    asc|desc] [-s <value>] [-l <value>] [-o <value>]
 
 FLAGS
   -j, --json            Output as JSON
-  -l, --limit=<value>   [default: 10] Max results
+  -l, --limit=<value>   [default: 10] Max results per request
+  -o, --offset=<value>  Number of results to skip
   -s, --search=<value>  Search by name/username
   -v, --verbose         Show detailed error information
       --order=<option>  [default: desc] Sort direction
@@ -651,15 +717,16 @@ List NFTs owned by a user
 
 ```
 USAGE
-  $ ethos nft list USERKEY [-j] [-v] [-l <value>]
+  $ ethos nft list USERKEY [-j] [-v] [-l <value>] [-o <value>]
 
 ARGUMENTS
   USERKEY  User key (address, profileId, or twitter:username)
 
 FLAGS
-  -j, --json           Output as JSON
-  -l, --limit=<value>  [default: 10] Max results
-  -v, --verbose        Show detailed error information
+  -j, --json            Output as JSON
+  -l, --limit=<value>   [default: 10] Max results per request
+  -o, --offset=<value>  Number of results to skip
+  -v, --verbose         Show detailed error information
 
 DESCRIPTION
   List NFTs owned by a user
@@ -673,30 +740,6 @@ EXAMPLES
 ```
 
 _See code: [src/commands/nft/list.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/nft/list.ts)_
-
-## `ethos nft validators`
-
-List validator NFTs for sale on OpenSea
-
-```
-USAGE
-  $ ethos nft validators [-j] [-v] [-l <value>]
-
-FLAGS
-  -j, --json           Output as JSON
-  -l, --limit=<value>  [default: 10] Max results
-  -v, --verbose        Show detailed error information
-
-DESCRIPTION
-  List validator NFTs for sale on OpenSea
-
-EXAMPLES
-  $ ethos nft validators
-
-  $ ethos nft validators --limit 20 --json
-```
-
-_See code: [src/commands/nft/validators.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/nft/validators.ts)_
 
 ## `ethos score lookup IDENTIFIER`
 
@@ -789,11 +832,13 @@ List reputation slashes
 
 ```
 USAGE
-  $ ethos slash list [-j] [-v] [--status open|closed] [--author <value>] [--subject <value>] [-l <value>]
+  $ ethos slash list [-j] [-v] [--status open|closed] [--author <value>] [--subject <value>] [-l <value>] [-o
+    <value>]
 
 FLAGS
   -j, --json             Output as JSON
-  -l, --limit=<value>    [default: 10] Max results
+  -l, --limit=<value>    [default: 10] Max results per request
+  -o, --offset=<value>   Number of results to skip
   -v, --verbose          Show detailed error information
       --author=<value>   Filter by slasher userkey
       --status=<option>  Filter by status
@@ -909,25 +954,107 @@ EXAMPLES
 
 _See code: [src/commands/user/search.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/user/search.ts)_
 
+## `ethos validator info TOKENID`
+
+Get details of a specific validator NFT
+
+```
+USAGE
+  $ ethos validator info TOKENID [-j] [-v]
+
+ARGUMENTS
+  TOKENID  Validator token ID
+
+FLAGS
+  -j, --json     Output as JSON
+  -v, --verbose  Show detailed error information
+
+DESCRIPTION
+  Get details of a specific validator NFT
+
+EXAMPLES
+  $ ethos validator info 1
+
+  $ ethos validator info 42 --json
+```
+
+_See code: [src/commands/validator/info.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/validator/info.ts)_
+
+## `ethos validator list`
+
+List all Ethos validator NFT owners
+
+```
+USAGE
+  $ ethos validator list [-j] [-v] [-l <value>] [-o <value>] [-a]
+
+FLAGS
+  -a, --available       Show only validators with remaining XP capacity
+  -j, --json            Output as JSON
+  -l, --limit=<value>   [default: 10] Max results to display
+  -o, --offset=<value>  Number of results to skip
+  -v, --verbose         Show detailed error information
+
+DESCRIPTION
+  List all Ethos validator NFT owners
+
+EXAMPLES
+  $ ethos validator list
+
+  $ ethos validator list --limit 20
+
+  $ ethos validator list --available
+
+  $ ethos validator list --json
+```
+
+_See code: [src/commands/validator/list.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/validator/list.ts)_
+
+## `ethos validator sales`
+
+List validator NFTs for sale on OpenSea
+
+```
+USAGE
+  $ ethos validator sales [-j] [-v] [-l <value>] [-o <value>]
+
+FLAGS
+  -j, --json            Output as JSON
+  -l, --limit=<value>   [default: 10] Max results per request
+  -o, --offset=<value>  Number of results to skip
+  -v, --verbose         Show detailed error information
+
+DESCRIPTION
+  List validator NFTs for sale on OpenSea
+
+EXAMPLES
+  $ ethos validator sales
+
+  $ ethos validator sales --limit 20 --json
+```
+
+_See code: [src/commands/validator/sales.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/validator/sales.ts)_
+
 ## `ethos vote list ID`
 
 List votes on an activity
 
 ```
 USAGE
-  $ ethos vote list ID -t review|vouch|slash [-j] [-v] [--upvotes | --downvotes] [-l <value>]
+  $ ethos vote list ID -t review|vouch|slash [-j] [-v] [--upvotes | --downvotes] [-l <value>] [-o <value>]
 
 ARGUMENTS
   ID  Activity ID (review, vouch, or slash)
 
 FLAGS
-  -j, --json           Output as JSON
-  -l, --limit=<value>  [default: 10] Max results
-  -t, --type=<option>  (required) Activity type
-                       <options: review|vouch|slash>
-  -v, --verbose        Show detailed error information
-      --downvotes      Show only downvotes
-      --upvotes        Show only upvotes
+  -j, --json            Output as JSON
+  -l, --limit=<value>   [default: 10] Max results per request
+  -o, --offset=<value>  Number of results to skip
+  -t, --type=<option>   (required) Activity type
+                        <options: review|vouch|slash>
+  -v, --verbose         Show detailed error information
+      --downvotes       Show only downvotes
+      --upvotes         Show only upvotes
 
 DESCRIPTION
   List votes on an activity
@@ -1004,14 +1131,15 @@ List vouches for a user or all vouches
 
 ```
 USAGE
-  $ ethos vouch list [IDENTIFIER] [-j] [-v] [--author <value>] [--active] [-l <value>]
+  $ ethos vouch list [IDENTIFIER] [-j] [-v] [--author <value>] [--active] [-l <value>] [-o <value>]
 
 ARGUMENTS
   [IDENTIFIER]  Twitter username, ETH address, or ENS name (optional, filter by subject)
 
 FLAGS
   -j, --json            Output as JSON
-  -l, --limit=<value>   [default: 10] Max results
+  -l, --limit=<value>   [default: 10] Max results per request
+  -o, --offset=<value>  Number of results to skip
   -v, --verbose         Show detailed error information
       --active          Show only active (non-archived) vouches
       --author=<value>  Filter by author (Twitter username, ETH address, or ENS name)

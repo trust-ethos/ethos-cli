@@ -1,5 +1,5 @@
 import { Command, Flags } from '@oclif/core';
-import { EchoClient } from '../../lib/api/echo-client.js';
+import { EchoClient, type Auction } from '../../lib/api/echo-client.js';
 import { formatAuctions, output } from '../../lib/formatting/output.js';
 import { formatError } from '../../lib/formatting/error.js';
 
@@ -30,10 +30,12 @@ export default class AuctionList extends Command {
     try {
       const response = await client.getAuctions({ limit: flags.limit, offset: flags.offset, status: flags.status });
 
+      const enrichedAuctions = await this.enrichWithBuyerInfo(client, response.values);
+
       if (flags.json) {
-        this.log(output(response));
+        this.log(output({ ...response, values: enrichedAuctions }));
       } else {
-        this.log(formatAuctions(response.values, response.total));
+        this.log(formatAuctions(enrichedAuctions, response.total));
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -41,5 +43,29 @@ export default class AuctionList extends Command {
         this.exit(1);
       }
     }
+  }
+
+  private async enrichWithBuyerInfo(client: EchoClient, auctions: Auction[]): Promise<Auction[]> {
+    const buyerAddresses = [...new Set(auctions.filter(a => a.buyerAddress).map(a => a.buyerAddress!))];
+    
+    if (buyerAddresses.length === 0) return auctions;
+
+    const buyerMap = new Map<string, { displayName?: string; username?: string | null }>();
+    
+    await Promise.all(
+      buyerAddresses.map(async (address) => {
+        try {
+          const user = await client.getUserByAddress(address);
+          buyerMap.set(address, { displayName: user.displayName, username: user.username });
+        } catch {
+          buyerMap.set(address, {});
+        }
+      })
+    );
+
+    return auctions.map(auction => ({
+      ...auction,
+      buyerUser: auction.buyerAddress ? buyerMap.get(auction.buyerAddress) : null,
+    }));
   }
 }

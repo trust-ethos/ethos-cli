@@ -3,7 +3,7 @@ import { EchoClient } from '../../lib/api/echo-client.js';
 import { formatError } from '../../lib/formatting/error.js';
 import { formatValidatorListings, output } from '../../lib/formatting/output.js';
 
-export default class NftValidators extends Command {
+export default class ValidatorSales extends Command {
   static description = 'List validator NFTs for sale on OpenSea';
 
   static examples = [
@@ -35,7 +35,7 @@ export default class NftValidators extends Command {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(NftValidators);
+    const { flags } = await this.parse(ValidatorSales);
     const client = new EchoClient();
 
     try {

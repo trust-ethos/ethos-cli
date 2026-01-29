@@ -2,14 +2,6 @@ import { APIError, NetworkError, NotFoundError } from '../errors/cli-error.js';
 import { parseIdentifier, type ParsedIdentifier } from '../validation/userkey.js';
 import { loadConfig } from '../config/index.js';
 
-const API_URLS = {
-  dev: 'https://api.dev.ethos.network',
-  staging: 'https://api.dev.ethos.network',
-  prod: 'https://api.ethos.network',
-} as const;
-
-type Environment = keyof typeof API_URLS;
-
 export interface EthosUser {
   id: number;
   profileId: number | null;
@@ -327,6 +319,11 @@ export interface ValidatorListingsResponse {
   offset?: number;
 }
 
+export interface AuctionBuyer {
+  displayName?: string;
+  username?: string | null;
+}
+
 export interface Auction {
   id: number;
   nftTokenId: number;
@@ -341,11 +338,27 @@ export interface Auction {
   pricePaid: string | null;  // wei
   soldTime: string | null;
   createdAt: string;
+  buyerUser?: AuctionBuyer | null;
 }
 
 export interface AuctionsResponse {
   values: Auction[];
   total: number;
+}
+
+export interface Validator {
+  tokenId: string;
+  name: string;
+  imageUrl: string;
+  ownerAddress: string;
+  ownerProfileId: number;
+  ownerDisplayName: string;
+  ownerUsername: string | null;
+  ownerAvatarUrl: string | null;
+  currentXp: number;
+  remainingCapacity: number;
+  xpCap: number;
+  isFull: boolean;
 }
 
 export type ScoreLevel = 'untrusted' | 'questionable' | 'neutral' | 'reputable' | 'exemplary';
@@ -476,14 +489,10 @@ export class EchoClient {
   private baseUrl: string;
   private debug: boolean;
 
-  constructor(env?: Environment) {
+  constructor() {
     const config = loadConfig();
-    const environment = env || 
-      (process.env.ETHOS_ENV as Environment) || 
-      config.environment || 
-      'prod';
-    this.baseUrl = process.env.ETHOS_API_URL || config.apiUrl || API_URLS[environment];
-    this.debug = process.env.ETHOS_DEBUG === 'true' || process.env.DEBUG === 'ethos:*';
+    this.baseUrl = config.apiUrl;
+    this.debug = process.env.DEBUG === 'ethos:*';
   }
 
   private log(message: string, data?: unknown): void {
@@ -854,7 +863,7 @@ export class EchoClient {
     query.set('viewerProfileId', String(viewerProfileId));
     query.set('targetProfileId', String(targetProfileId));
     if (params.limit) query.set('limit', String(params.limit));
-    return this.request<{ values: VouchUser[]; total: number }>(`/api/v1/vouches/mutual-vouchers?${query}`, 'Mutual Vouchers');
+    return this.request<{ values: VouchUser[]; total: number }>(`/api/v2/vouches/mutual-vouchers?${query}`, 'Mutual Vouchers');
   }
 
   async getVotes(activityId: number, type: VoteType, params: { isUpvote?: boolean; limit?: number; offset?: number } = {}): Promise<VotesResponse> {
@@ -872,5 +881,14 @@ export class EchoClient {
     query.set('activityId', String(activityId));
     query.set('type', type);
     return this.request<VoteStats>(`/api/v1/votes/stats?${query}`, 'Vote Stats');
+  }
+
+  async getValidators(): Promise<Validator[]> {
+    return this.request<Validator[]>('/api/v2/xp/validators', 'Validators');
+  }
+
+  async getValidatorByTokenId(tokenId: string): Promise<Validator | null> {
+    const validators = await this.getValidators();
+    return validators.find(v => v.tokenId === tokenId) || null;
   }
 }

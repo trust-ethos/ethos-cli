@@ -93,42 +93,12 @@ const mockActivities: Activity[] = [
 ];
 
 describe('EchoClient', () => {
-  beforeEach(() => {
-    // Reset environment variables
-    delete process.env.ETHOS_API_URL;
-    delete process.env.ETHOS_ENV;
-    delete process.env.ETHOS_DEBUG;
-  });
-
   afterEach(() => {
-    // Restore original fetch
     globalThis.fetch = originalFetch;
   });
 
   describe('constructor', () => {
-    test('creates client with default prod environment', () => {
-      const client = new EchoClient();
-      expect(client).toBeDefined();
-    });
-
-    test('creates client with staging environment', () => {
-      const client = new EchoClient('staging');
-      expect(client).toBeDefined();
-    });
-
-    test('creates client with dev environment', () => {
-      const client = new EchoClient('dev');
-      expect(client).toBeDefined();
-    });
-
-    test('uses ETHOS_ENV environment variable', () => {
-      process.env.ETHOS_ENV = 'staging';
-      const client = new EchoClient();
-      expect(client).toBeDefined();
-    });
-
-    test('uses ETHOS_API_URL environment variable', () => {
-      process.env.ETHOS_API_URL = 'https://custom-api.example.com';
+    test('creates client using config file', () => {
       const client = new EchoClient();
       expect(client).toBeDefined();
     });

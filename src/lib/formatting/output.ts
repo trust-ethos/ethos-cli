@@ -1,5 +1,5 @@
 import pc from 'picocolors';
-import type { Activity, Auction, BrokerPost, EthosUser, FeaturedMarketsResponse, Market, MarketHolder, Project, ProjectVoter, ProjectVotersTotals, ScoreLevel, ScoreResponse, ScoreStatus, Season, Slash, Vote, VoteStats, Vouch, VouchUser } from '../api/echo-client.js';
+import type { Activity, Auction, BrokerPost, EthosUser, FeaturedMarketsResponse, Market, MarketHolder, Project, ProjectVoter, ProjectVotersTotals, ScoreLevel, ScoreResponse, ScoreStatus, Season, Slash, Validator, Vote, VoteStats, Vouch, VouchUser } from '../api/echo-client.js';
 
 export function output<T>(data: T): string {
   return JSON.stringify(data, null, 2);
@@ -473,7 +473,10 @@ export function formatAuction(auction: Auction): string {
   lines.push(`${pc.dim('Starts:')} ${startTime.toLocaleString()}`);
 
   if (auction.buyerAddress) {
-    lines.push('', pc.green(`🏆 Winner: ${auction.buyerAddress.slice(0, 10)}...`));
+    const buyerName = auction.buyerUser?.username 
+      ? `@${auction.buyerUser.username}` 
+      : auction.buyerUser?.displayName || `${auction.buyerAddress.slice(0, 10)}...`;
+    lines.push('', pc.green(`🏆 Winner: ${buyerName}`));
   }
 
   return lines.filter(Boolean).join('\n');
@@ -493,6 +496,12 @@ export function formatAuctions(auctions: Auction[], total: number): string {
     lines.push(`   ${pc.dim('Start Price:')} ${startEth} ETH`);
     if (a.pricePaid) {
       lines.push(`   ${pc.dim('Sold For:')} ${pc.green(formatWeiToEth(a.pricePaid) + ' ETH')}`);
+    }
+    if (a.buyerAddress) {
+      const buyerName = a.buyerUser?.username 
+        ? `@${a.buyerUser.username}` 
+        : a.buyerUser?.displayName || `${a.buyerAddress.slice(0, 10)}...`;
+      lines.push(`   ${pc.dim('Buyer:')} ${buyerName}`);
     }
     lines.push(`   ${pc.dim('Starts:')} ${new Date(a.startTime).toLocaleDateString()}`);
     lines.push('');
@@ -768,6 +777,50 @@ export function formatVoteStats(stats: VoteStats, activityType?: string, activit
     `${pc.dim('Total:')} ${total}`,
     `${pc.dim('Approval:')} ${ratio}%`,
   ];
+
+  return lines.join('\n');
+}
+
+export function formatValidator(validator: Validator): string {
+  const ownerName = validator.ownerUsername ? `@${validator.ownerUsername}` : validator.ownerDisplayName || `Profile #${validator.ownerProfileId}`;
+  const capacityPercent = Math.round((validator.currentXp / validator.xpCap) * 100);
+  const capacityColor = validator.isFull ? pc.red : capacityPercent > 80 ? pc.yellow : pc.green;
+
+  const lines = [
+    pc.bold(pc.cyan(`🎫 ${validator.name}`)),
+    '',
+    `${pc.dim('Token ID:')} ${validator.tokenId}`,
+    `${pc.dim('Owner:')} ${ownerName}`,
+    `${pc.dim('Owner Address:')} ${validator.ownerAddress.slice(0, 10)}...${validator.ownerAddress.slice(-8)}`,
+    '',
+    pc.bold('Delegated XP'),
+    `${pc.dim('Current:')} ${validator.currentXp.toLocaleString()}`,
+    `${pc.dim('Cap:')} ${validator.xpCap.toLocaleString()}`,
+    `${pc.dim('Remaining:')} ${capacityColor(validator.remainingCapacity.toLocaleString())}`,
+    `${pc.dim('Usage:')} ${capacityColor(`${capacityPercent}%`)}${validator.isFull ? pc.red(' (FULL)') : ''}`,
+  ];
+
+  return lines.join('\n');
+}
+
+export function formatValidators(validators: Validator[], total: number): string {
+  if (!validators.length) {
+    return pc.yellow('No validators found.');
+  }
+
+  const lines = [pc.bold(`🎫 Validators (${total} total)`), ''];
+
+  for (const v of validators) {
+    const ownerName = v.ownerUsername ? `@${v.ownerUsername}` : v.ownerDisplayName || 'Unknown';
+    const capacityPercent = Math.round((v.currentXp / v.xpCap) * 100);
+    const capacityColor = v.isFull ? pc.red : capacityPercent > 80 ? pc.yellow : pc.green;
+    const fullTag = v.isFull ? pc.red(' [FULL]') : '';
+
+    lines.push(`🎫 ${pc.bold(v.name)} (Token #${v.tokenId})${fullTag}`);
+    lines.push(`   ${pc.dim('Owner:')} ${ownerName}`);
+    lines.push(`   ${pc.dim('Delegated:')} ${v.currentXp.toLocaleString()} / ${v.xpCap.toLocaleString()} ${capacityColor(`(${capacityPercent}%)`)}`);
+    lines.push('');
+  }
 
   return lines.join('\n');
 }
