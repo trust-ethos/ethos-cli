@@ -756,9 +756,9 @@ export function formatVotes(votes: Vote[], total: number, activityType?: string)
 
   for (const v of votes) {
     const voteIcon = v.isUpvote ? pc.green('👍') : pc.red('👎');
-    const voterName = v.voter.username ? `@${v.voter.username}` : v.voter.displayName || `Profile #${v.voter.profileId}`;
-    lines.push(`${voteIcon} ${pc.bold(voterName)} (Score: ${v.voter.score || 0})`);
-    lines.push(`   ${pc.dim('Voted:')} ${new Date(v.createdAt).toLocaleDateString()}`);
+    const voterName = v.user.username ? `@${v.user.username}` : v.user.displayName || `Profile #${v.user.profileId}`;
+    lines.push(`${voteIcon} ${pc.bold(voterName)} (Score: ${v.user.score})`);
+    lines.push(`   ${pc.dim('Voted:')} ${new Date(v.createdAt * 1000).toLocaleDateString()}`);
     lines.push('');
   }
 
@@ -766,16 +766,16 @@ export function formatVotes(votes: Vote[], total: number, activityType?: string)
 }
 
 export function formatVoteStats(stats: VoteStats, activityType?: string, activityId?: number): string {
-  const total = stats.upvotes + stats.downvotes;
-  const ratio = total > 0 ? Math.round((stats.upvotes / total) * 100) : 0;
+  const { upvotes, downvotes } = stats.counts;
+  const total = upvotes + downvotes;
 
   const lines = [
     pc.bold(pc.cyan(`Vote Stats${activityId ? ` for ${activityType || 'Activity'} #${activityId}` : ''}`)),
     '',
-    `${pc.green('👍 Upvotes:')} ${stats.upvotes}`,
-    `${pc.red('👎 Downvotes:')} ${stats.downvotes}`,
+    `${pc.green('👍 Upvotes:')} ${upvotes}`,
+    `${pc.red('👎 Downvotes:')} ${downvotes}`,
     `${pc.dim('Total:')} ${total}`,
-    `${pc.dim('Approval:')} ${ratio}%`,
+    `${pc.dim('Approval:')} ${stats.weights.upvotePercentage}%`,
   ];
 
   return lines.join('\n');

@@ -456,18 +456,23 @@ export interface VouchQueryParams {
 export type VoteType = 'review' | 'vouch' | 'slash';
 
 export interface VoteUser {
+  id: number;
   profileId: number;
-  displayName?: string;
-  username?: string | null;
-  avatarUrl?: string | null;
-  score?: number;
+  displayName: string;
+  username: string | null;
+  avatarUrl: string | null;
+  score: number;
 }
 
 export interface Vote {
-  id: number;
   isUpvote: boolean;
-  voter: VoteUser;
-  createdAt: string;
+  isArchived: boolean;
+  voter: number;
+  targetContract: string;
+  targetId: string;
+  createdAt: number;
+  weight: number;
+  user: VoteUser;
 }
 
 export interface VotesResponse {
@@ -478,11 +483,17 @@ export interface VotesResponse {
 }
 
 export interface VoteStats {
-  upvotes: number;
-  downvotes: number;
-  userVote?: {
-    isUpvote: boolean;
-  } | null;
+  userVote: { isUpvote: boolean } | null;
+  counts: {
+    upvotes: number;
+    downvotes: number;
+  };
+  weights: {
+    weightedUpvotes: number;
+    weightedDownvotes: number;
+    upvotePercentage: number;
+    downvotePercentage: number;
+  };
 }
 
 export class EchoClient {
@@ -873,14 +884,14 @@ export class EchoClient {
     if (params.isUpvote !== undefined) query.set('isUpvote', String(params.isUpvote));
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
-    return this.request<VotesResponse>(`/api/v1/votes?${query}`, 'Votes');
+    return this.request<VotesResponse>(`/api/v2/votes?${query}`, 'Votes');
   }
 
   async getVoteStats(activityId: number, type: VoteType): Promise<VoteStats> {
     const query = new URLSearchParams();
     query.set('activityId', String(activityId));
     query.set('type', type);
-    return this.request<VoteStats>(`/api/v1/votes/stats?${query}`, 'Vote Stats');
+    return this.request<VoteStats>(`/api/v2/votes/stats?${query}`, 'Vote Stats');
   }
 
   async getValidators(): Promise<Validator[]> {
