@@ -84,6 +84,126 @@ export interface Activity {
 
 export type ActivityType = 'review' | 'vouch';
 
+export interface Slash {
+  id: number;
+  authorProfileId: number;
+  subject: null | number;
+  createdAt: number;
+  duration: number;
+  closedAt: number;
+  cancelledAt: number;
+  amount: number;
+  slashType: string;
+  comment: string;
+  metadata?: string;
+  attestationDetails?: {
+    service: string;
+    account: string;
+  };
+}
+
+export interface SlashesResponse {
+  ok: boolean;
+  data: {
+    values: Slash[];
+    total: number;
+    limit: number;
+    offset: number;
+  };
+}
+
+export type BrokerPostType = 'SELL' | 'BUY' | 'HIRE' | 'FOR_HIRE' | 'BOUNTY';
+export type BrokerPostLevel = 'BASIC' | 'PREMIUM';
+export type BrokerPostStatus = 'OPEN' | 'COMPLETED' | 'CLOSED' | 'EXPIRED';
+export type BrokerSortBy = 'newest' | 'score' | 'top' | 'expiresAt' | 'hot';
+
+export interface BrokerPostAuthor {
+  profileId: number;
+  username?: string;
+  displayName?: string;
+  avatarUrl?: string;
+  score: number;
+}
+
+export interface BrokerPost {
+  id: number;
+  type: BrokerPostType;
+  level: BrokerPostLevel;
+  status: BrokerPostStatus;
+  title: string;
+  description: string;
+  tags: string[];
+  expiresAt: string | null;
+  createdAt: string;
+  author: BrokerPostAuthor;
+  votes: { upvotes: number; downvotes: number };
+  replyCount: number;
+}
+
+export interface BrokerListParams {
+  type?: BrokerPostType;
+  search?: string;
+  sortBy?: BrokerSortBy;
+  minScore?: number;
+  limit?: number;
+  offset?: number;
+}
+
+export interface BrokerListResponse {
+  values: BrokerPost[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface ProjectChain {
+  id: number;
+  name: string;
+  logoUrl?: string;
+}
+
+export interface ProjectVotes {
+  bullish: { total: number; percentage: number };
+  bearish: { total: number; percentage: number };
+  all: { totalVoters: number; totalVotes: number };
+}
+
+export interface Project {
+  id: number;
+  name: string;
+  username: string;
+  description: string;
+  logoUrl?: string;
+  websiteUrl?: string;
+  twitterUrl?: string;
+  status: 'ACTIVE' | 'PENDING' | 'ARCHIVED';
+  categories: string[];
+  chains: ProjectChain[];
+  votes?: ProjectVotes;
+}
+
+export interface ProjectVoter {
+  profileId: number;
+  username?: string;
+  displayName?: string;
+  avatarUrl?: string;
+  score: number;
+  bullishVotes: number;
+  bearishVotes: number;
+  voteReasons: string[];
+}
+
+export interface ProjectListResponse {
+  projects: Project[];
+  total: number;
+}
+
+export interface ProjectVotersResponse {
+  values: ProjectVoter[];
+  total: number;
+  totals: { bullish: number; bearish: number };
+}
+
 export class EchoClient {
   private baseUrl: string;
   private debug: boolean;
@@ -275,8 +395,75 @@ export class EchoClient {
     return this.getUserByTwitter(username);
   }
 
-  /** @deprecated Use getXpTotal instead */
-  async getTotalXp(userkey: string): Promise<number> {
-    return this.getXpTotal(userkey);
+   /** @deprecated Use getXpTotal instead */
+   async getTotalXp(userkey: string): Promise<number> {
+     return this.getXpTotal(userkey);
+   }
+
+   async getSlashes(params: { author?: string; subject?: string; status?: 'open' | 'closed'; limit?: number } = {}): Promise<SlashesResponse> {
+     const query = new URLSearchParams();
+     if (params.author) query.set('author', params.author);
+     if (params.subject) query.set('subject', params.subject);
+     if (params.status) query.set('status', params.status);
+     if (params.limit) query.set('limit', String(params.limit));
+     const path = `/api/v1/slashes${query.toString() ? '?' + query.toString() : ''}`;
+     return this.request<SlashesResponse>(path, 'Slashes');
+   }
+
+   async getSlashRoles(slashId: number, profileIds: number[]): Promise<Record<number, string>> {
+     const query = new URLSearchParams();
+     profileIds.forEach(id => query.append('profileId', String(id)));
+     return this.request<Record<number, string>>(`/api/v1/slashes/${slashId}/roles?${query.toString()}`, 'Slash Roles');
+   }
+
+  async getBrokerPosts(params: BrokerListParams = {}): Promise<BrokerListResponse> {
+    const query = new URLSearchParams();
+    if (params.type) query.set('type', params.type);
+    if (params.search) query.set('search', params.search);
+    if (params.sortBy) query.set('sortBy', params.sortBy);
+    if (params.minScore) query.set('minScore', String(params.minScore));
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    const path = `/api/v2/broker/posts${query.toString() ? '?' + query.toString() : ''}`;
+    return this.request<BrokerListResponse>(path, 'Broker Posts');
+  }
+
+  async getBrokerPost(id: number): Promise<BrokerPost> {
+    return this.request<BrokerPost>(`/api/v2/broker/posts/${id}`, 'Broker Post');
+  }
+
+  async getBrokerPostsByAuthor(profileId: number, params: { type?: BrokerPostType; limit?: number } = {}): Promise<BrokerListResponse> {
+    const query = new URLSearchParams();
+    if (params.type) query.set('type', params.type);
+    if (params.limit) query.set('limit', String(params.limit));
+    const path = `/api/v2/broker/author/${profileId}/posts${query.toString() ? '?' + query.toString() : ''}`;
+    return this.request<BrokerListResponse>(path, 'Author Posts');
+  }
+
+  async getProjects(params: { status?: string[]; limit?: number; offset?: number } = {}): Promise<ProjectListResponse> {
+    const query = new URLSearchParams();
+    if (params.status) params.status.forEach(s => query.append('status', s));
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    return this.request<ProjectListResponse>(`/api/v2/projects${query.toString() ? '?' + query.toString() : ''}`, 'Projects');
+  }
+
+  async getProjectDetails(projectId: number): Promise<Project> {
+    return this.request<Project>(`/api/v2/projects/${projectId}/details`, 'Project');
+  }
+
+  async getProjectByUsername(username: string): Promise<Project> {
+    return this.request<Project>(`/api/v2/projects/username/${encodeURIComponent(username)}`, 'Project');
+  }
+
+  async getProjectVoters(projectId: number, params: { limit?: number; sentiment?: 'bullish' | 'bearish' } = {}): Promise<ProjectVotersResponse> {
+    const query = new URLSearchParams();
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.sentiment) query.set('sentiment', params.sentiment);
+    return this.request<ProjectVotersResponse>(`/api/v2/projects/${projectId}/voters${query.toString() ? '?' + query.toString() : ''}`, 'Voters');
+  }
+
+  async getProjectTeam(projectId: number): Promise<EthosUser[]> {
+    return this.request<EthosUser[]>(`/api/v2/projects/${projectId}/team`, 'Team');
   }
 }

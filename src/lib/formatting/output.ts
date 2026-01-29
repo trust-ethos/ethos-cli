@@ -1,5 +1,5 @@
 import pc from 'picocolors';
-import type { Activity, EthosUser, Season } from '../api/echo-client.js';
+import type { Activity, BrokerPost, EthosUser, Project, ProjectVoter, Season, Slash } from '../api/echo-client.js';
 
 export function output<T>(data: T): string {
   return JSON.stringify(data, null, 2);
@@ -202,6 +202,209 @@ export function formatActivities(activities: Activity[], username?: string): str
       lines.push(`   ${pc.dim(desc)}`);
     }
     
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+export function formatSlash(slash: Slash): string {
+  const isClosed = slash.closedAt > 0;
+  const statusIcon = isClosed ? pc.gray('✓ CLOSED') : pc.red('⚔️ OPEN');
+  
+  const lines = [
+    pc.bold(`Slash #${slash.id}`),
+    statusIcon,
+    '',
+    `${pc.dim('Author Profile ID:')} ${slash.authorProfileId}`,
+    `${pc.dim('Subject Profile ID:')} ${slash.subject || 'N/A'}`,
+    `${pc.dim('Amount:')} ${slash.amount}`,
+    `${pc.dim('Type:')} ${slash.slashType}`,
+    '',
+    pc.dim('Reason:'),
+    slash.comment || 'No reason provided',
+  ];
+
+  if (slash.attestationDetails) {
+    lines.push(
+      '',
+      pc.bold('Attestation'),
+      `  ${pc.dim('Service:')} ${slash.attestationDetails.service}`,
+      `  ${pc.dim('Account:')} ${slash.attestationDetails.account}`
+    );
+  }
+
+  lines.push('', `${pc.dim('Created:')} ${new Date(slash.createdAt * 1000).toLocaleString()}`);
+  if (isClosed) {
+    lines.push(`${pc.dim('Closed:')} ${new Date(slash.closedAt * 1000).toLocaleString()}`);
+  }
+
+  return lines.join('\n');
+}
+
+export function formatSlashes(slashes: Slash[], total: number): string {
+  if (!slashes.length) {
+    return pc.yellow('No slashes found.');
+  }
+
+  const lines = [pc.bold(`Slashes (${total} total)`), ''];
+
+  for (const s of slashes) {
+    const isClosed = s.closedAt > 0;
+    const statusIcon = isClosed ? pc.gray('✓') : pc.red('⚔️');
+    
+    lines.push(`${statusIcon} ${pc.bold('#' + s.id)} Profile #${s.authorProfileId} → Profile #${s.subject || 'N/A'}`);
+    const commentPreview = s.comment ? (s.comment.slice(0, 40) + (s.comment.length > 40 ? '...' : '')) : 'No reason';
+    lines.push(`   ${pc.dim('Amount:')} ${s.amount} ${pc.dim('|')} ${commentPreview}`);
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+const BROKER_TYPE_EMOJI: Record<string, string> = {
+  'SELL': '🏷️',
+  'BUY': '🛒',
+  'HIRE': '👔',
+  'FOR_HIRE': '🧑‍💻',
+  'BOUNTY': '🎯',
+};
+
+const BROKER_STATUS_COLOR: Record<string, (s: string) => string> = {
+  'OPEN': pc.green,
+  'COMPLETED': pc.blue,
+  'CLOSED': pc.gray,
+  'EXPIRED': pc.red,
+};
+
+export function formatBrokerPost(post: BrokerPost): string {
+  const typeEmoji = BROKER_TYPE_EMOJI[post.type] || '📝';
+  const statusColor = BROKER_STATUS_COLOR[post.status] || pc.white;
+
+  const lines = [
+    pc.bold(`${typeEmoji} ${post.title}`),
+    '',
+    `${pc.dim('Type:')} ${post.type} ${post.level === 'PREMIUM' ? pc.yellow('⭐ PREMIUM') : ''}`,
+    `${pc.dim('Status:')} ${statusColor(post.status)}`,
+    `${pc.dim('Author:')} ${post.author?.username ? '@' + post.author.username : post.author?.displayName || 'Unknown'} (Score: ${post.author?.score || 0})`,
+    '',
+    pc.dim('Description:'),
+    post.description?.slice(0, 300) + (post.description?.length > 300 ? '...' : ''),
+    '',
+    `${pc.dim('Votes:')} 👍 ${post.votes?.upvotes || 0}  👎 ${post.votes?.downvotes || 0}  💬 ${post.replyCount || 0} replies`,
+  ];
+
+  if (post.tags?.length) {
+    lines.push(`${pc.dim('Tags:')} ${post.tags.map((t: string) => pc.cyan('#' + t)).join(' ')}`);
+  }
+
+  if (post.expiresAt) {
+    lines.push(`${pc.dim('Expires:')} ${new Date(post.expiresAt).toLocaleDateString()}`);
+  }
+
+  return lines.join('\n');
+}
+
+export function formatBrokerPosts(posts: BrokerPost[], total: number): string {
+  if (!posts.length) {
+    return pc.yellow('No broker posts found.');
+  }
+
+  const lines = [
+    pc.bold(`Broker Posts (${total} total)`),
+    '',
+  ];
+
+  for (const post of posts) {
+    const typeEmoji = BROKER_TYPE_EMOJI[post.type] || '📝';
+    const status = post.status === 'OPEN' ? pc.green('●') : pc.gray('○');
+    lines.push(
+      `${status} ${typeEmoji} ${pc.bold('#' + post.id)} ${post.title.slice(0, 50)}${post.title.length > 50 ? '...' : ''}`
+    );
+    lines.push(
+      `   ${pc.dim('by')} ${post.author?.username ? '@' + post.author.username : 'Unknown'} ${pc.dim('|')} 👍 ${post.votes?.upvotes || 0} ${pc.dim('|')} 💬 ${post.replyCount || 0}`
+    );
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+export function formatListing(project: Project): string {
+  const lines = [
+    pc.bold(pc.cyan(`${project.name}`)),
+    project.username ? pc.dim(`@${project.username}`) : '',
+    '',
+    `${pc.dim('Status:')} ${project.status === 'ACTIVE' ? pc.green('ACTIVE') : pc.yellow(project.status)}`,
+  ];
+
+  if (project.description) {
+    lines.push('', pc.dim('Description:'), project.description.slice(0, 300) + (project.description.length > 300 ? '...' : ''));
+  }
+
+  if (project.votes) {
+    lines.push(
+      '',
+      pc.bold('Votes'),
+      `  ${pc.green('Bullish:')} ${project.votes.bullish?.total || 0} (${project.votes.bullish?.percentage || 0}%)`,
+      `  ${pc.red('Bearish:')} ${project.votes.bearish?.total || 0} (${project.votes.bearish?.percentage || 0}%)`,
+      `  ${pc.dim('Total:')} ${project.votes.all?.totalVotes || 0} votes from ${project.votes.all?.totalVoters || 0} voters`
+    );
+  }
+
+  if (project.categories?.length) {
+    lines.push(`${pc.dim('Categories:')} ${project.categories.join(', ')}`);
+  }
+
+  if (project.chains?.length) {
+    lines.push(`${pc.dim('Chains:')} ${project.chains.map((c) => c.name).join(', ')}`);
+  }
+
+  if (project.websiteUrl) lines.push(`${pc.dim('Website:')} ${project.websiteUrl}`);
+  if (project.twitterUrl) lines.push(`${pc.dim('Twitter:')} ${project.twitterUrl}`);
+
+  return lines.filter(Boolean).join('\n');
+}
+
+export function formatListings(projects: Project[], total: number): string {
+  if (!projects.length) {
+    return pc.yellow('No listings found.');
+  }
+
+  const lines = [pc.bold(`Listings (${total} total)`), ''];
+
+  for (const p of projects) {
+    const bullish = p.votes?.bullish?.percentage || 0;
+    const sentiment = bullish >= 60 ? pc.green('>>') : bullish <= 40 ? pc.red('<<') : pc.yellow('==');
+    lines.push(`${sentiment} ${pc.bold(p.name)} ${pc.dim('@' + p.username)}`);
+    if (p.votes) {
+      lines.push(`   ${pc.green(bullish + '% bullish')} | ${p.votes.all?.totalVoters || 0} voters`);
+    }
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+export function formatListingVoters(voters: ProjectVoter[], totals: { bullish: number; bearish: number }): string {
+  if (!voters.length) {
+    return pc.yellow('No voters found.');
+  }
+
+  const lines = [
+    pc.bold(`Project Voters`),
+    `${pc.green('Bullish:')} ${totals.bullish}  ${pc.red('Bearish:')} ${totals.bearish}`,
+    '',
+  ];
+
+  for (const v of voters) {
+    const name = v.username ? `@${v.username}` : v.displayName || `Profile #${v.profileId}`;
+    const sentiment = v.bullishVotes > v.bearishVotes ? pc.green('>>') : pc.red('<<');
+    lines.push(`${sentiment} ${pc.bold(name)} (Score: ${v.score})`);
+    lines.push(`   Bullish: ${v.bullishVotes} | Bearish: ${v.bearishVotes}`);
+    if (v.voteReasons?.length) {
+      lines.push(`   ${pc.dim('Reasons:')} ${v.voteReasons.slice(0, 3).join(', ')}`);
+    }
     lines.push('');
   }
 
