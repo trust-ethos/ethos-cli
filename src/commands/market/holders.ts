@@ -7,12 +7,16 @@ export default class MarketHolders extends Command {
   static description = 'Show who holds trust/distrust in a user';
 
   static args = {
-    profileId: Args.integer({ description: 'Profile ID', required: true }),
+    identifier: Args.string({
+      description: 'Twitter username, ETH address, or ENS name',
+      required: true,
+    }),
   };
 
   static examples = [
-    '<%= config.bin %> <%= command.id %> 123',
-    '<%= config.bin %> <%= command.id %> 123 --limit 20 --json',
+    '<%= config.bin %> <%= command.id %> sethgho',
+    '<%= config.bin %> <%= command.id %> 0xNowater --limit 20',
+    '<%= config.bin %> <%= command.id %> vitalik.eth --json',
   ];
 
   static flags = {
@@ -26,7 +30,13 @@ export default class MarketHolders extends Command {
     const client = new EchoClient();
 
     try {
-      const response = await client.getMarketHolders(args.profileId, { limit: flags.limit });
+      const user = await client.resolveUser(args.identifier);
+
+      if (!user.profileId) {
+        this.error('User does not have a profile ID', { exit: 1 });
+      }
+
+      const response = await client.getMarketHolders(user.profileId, { limit: flags.limit });
 
       if (flags.json) {
         this.log(output(response));

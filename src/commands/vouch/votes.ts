@@ -1,22 +1,23 @@
 import { Args, Command, Flags } from '@oclif/core';
-import { EchoClient, type VoteType } from '../../lib/api/echo-client.js';
+import { EchoClient } from '../../lib/api/echo-client.js';
 import { formatError } from '../../lib/formatting/error.js';
-import { formatVotes, output } from '../../lib/formatting/output.js';
+import { formatVotes, formatVoteStats, output } from '../../lib/formatting/output.js';
 
-export default class VoteList extends Command {
+export default class VouchVotes extends Command {
   static args = {
     id: Args.integer({
-      description: 'Activity ID (review, vouch, or slash)',
+      description: 'Vouch ID',
       required: true,
     }),
   };
 
-  static description = 'List votes on an activity';
+  static description = 'Show votes on a vouch';
 
   static examples = [
-    '<%= config.bin %> <%= command.id %> 123 --type review',
-    '<%= config.bin %> <%= command.id %> 456 --type slash --upvotes',
-    '<%= config.bin %> <%= command.id %> 789 --type vouch --downvotes --json',
+    '<%= config.bin %> <%= command.id %> 182',
+    '<%= config.bin %> <%= command.id %> 182 --stats',
+    '<%= config.bin %> <%= command.id %> 182 --upvotes',
+    '<%= config.bin %> <%= command.id %> 182 --json',
   ];
 
   static flags = {
@@ -30,11 +31,10 @@ export default class VoteList extends Command {
       description: 'Show detailed error information',
       default: false,
     }),
-    type: Flags.string({
-      char: 't',
-      description: 'Activity type',
-      required: true,
-      options: ['review', 'vouch', 'slash'],
+    stats: Flags.boolean({
+      char: 's',
+      description: 'Show vote statistics only',
+      default: false,
     }),
     upvotes: Flags.boolean({
       description: 'Show only upvotes',
@@ -57,10 +57,20 @@ export default class VoteList extends Command {
   };
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(VoteList);
+    const { args, flags } = await this.parse(VouchVotes);
     const client = new EchoClient();
 
     try {
+      if (flags.stats) {
+        const stats = await client.getVoteStats(args.id, 'vouch');
+        if (flags.json) {
+          this.log(output(stats));
+        } else {
+          this.log(formatVoteStats(stats, 'vouch', args.id));
+        }
+        return;
+      }
+
       const params: { isUpvote?: boolean; limit?: number; offset?: number } = {
         limit: flags.limit,
         offset: flags.offset,
@@ -69,12 +79,12 @@ export default class VoteList extends Command {
       if (flags.upvotes) params.isUpvote = true;
       if (flags.downvotes) params.isUpvote = false;
 
-      const response = await client.getVotes(args.id, flags.type as VoteType, params);
+      const response = await client.getVotes(args.id, 'vouch', params);
 
       if (flags.json) {
         this.log(output(response));
       } else {
-        this.log(formatVotes(response.values, response.total, flags.type));
+        this.log(formatVotes(response.values, response.total, 'vouch'));
       }
     } catch (error) {
       if (error instanceof Error) {

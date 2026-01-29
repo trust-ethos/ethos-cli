@@ -9,6 +9,14 @@ function pluralize(count: number, singular: string, plural?: string): string {
   return count === 1 ? singular : (plural || `${singular}s`);
 }
 
+function getScoreLevel(score: number): ScoreLevel {
+  if (score < 800) return 'untrusted';
+  if (score < 1200) return 'questionable';
+  if (score < 1600) return 'neutral';
+  if (score < 2000) return 'reputable';
+  return 'exemplary';
+}
+
 export function formatUser(user: EthosUser): string {
   const displayName = user.displayName || user.username || 'Unknown';
   const lines = [
@@ -24,7 +32,9 @@ export function formatUser(user: EthosUser): string {
     lines.push(`${pc.dim('Profile ID:')} ${user.profileId}`);
   }
 
-  lines.push(`${pc.dim('Score:')} ${pc.green(String(user.score))}`);
+  const level = getScoreLevel(user.score);
+  const levelColor = LEVEL_COLORS[level] || pc.white;
+  lines.push(`${pc.dim('Score:')} ${pc.green(String(user.score))} ${levelColor(`(${level.toUpperCase()})`)}`);
   lines.push(`${pc.dim('Status:')} ${user.status}`);
   lines.push(`${pc.dim('XP:')} ${pc.green(user.xpTotal.toLocaleString())}`);
   
