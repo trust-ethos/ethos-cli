@@ -50,7 +50,6 @@ export default class UserInfo extends Command {
         this.log(formatError(error, flags.verbose));
         this.exit(1);
       }
-      throw error;
     }
   }
 }

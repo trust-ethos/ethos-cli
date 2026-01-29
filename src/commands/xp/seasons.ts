@@ -36,12 +36,11 @@ export default class XpSeasons extends Command {
        } else {
          this.log(formatSeasons(response.seasons, response.currentSeason));
        }
-    } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
-      throw error;
-    }
+     } catch (error) {
+       if (error instanceof Error) {
+         this.log(formatError(error, flags.verbose));
+         this.exit(1);
+       }
+     }
   }
 }

@@ -52,12 +52,11 @@ export default class XpRank extends Command {
         } else {
           this.log(formatRank({ rank, userkey, username: user.username || user.displayName }));
         }
-     } catch (error) {
-       if (error instanceof Error) {
-         this.log(formatError(error, flags.verbose));
-         this.exit(1);
-       }
-       throw error;
-     }
+      } catch (error) {
+        if (error instanceof Error) {
+          this.log(formatError(error, flags.verbose));
+          this.exit(1);
+        }
+      }
   }
 }

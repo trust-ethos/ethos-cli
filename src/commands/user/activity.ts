@@ -39,6 +39,11 @@ export default class UserActivity extends Command {
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(UserActivity);
+
+    if (flags.limit < 1 || flags.limit > 100) {
+      this.error('limit must be between 1 and 100', { exit: 2 });
+    }
+
     const client = new EchoClient();
 
      try {
@@ -56,12 +61,11 @@ export default class UserActivity extends Command {
         } else {
           this.log(formatActivities(activities, user.username || user.displayName));
         }
-     } catch (error) {
-       if (error instanceof Error) {
-         this.log(formatError(error, flags.verbose));
-         this.exit(1);
-       }
-       throw error;
-     }
-  }
+      } catch (error) {
+        if (error instanceof Error) {
+          this.log(formatError(error, flags.verbose));
+          this.exit(1);
+        }
+      }
+   }
 }

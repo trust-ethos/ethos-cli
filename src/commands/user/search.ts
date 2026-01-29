@@ -40,6 +40,11 @@ export default class UserSearch extends Command {
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(UserSearch);
+
+    if (flags.limit < 1 || flags.limit > 100) {
+      this.error('limit must be between 1 and 100', { exit: 2 });
+    }
+
     const client = new EchoClient();
 
     try {
@@ -55,7 +60,6 @@ export default class UserSearch extends Command {
         this.log(formatError(error, flags.verbose));
         this.exit(1);
       }
-      throw error;
     }
   }
 }
