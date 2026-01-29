@@ -519,38 +519,39 @@ export class EchoClient {
 
      this.log(`Fetching ${url}`);
 
-     try {
-       const response = await fetch(url, {
-         headers: { 
-           'Accept': 'application/json',
-           ...(options?.body ? { 'Content-Type': 'application/json' } : {}),
-         },
-         signal: controller.signal,
-         ...options,
-       });
+      try {
+        const response = await fetch(url, {
+          headers: { 
+            'Accept': 'application/json',
+            'X-Ethos-Client': 'ethos-cli',
+            ...(options?.body ? { 'Content-Type': 'application/json' } : {}),
+          },
+          signal: controller.signal,
+          ...options,
+        });
 
        this.log(`Response status: ${response.status}`);
 
-       if (!response.ok) {
-         if (response.status === 404) {
-           const identifier = path.split('/').pop() || 'unknown';
-           throw new NotFoundError(resourceType || 'Resource', decodeURIComponent(identifier));
-         }
+        if (!response.ok) {
+          if (response.status === 404) {
+            const identifier = path.split('/').pop() || 'unknown';
+            throw new NotFoundError(resourceType || 'Resource', decodeURIComponent(identifier));
+          }
 
-         let errorMessage = `API request failed with status ${response.status}`;
-         let errorBody;
+          let errorMessage = `API request failed with status ${response.status}`;
+          let errorBody;
 
-         try {
-           errorBody = await response.json();
-           errorMessage = errorBody.message || errorBody.error || errorMessage;
-         } catch {
-           const errorText = await response.text();
-           if (errorText) errorMessage = errorText;
-         }
+          const responseText = await response.text();
+          try {
+            errorBody = JSON.parse(responseText);
+            errorMessage = errorBody.message || errorBody.error || errorMessage;
+          } catch {
+            if (responseText) errorMessage = responseText;
+          }
 
-         this.log('API Error', { status: response.status, body: errorBody });
-         throw new APIError(errorMessage, response.status, errorBody);
-       }
+          this.log('API Error', { status: response.status, body: errorBody });
+          throw new APIError(errorMessage, response.status, errorBody);
+        }
 
        const data = await response.json() as T;
        this.log('Response data', data);
@@ -849,7 +850,7 @@ export class EchoClient {
 
   async getScoreStatus(userkey: string): Promise<ScoreStatus> {
     const params = new URLSearchParams({ userkey });
-    return this.request<ScoreStatus>(`/api/v1/score/status?${params}`, 'Score Status');
+    return this.request<ScoreStatus>(`/api/v2/score/status?${params}`, 'Score Status');
   }
 
   async getVouches(params: VouchQueryParams = {}): Promise<VouchesResponse> {

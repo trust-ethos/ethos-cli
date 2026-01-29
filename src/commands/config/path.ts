@@ -9,6 +9,7 @@ export default class ConfigPath extends Command {
   ];
 
   async run(): Promise<void> {
+    await this.parse(ConfigPath);
     this.log(getConfigPath());
   }
 }

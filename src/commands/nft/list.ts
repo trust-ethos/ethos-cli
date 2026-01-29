@@ -7,16 +7,16 @@ export default class NftList extends Command {
   static description = 'List NFTs owned by a user';
 
   static args = {
-    userkey: Args.string({
-      description: 'User key (address, profileId, or twitter:username)',
+    identifier: Args.string({
+      description: 'Twitter username, ETH address, or ENS name',
       required: true,
     }),
   };
 
   static examples = [
-    '<%= config.bin %> <%= command.id %> 0x1234...',
-    '<%= config.bin %> <%= command.id %> twitter:vitalik',
-    '<%= config.bin %> <%= command.id %> profileId:123 --json',
+    '<%= config.bin %> <%= command.id %> sethgho',
+    '<%= config.bin %> <%= command.id %> 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+    '<%= config.bin %> <%= command.id %> vitalik.eth --json',
   ];
 
   static flags = {
@@ -47,7 +47,14 @@ export default class NftList extends Command {
     const client = new EchoClient();
 
     try {
-      const response = await client.getNftsForUser(args.userkey, { limit: flags.limit, offset: flags.offset });
+      const user = await client.resolveUser(args.identifier);
+      const userkey = client.getPrimaryUserkey(user);
+      
+      if (!userkey) {
+        throw new Error('Could not determine userkey for user');
+      }
+      
+      const response = await client.getNftsForUser(userkey, { limit: flags.limit, offset: flags.offset });
 
       if (flags.json) {
         this.log(output(response));
