@@ -1,5 +1,5 @@
 import pc from 'picocolors';
-import type { Activity, Auction, BrokerPost, EthosUser, FeaturedMarketsResponse, Market, MarketHolder, Project, ProjectVoter, ProjectVotersTotals, Season, Slash } from '../api/echo-client.js';
+import type { Activity, Auction, BrokerPost, EthosUser, FeaturedMarketsResponse, Market, MarketHolder, Project, ProjectVoter, ProjectVotersTotals, ScoreLevel, ScoreResponse, ScoreStatus, Season, Slash, Vote, VoteStats, Vouch, VouchUser } from '../api/echo-client.js';
 
 export function output<T>(data: T): string {
   return JSON.stringify(data, null, 2);
@@ -610,6 +610,164 @@ export function formatFeaturedMarkets(response: FeaturedMarketsResponse): string
     lines.push(`   Score: ${m.user?.score || 0} | Price: ${priceChange >= 0 ? '+' : ''}${priceChange.toFixed(1)}%`);
     lines.push('');
   }
+
+  return lines.join('\n');
+}
+
+const LEVEL_COLORS: Record<ScoreLevel, (s: string) => string> = {
+  untrusted: pc.red,
+  questionable: pc.yellow,
+  neutral: pc.white,
+  reputable: pc.green,
+  exemplary: pc.cyan,
+};
+
+export function formatScore(data: ScoreResponse & { identifier?: string }): string {
+  const levelColor = LEVEL_COLORS[data.level] || pc.white;
+  const lines = [
+    pc.bold(pc.cyan('Reputation Score')),
+    '',
+    `${pc.dim('Score:')} ${pc.green(String(data.score))}`,
+    `${pc.dim('Level:')} ${levelColor(data.level.toUpperCase())}`,
+  ];
+
+  if (data.identifier) {
+    lines.push(`${pc.dim('User:')} ${data.identifier}`);
+  }
+
+  return lines.join('\n');
+}
+
+export function formatScoreStatus(data: ScoreStatus & { identifier?: string }): string {
+  const statusColor = data.status === 'idle' ? pc.green : data.status === 'calculating' ? pc.yellow : pc.blue;
+  const lines = [
+    pc.bold(pc.cyan('Score Calculation Status')),
+    '',
+    `${pc.dim('Status:')} ${statusColor(data.status.toUpperCase())}`,
+  ];
+
+  if (data.isPending) {
+    lines.push(`${pc.dim('Pending:')} ${pc.yellow('Yes')} (${data.isCalculating ? 'calculating' : 'queued'})`);
+  }
+
+  if (data.identifier) {
+    lines.push(`${pc.dim('User:')} ${data.identifier}`);
+  }
+
+  return lines.join('\n');
+}
+
+function formatVouchAmount(wei: string): string {
+  const cleanWei = wei.replace(/n$/, '');
+  const eth = Number(BigInt(cleanWei)) / 1e18;
+  if (eth >= 1) return eth.toFixed(4) + ' ETH';
+  if (eth >= 0.001) return eth.toFixed(6) + ' ETH';
+  if (eth > 0) return eth.toExponential(2) + ' ETH';
+  return '0 ETH';
+}
+
+export function formatVouch(vouch: Vouch): string {
+  const authorName = vouch.authorUser?.username ? `@${vouch.authorUser.username}` : vouch.authorUser?.displayName || `Profile #${vouch.authorProfileId}`;
+  const subjectName = vouch.subjectUser?.username ? `@${vouch.subjectUser.username}` : vouch.subjectUser?.displayName || `Profile #${vouch.subjectProfileId}`;
+  const statusIcon = vouch.archived ? pc.gray('○ Archived') : vouch.unhealthy ? pc.yellow('⚠ Unhealthy') : pc.green('● Active');
+
+  const lines = [
+    pc.bold(`Vouch #${vouch.id}`),
+    statusIcon,
+    '',
+    `${pc.dim('From:')} ${authorName}`,
+    `${pc.dim('To:')} ${subjectName}`,
+    `${pc.dim('Amount:')} ${pc.green(formatVouchAmount(vouch.balance))}`,
+  ];
+
+  if (vouch.mutualId) {
+    lines.push(`${pc.dim('Mutual:')} Yes (Vouch #${vouch.mutualId})`);
+  }
+
+  if (vouch.comment) {
+    lines.push('', pc.dim('Comment:'), vouch.comment.slice(0, 200) + (vouch.comment.length > 200 ? '...' : ''));
+  }
+
+  const vouchedAt = new Date(vouch.activityCheckpoints.vouchedAt * 1000);
+  lines.push('', `${pc.dim('Vouched:')} ${vouchedAt.toLocaleDateString()}`);
+
+  return lines.join('\n');
+}
+
+export function formatVouches(vouches: Vouch[], total: number): string {
+  if (!vouches.length) {
+    return pc.yellow('No vouches found.');
+  }
+
+  const lines = [pc.bold(`Vouches (${total} total)`), ''];
+
+  for (const v of vouches) {
+    const authorName = v.authorUser?.username ? `@${v.authorUser.username}` : v.authorUser?.displayName || `Profile #${v.authorProfileId}`;
+    const subjectName = v.subjectUser?.username ? `@${v.subjectUser.username}` : v.subjectUser?.displayName || `Profile #${v.subjectProfileId}`;
+    const statusIcon = v.archived ? pc.gray('○') : v.unhealthy ? pc.yellow('⚠') : pc.green('●');
+    const mutualTag = v.mutualId ? pc.cyan(' [MUTUAL]') : '';
+
+    lines.push(`${statusIcon} ${pc.bold('#' + v.id)} ${authorName} → ${subjectName}${mutualTag}`);
+    lines.push(`   ${pc.dim('Amount:')} ${formatVouchAmount(v.balance)}`);
+    if (v.comment) {
+      const preview = v.comment.slice(0, 50) + (v.comment.length > 50 ? '...' : '');
+      lines.push(`   ${pc.dim(preview)}`);
+    }
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+export function formatMutualVouchers(users: VouchUser[], total: number): string {
+  if (!users.length) {
+    return pc.yellow('No mutual vouchers found.');
+  }
+
+  const lines = [pc.bold(`Mutual Vouchers (${total} total)`), ''];
+
+  for (const u of users) {
+    const name = u.username ? `@${u.username}` : u.displayName || 'Unknown';
+    lines.push(`🤝 ${pc.bold(name)}`);
+    if (u.score !== undefined) {
+      lines.push(`   ${pc.dim('Score:')} ${u.score}`);
+    }
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+export function formatVotes(votes: Vote[], total: number, activityType?: string): string {
+  if (!votes.length) {
+    return pc.yellow('No votes found.');
+  }
+
+  const lines = [pc.bold(`Votes${activityType ? ` on ${activityType}` : ''} (${total} total)`), ''];
+
+  for (const v of votes) {
+    const voteIcon = v.isUpvote ? pc.green('👍') : pc.red('👎');
+    const voterName = v.voter.username ? `@${v.voter.username}` : v.voter.displayName || `Profile #${v.voter.profileId}`;
+    lines.push(`${voteIcon} ${pc.bold(voterName)} (Score: ${v.voter.score || 0})`);
+    lines.push(`   ${pc.dim('Voted:')} ${new Date(v.createdAt).toLocaleDateString()}`);
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+export function formatVoteStats(stats: VoteStats, activityType?: string, activityId?: number): string {
+  const total = stats.upvotes + stats.downvotes;
+  const ratio = total > 0 ? Math.round((stats.upvotes / total) * 100) : 0;
+
+  const lines = [
+    pc.bold(pc.cyan(`Vote Stats${activityId ? ` for ${activityType || 'Activity'} #${activityId}` : ''}`)),
+    '',
+    `${pc.green('👍 Upvotes:')} ${stats.upvotes}`,
+    `${pc.red('👎 Downvotes:')} ${stats.downvotes}`,
+    `${pc.dim('Total:')} ${total}`,
+    `${pc.dim('Approval:')} ${ratio}%`,
+  ];
 
   return lines.join('\n');
 }

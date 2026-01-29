@@ -348,6 +348,130 @@ export interface AuctionsResponse {
   total: number;
 }
 
+export type ScoreLevel = 'untrusted' | 'questionable' | 'neutral' | 'reputable' | 'exemplary';
+
+export interface ScoreResponse {
+  score: number;
+  level: ScoreLevel;
+}
+
+export interface ScoreBreakdownElement {
+  element: {
+    name: string;
+    type: string;
+    range?: { min: number; max: number };
+  };
+  raw: number;
+  weighted: number;
+  error: boolean;
+}
+
+export interface ScoreBreakdownResponse {
+  ok: boolean;
+  data: {
+    score: number;
+    elements: Record<string, ScoreBreakdownElement>;
+    metadata: Record<string, unknown>;
+    errors: string[];
+  };
+}
+
+export interface ScoreStatus {
+  status: 'idle' | 'queued' | 'calculating';
+  isQueued: boolean;
+  isCalculating: boolean;
+  isPending: boolean;
+}
+
+// Vouch types
+export interface VouchUser {
+  id?: number;
+  profileId?: number | null;
+  displayName?: string;
+  username?: string | null;
+  avatarUrl?: string | null;
+  score?: number;
+  userkeys?: string[];
+}
+
+export interface Vouch {
+  id: number;
+  authorProfileId: number;
+  subjectProfileId: number;
+  subjectAddress: string | null;
+  balance: string;  // bigint as string
+  comment: string;
+  metadata: string;
+  archived: boolean;
+  mutualId: number | null;
+  deposited: string;
+  staked: string;
+  withdrawn: string;
+  unhealthy: boolean;
+  authorAddress: string;
+  activityCheckpoints: {
+    vouchedAt: number;
+    unvouchedAt: number;
+    unhealthyAt: number;
+  };
+  attestationDetails?: {
+    service: string;
+    account: string;
+  } | null;
+  authorUser?: VouchUser | null;
+  subjectUser?: VouchUser | null;
+}
+
+export interface VouchesResponse {
+  values: Vouch[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface VouchQueryParams {
+  ids?: number[];
+  subjectUserkeys?: string[];
+  authorProfileIds?: number[];
+  subjectProfileIds?: number[];
+  archived?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
+// Vote types
+export type VoteType = 'review' | 'vouch' | 'slash';
+
+export interface VoteUser {
+  profileId: number;
+  displayName?: string;
+  username?: string | null;
+  avatarUrl?: string | null;
+  score?: number;
+}
+
+export interface Vote {
+  id: number;
+  isUpvote: boolean;
+  voter: VoteUser;
+  createdAt: string;
+}
+
+export interface VotesResponse {
+  values: Vote[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface VoteStats {
+  upvotes: number;
+  downvotes: number;
+  userVote?: {
+    isUpvote: boolean;
+  } | null;
+}
+
 export class EchoClient {
   private baseUrl: string;
   private debug: boolean;
@@ -678,5 +802,69 @@ export class EchoClient {
 
   async getMarketByTwitter(username: string): Promise<MarketUserByTwitter> {
     return this.request<MarketUserByTwitter>(`/api/v2/markets/users/by/x/${encodeURIComponent(username)}`, 'Market User');
+  }
+
+  async getScoreBreakdownByUserkey(userkey: string): Promise<ScoreBreakdownResponse> {
+    const params = new URLSearchParams({ userkey });
+    return this.request<ScoreBreakdownResponse>(`/api/v1/score/userkey?${params}`, 'Score');
+  }
+
+  async getScoreBreakdownByAddress(address: string): Promise<ScoreBreakdownResponse> {
+    const params = new URLSearchParams({ address });
+    return this.request<ScoreBreakdownResponse>(`/api/v1/score/address?${params}`, 'Score');
+  }
+
+  convertScoreToLevel(score: number): ScoreLevel {
+    if (score < 800) return 'untrusted';
+    if (score < 1200) return 'questionable';
+    if (score < 1600) return 'neutral';
+    if (score < 2000) return 'reputable';
+    return 'exemplary';
+  }
+
+  async getScoreStatus(userkey: string): Promise<ScoreStatus> {
+    const params = new URLSearchParams({ userkey });
+    return this.request<ScoreStatus>(`/api/v1/score/status?${params}`, 'Score Status');
+  }
+
+  async getVouches(params: VouchQueryParams = {}): Promise<VouchesResponse> {
+    const body: Record<string, unknown> = {};
+    if (params.ids) body.ids = params.ids;
+    if (params.subjectUserkeys) body.subjectUserkeys = params.subjectUserkeys;
+    if (params.authorProfileIds) body.authorProfileIds = params.authorProfileIds;
+    if (params.subjectProfileIds) body.subjectProfileIds = params.subjectProfileIds;
+    if (params.archived !== undefined) body.archived = params.archived;
+    if (params.limit) body.limit = params.limit;
+    if (params.offset) body.offset = params.offset;
+
+    const response = await this.request<{ ok: boolean; data: VouchesResponse }>('/api/v1/vouches', 'Vouches', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    return response.data;
+  }
+
+  async getMutualVouchers(viewerProfileId: number, targetProfileId: number, params: { limit?: number } = {}): Promise<{ values: VouchUser[]; total: number }> {
+    const query = new URLSearchParams();
+    query.set('viewerProfileId', String(viewerProfileId));
+    query.set('targetProfileId', String(targetProfileId));
+    if (params.limit) query.set('limit', String(params.limit));
+    return this.request<{ values: VouchUser[]; total: number }>(`/api/v1/vouches/mutual-vouchers?${query}`, 'Mutual Vouchers');
+  }
+
+  async getVotes(activityId: number, type: VoteType, params: { isUpvote?: boolean; limit?: number } = {}): Promise<VotesResponse> {
+    const query = new URLSearchParams();
+    query.set('activityId', String(activityId));
+    query.set('type', type);
+    if (params.isUpvote !== undefined) query.set('isUpvote', String(params.isUpvote));
+    if (params.limit) query.set('limit', String(params.limit));
+    return this.request<VotesResponse>(`/api/v1/votes?${query}`, 'Votes');
+  }
+
+  async getVoteStats(activityId: number, type: VoteType): Promise<VoteStats> {
+    const query = new URLSearchParams();
+    query.set('activityId', String(activityId));
+    query.set('type', type);
+    return this.request<VoteStats>(`/api/v1/votes/stats?${query}`, 'Vote Stats');
   }
 }

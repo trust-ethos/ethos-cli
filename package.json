@@ -47,6 +47,7 @@
     "bin": "ethos",
     "dirname": "ethos",
     "commands": "./dist/commands",
+    "helpClass": "./dist/lib/help",
     "plugins": [
       "@oclif/plugin-help",
       "@oclif/plugin-autocomplete"
