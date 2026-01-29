@@ -1,5 +1,5 @@
 import pc from 'picocolors';
-import type { Activity, BrokerPost, EthosUser, Project, ProjectVoter, ProjectVotersTotals, Season, Slash } from '../api/echo-client.js';
+import type { Activity, Auction, BrokerPost, EthosUser, FeaturedMarketsResponse, Market, MarketHolder, Project, ProjectVoter, ProjectVotersTotals, Season, Slash } from '../api/echo-client.js';
 
 export function output<T>(data: T): string {
   return JSON.stringify(data, null, 2);
@@ -402,6 +402,203 @@ export function formatListingVoters(voters: ProjectVoter[], totals: ProjectVoter
     const reasons = [...(v.bullishReasons || []), ...(v.bearishReasons || [])];
     if (reasons.length) {
       lines.push(`   ${pc.dim('Reasons:')} ${reasons.slice(0, 3).join(', ')}`);
+    }
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+export function formatNfts(nfts: any[], total: number): string {
+  if (!nfts.length) {
+    return pc.yellow('No NFTs found.');
+  }
+
+  const lines = [pc.bold(`NFTs (${total} total)`), ''];
+
+  for (const nft of nfts) {
+    lines.push(`🖼️  ${pc.bold(nft.name || `Token #${nft.tokenId}`)}`);
+    if (nft.contractName) lines.push(`   ${pc.dim('Collection:')} ${nft.contractName}`);
+    lines.push(`   ${pc.dim('Token ID:')} ${nft.tokenId}`);
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+export function formatValidatorListings(listings: any[], total: number): string {
+  if (!listings.length) {
+    return pc.yellow('No validator NFTs listed for sale.');
+  }
+
+  const lines = [pc.bold(`🎫 Validator NFTs For Sale (${total} total)`), ''];
+
+  for (const l of listings) {
+    lines.push(`🎫 ${pc.bold(l.name || `Validator #${l.tokenId}`)}`);
+    lines.push(`   ${pc.dim('Price:')} ${pc.green(l.priceEth + ' ETH')}`);
+    lines.push(`   ${pc.dim('Seller:')} ${l.seller.slice(0, 10)}...`);
+    lines.push(`   ${pc.dim('OpenSea:')} ${l.openseaUrl}`);
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+export function formatAuction(auction: Auction): string {
+  const statusColors: Record<string, (s: string) => string> = {
+    'pending': pc.yellow,
+    'active': pc.green,
+    'ended': pc.gray,
+    'settled': pc.blue,
+  };
+  const statusFn = statusColors[auction.status] || pc.white;
+
+  const lines = [
+    pc.bold(`🔨 Auction #${auction.id}`),
+    auction.name ? pc.cyan(auction.name) : '',
+    '',
+    `${pc.dim('Status:')} ${statusFn(auction.status.toUpperCase())}`,
+    `${pc.dim('Token ID:')} ${auction.tokenId}`,
+    `${pc.dim('Reserve Price:')} ${auction.reservePrice} ETH`,
+  ];
+
+  if (auction.currentBid) {
+    lines.push(`${pc.dim('Current Bid:')} ${pc.green(auction.currentBid + ' ETH')}`);
+    if (auction.currentBidder) {
+      lines.push(`${pc.dim('Current Bidder:')} ${auction.currentBidder.slice(0, 10)}...`);
+    }
+  }
+
+  lines.push(`${pc.dim('Bids:')} ${auction.bidsCount}`);
+
+  if (auction.status === 'active') {
+    const endTime = new Date(auction.endTime);
+    lines.push(`${pc.dim('Ends:')} ${endTime.toLocaleString()}`);
+  }
+
+  if (auction.winner) {
+    lines.push('', pc.green(`🏆 Winner: ${auction.winner.slice(0, 10)}...`));
+    lines.push(`   Winning Bid: ${auction.winningBid} ETH`);
+  }
+
+  return lines.filter(Boolean).join('\n');
+}
+
+export function formatAuctions(auctions: Auction[], total: number): string {
+   if (!auctions.length) {
+     return pc.yellow('No auctions found.');
+   }
+
+   const lines = [pc.bold(`🎫 Validator Auctions (${total} total)`), ''];
+
+   for (const a of auctions) {
+     const statusColor = a.status === 'active' ? pc.green : a.status === 'ended' ? pc.red : pc.yellow;
+     lines.push(`🎫 ${pc.bold(a.name || `Validator #${a.tokenId}`)} ${statusColor(`[${a.status.toUpperCase()}]`)}`);
+     lines.push(`   ${pc.dim('Reserve:')} ${a.reservePrice} ETH`);
+     if (a.currentBid) {
+       lines.push(`   ${pc.dim('Current Bid:')} ${pc.green(a.currentBid + ' ETH')} ${pc.dim('by')} ${a.currentBidder?.slice(0, 10)}...`);
+     }
+     lines.push(`   ${pc.dim('Bids:')} ${a.bidsCount}`);
+     lines.push(`   ${pc.dim('Ends:')} ${new Date(a.endTime).toLocaleDateString()}`);
+     lines.push('');
+   }
+
+   return lines.join('\n');
+}
+
+export function formatMarket(market: Market): string {
+  const name = market.displayName || market.username || 'Unknown';
+  const priceChange = market.priceChange24hPercent || 0;
+  const priceChangeColor = priceChange >= 0 ? pc.green : pc.red;
+
+  const lines = [
+    pc.bold(pc.cyan(name)),
+    '',
+    `${pc.dim('Price:')} ${market.price} ETH ${priceChangeColor(`(${priceChange >= 0 ? '+' : ''}${priceChange}%)`)}`,
+    `${pc.dim('Market Cap:')} ${market.marketCap} ETH`,
+    `${pc.dim('Holders:')} ${market.holdersCount}`,
+  ];
+
+  if (market.volume24h) {
+    lines.push(`${pc.dim('24h Volume:')} ${market.volume24h} ETH`);
+  }
+
+  if (market.marketCapChange24hPercent !== undefined) {
+    const mcChange = market.marketCapChange24hPercent;
+    const mcChangeColor = mcChange >= 0 ? pc.green : pc.red;
+    lines.push(`${pc.dim('Market Cap Change (24h):')} ${mcChangeColor(`${mcChange >= 0 ? '+' : ''}${mcChange}%`)}`);
+  }
+
+  return lines.join('\n');
+}
+
+export function formatMarkets(markets: Market[], total: number): string {
+  if (!markets.length) {
+    return pc.yellow('No markets found.');
+  }
+
+  const lines = [pc.bold(`📊 Markets (${total} total)`), ''];
+
+  for (const m of markets) {
+    const name = m.displayName || m.username || 'Unknown';
+    const priceChange = m.priceChange24hPercent || 0;
+    const priceChangeColor = priceChange >= 0 ? pc.green : pc.red;
+    lines.push(`📊 ${pc.bold(name)}`);
+    lines.push(`   ${pc.dim('Price:')} ${m.price} ETH ${priceChangeColor(`(${priceChange >= 0 ? '+' : ''}${priceChange}%)`)}`);
+    lines.push(`   ${pc.dim('Market Cap:')} ${m.marketCap} ETH`);
+    lines.push(`   ${pc.dim('Holders:')} ${m.holdersCount}`);
+    if (m.volume24h) {
+      lines.push(`   ${pc.dim('24h Volume:')} ${m.volume24h} ETH`);
+    }
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+export function formatMarketHolders(holders: MarketHolder[], total: number): string {
+  if (!holders.length) {
+    return pc.yellow('No holders found.');
+  }
+
+  const lines = [pc.bold(`👥 Market Holders (${total} total)`), ''];
+
+  for (const h of holders) {
+    const name = h.displayName || h.username || 'Unknown';
+    const netPosition = parseFloat(h.netPosition);
+    const netColor = netPosition >= 0 ? pc.green : pc.red;
+    lines.push(`👥 ${pc.bold(name)}`);
+    lines.push(`   ${pc.dim('Trust Balance:')} ${h.trustBalance}`);
+    lines.push(`   ${pc.dim('Distrust Balance:')} ${h.distrustBalance}`);
+    lines.push(`   ${pc.dim('Net Position:')} ${netColor(h.netPosition)}`);
+    lines.push(`   ${pc.dim('Percentage:')} ${h.percentage}%`);
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+export function formatFeaturedMarkets(response: FeaturedMarketsResponse): string {
+  const lines = [pc.bold(pc.cyan('Featured Markets')), ''];
+
+  if (response.topGainers && response.topGainers.length > 0) {
+    lines.push(pc.bold(pc.green('🚀 Top Gainers')));
+    for (const m of response.topGainers) {
+      const name = m.displayName || m.username || 'Unknown';
+      const priceChange = m.priceChange24hPercent || 0;
+      lines.push(`  ${pc.bold(name)} ${pc.green(`+${priceChange}%`)}`);
+      lines.push(`    Price: ${m.price} ETH | Market Cap: ${m.marketCap} ETH`);
+    }
+    lines.push('');
+  }
+
+  if (response.topLosers && response.topLosers.length > 0) {
+    lines.push(pc.bold(pc.red('📉 Top Losers')));
+    for (const m of response.topLosers) {
+      const name = m.displayName || m.username || 'Unknown';
+      const priceChange = m.priceChange24hPercent || 0;
+      lines.push(`  ${pc.bold(name)} ${pc.red(`${priceChange}%`)}`);
+      lines.push(`    Price: ${m.price} ETH | Market Cap: ${m.marketCap} ETH`);
     }
     lines.push('');
   }

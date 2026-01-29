@@ -215,6 +215,113 @@ export interface ProjectVotersResponse {
   totals: ProjectVotersTotals;
 }
 
+export interface Market {
+  profileId: number;
+  username?: string;
+  displayName?: string;
+  avatarUrl?: string;
+  price: string;
+  priceUsd?: number;
+  marketCap: string;
+  marketCapUsd?: number;
+  holdersCount: number;
+  volume24h?: string;
+  priceChange24hPercent?: number;
+  marketCapChange24hPercent?: number;
+}
+
+export interface MarketHolder {
+  profileId: number;
+  username?: string;
+  displayName?: string;
+  avatarUrl?: string;
+  trustBalance: string;
+  distrustBalance: string;
+  netPosition: string;
+  percentage: number;
+}
+
+export interface MarketListParams {
+  limit?: number;
+  offset?: number;
+  orderBy?: 'marketCap' | 'price' | 'priceChange24hPercent' | 'volume24h';
+  orderDirection?: 'asc' | 'desc';
+  filterQuery?: string;
+}
+
+export interface MarketListResponse {
+  values: Market[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface FeaturedMarketsResponse {
+  topGainers: Market[];
+  topLosers: Market[];
+}
+
+export interface MarketHoldersResponse {
+  values: MarketHolder[];
+  total: number;
+}
+
+export interface NFT {
+  tokenId: string;
+  name: string | null;
+  description?: string;
+  imageUrl: string | null;
+  contractAddress: string;
+  contractName?: string;
+}
+
+export interface NftsResponse {
+  values: NFT[];
+  total: number;
+  limit?: number;
+  offset?: number;
+}
+
+export interface ValidatorListing {
+  orderHash: string;
+  tokenId: string;
+  name: string | null;
+  imageUrl: string | null;
+  priceWei: string;
+  priceEth: string;
+  currency: string;
+  seller: string;
+  openseaUrl: string;
+}
+
+export interface ValidatorListingsResponse {
+  values: ValidatorListing[];
+  total: number;
+  limit?: number;
+  offset?: number;
+}
+
+export interface Auction {
+  id: number;
+  tokenId: string;
+  name?: string;
+  imageUrl?: string;
+  startTime: string;
+  endTime: string;
+  reservePrice: string;
+  currentBid?: string;
+  currentBidder?: string;
+  status: 'pending' | 'active' | 'ended' | 'settled';
+  winner?: string;
+  winningBid?: string;
+  bidsCount: number;
+}
+
+export interface AuctionsResponse {
+  values: Auction[];
+  total: number;
+}
+
 export class EchoClient {
   private baseUrl: string;
   private debug: boolean;
@@ -235,7 +342,7 @@ export class EchoClient {
     }
   }
 
-   private async request<T>(path: string, resourceType?: string): Promise<T> {
+   private async request<T>(path: string, resourceType?: string, options?: RequestInit): Promise<T> {
      const url = `${this.baseUrl}${path}`;
      const controller = new AbortController();
      const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -244,8 +351,12 @@ export class EchoClient {
 
      try {
        const response = await fetch(url, {
-         headers: { 'Accept': 'application/json' },
+         headers: { 
+           'Accept': 'application/json',
+           ...(options?.body ? { 'Content-Type': 'application/json' } : {}),
+         },
          signal: controller.signal,
+         ...options,
        });
 
        this.log(`Response status: ${response.status}`);
@@ -474,7 +585,72 @@ export class EchoClient {
     return this.request<ProjectVotersResponse>(`/api/v2/projects/${projectId}/voters${query.toString() ? '?' + query.toString() : ''}`, 'Voters');
   }
 
-  async getProjectTeam(projectId: number): Promise<EthosUser[]> {
-    return this.request<EthosUser[]>(`/api/v2/projects/${projectId}/team`, 'Team');
+   async getProjectTeam(projectId: number): Promise<EthosUser[]> {
+     return this.request<EthosUser[]>(`/api/v2/projects/${projectId}/team`, 'Team');
+   }
+
+   async getNftsForUser(userkey: string, params: { limit?: number } = {}): Promise<NftsResponse> {
+     const query = new URLSearchParams();
+     if (params.limit) query.set('limit', String(params.limit));
+     const path = `/api/v2/nfts/user/${encodeURIComponent(userkey)}${query.toString() ? '?' + query.toString() : ''}`;
+     return this.request<NftsResponse>(path, 'User NFTs');
+   }
+
+   async checkValidatorOwnership(userkey: string): Promise<NFT[]> {
+     return this.request<NFT[]>(`/api/v2/nfts/user/${encodeURIComponent(userkey)}/owns-validator`, 'Validator Check');
+   }
+
+    async getValidatorListings(params: { limit?: number } = {}): Promise<ValidatorListingsResponse> {
+      const query = new URLSearchParams();
+      if (params.limit) query.set('limit', String(params.limit));
+      const path = `/api/v2/nfts/validators/listings${query.toString() ? '?' + query.toString() : ''}`;
+      return this.request<ValidatorListingsResponse>(path, 'Validator Listings');
+    }
+
+    async getAuctions(params: { limit?: number; status?: string } = {}): Promise<AuctionsResponse> {
+      const query = new URLSearchParams();
+      if (params.limit) query.set('limit', String(params.limit));
+      if (params.status) query.set('status', params.status);
+      const path = `/api/v2/auctions${query.toString() ? '?' + query.toString() : ''}`;
+      return this.request<AuctionsResponse>(path, 'Auctions');
+    }
+
+    async getActiveAuction(): Promise<Auction | null> {
+      return this.request<Auction | null>('/api/v2/auctions/active', 'Active Auction');
+    }
+
+    async getAuction(auctionId: number): Promise<Auction> {
+      return this.request<Auction>(`/api/v2/auctions/${auctionId}`, 'Auction');
+    }
+
+  async getMarkets(params: MarketListParams = {}): Promise<MarketListResponse> {
+    const query = new URLSearchParams();
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    if (params.orderBy) query.set('orderBy', params.orderBy);
+    if (params.orderDirection) query.set('orderDirection', params.orderDirection);
+    if (params.filterQuery) query.set('filterQuery', params.filterQuery);
+    return this.request<MarketListResponse>(`/api/v2/markets${query.toString() ? '?' + query.toString() : ''}`, 'Markets');
+  }
+
+  async getFeaturedMarkets(): Promise<FeaturedMarketsResponse> {
+    return this.request<FeaturedMarketsResponse>('/api/v2/markets/featured', 'Featured Markets');
+  }
+
+  async getMarketInfo(profileId: number): Promise<Market> {
+    return this.request<Market>(`/api/v2/markets/${profileId}/info`, 'Market Info', {
+      method: 'POST',
+      body: JSON.stringify({ profileId, includeTopHolders: true, includeMarketChange: true }),
+    });
+  }
+
+  async getMarketHolders(profileId: number, params: { limit?: number } = {}): Promise<MarketHoldersResponse> {
+    const query = new URLSearchParams();
+    if (params.limit) query.set('limit', String(params.limit));
+    return this.request<MarketHoldersResponse>(`/api/v2/markets/${profileId}/holders${query.toString() ? '?' + query.toString() : ''}`, 'Market Holders');
+  }
+
+  async getMarketByTwitter(username: string): Promise<Market> {
+    return this.request<Market>(`/api/v2/markets/users/by/x/${encodeURIComponent(username)}`, 'Market User');
   }
 }
