@@ -99,62 +99,71 @@ export class EchoClient {
     }
   }
 
-  private async request<T>(path: string, resourceType?: string): Promise<T> {
-    const url = `${this.baseUrl}${path}`;
+   private async request<T>(path: string, resourceType?: string): Promise<T> {
+     const url = `${this.baseUrl}${path}`;
+     const controller = new AbortController();
+     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    this.log(`Fetching ${url}`);
+     this.log(`Fetching ${url}`);
 
-    try {
-      const response = await fetch(url, {
-        headers: { 'Accept': 'application/json' },
-      });
+     try {
+       const response = await fetch(url, {
+         headers: { 'Accept': 'application/json' },
+         signal: controller.signal,
+       });
 
-      this.log(`Response status: ${response.status}`);
+       this.log(`Response status: ${response.status}`);
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          const identifier = path.split('/').pop() || 'unknown';
-          throw new NotFoundError(resourceType || 'Resource', decodeURIComponent(identifier));
-        }
+       if (!response.ok) {
+         if (response.status === 404) {
+           const identifier = path.split('/').pop() || 'unknown';
+           throw new NotFoundError(resourceType || 'Resource', decodeURIComponent(identifier));
+         }
 
-        let errorMessage = `API request failed with status ${response.status}`;
-        let errorBody;
+         let errorMessage = `API request failed with status ${response.status}`;
+         let errorBody;
 
-        try {
-          errorBody = await response.json();
-          errorMessage = errorBody.message || errorBody.error || errorMessage;
-        } catch {
-          const errorText = await response.text();
-          if (errorText) errorMessage = errorText;
-        }
+         try {
+           errorBody = await response.json();
+           errorMessage = errorBody.message || errorBody.error || errorMessage;
+         } catch {
+           const errorText = await response.text();
+           if (errorText) errorMessage = errorText;
+         }
 
-        this.log('API Error', { status: response.status, body: errorBody });
-        throw new APIError(errorMessage, response.status, errorBody);
-      }
+         this.log('API Error', { status: response.status, body: errorBody });
+         throw new APIError(errorMessage, response.status, errorBody);
+       }
 
-      const data = await response.json() as T;
-      this.log('Response data', data);
-      return data;
-    } catch (error) {
-      if (error instanceof NotFoundError || error instanceof APIError) {
-        throw error;
-      }
+       const data = await response.json() as T;
+       this.log('Response data', data);
+       return data;
+     } catch (error) {
+       if (error instanceof NotFoundError || error instanceof APIError) {
+         throw error;
+       }
 
-      if (error instanceof Error) {
-        this.log('Network error', error.message);
+       if (error instanceof Error) {
+         this.log('Network error', error.message);
 
-        if (error.message.includes('fetch failed') ||
-            error.message.includes('ECONNREFUSED') ||
-            error.message.includes('ENOTFOUND')) {
-          throw new NetworkError(`Cannot connect to API at ${this.baseUrl}`, url);
-        }
+         if (error.name === 'AbortError') {
+           throw new NetworkError('Request timed out after 10 seconds', url);
+         }
 
-        throw new NetworkError(error.message, url);
-      }
+         if (error.message.includes('fetch failed') ||
+             error.message.includes('ECONNREFUSED') ||
+             error.message.includes('ENOTFOUND')) {
+           throw new NetworkError(`Cannot connect to API at ${this.baseUrl}`, url);
+         }
 
-      throw error;
-    }
-  }
+         throw new NetworkError(error.message, url);
+       }
+
+       throw error;
+     } finally {
+       clearTimeout(timeoutId);
+     }
+   }
 
   async getUserByTwitter(username: string): Promise<EthosUser> {
     return this.request<EthosUser>(`/api/v2/user/by/x/${encodeURIComponent(username)}`, 'User');
