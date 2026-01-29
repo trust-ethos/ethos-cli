@@ -1,5 +1,5 @@
 import pc from 'picocolors';
-import type { EthosUser, Season } from '../api/echo-client.js';
+import type { Activity, EthosUser, Season } from '../api/echo-client.js';
 
 export function output<T>(data: T, _flags: { json?: boolean }): string {
   return JSON.stringify(data, null, 2);
@@ -136,6 +136,68 @@ export function formatSearchResults(results: EthosUser[]): string {
     }
     lines.push(`  ${pc.dim('Score:')} ${pc.green(String(user.score))}`);
     lines.push(`  ${pc.dim('XP:')} ${user.xpTotal.toLocaleString()}`);
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+function formatTimestamp(ts: number): string {
+  const date = new Date(ts * 1000);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function parseMetadata(metadata?: string): { description?: string } {
+  if (!metadata) return {};
+  try {
+    return JSON.parse(metadata);
+  } catch {
+    return {};
+  }
+}
+
+export function formatActivities(activities: Activity[], username?: string): string {
+  if (!activities || activities.length === 0) {
+    return pc.yellow('No activities found');
+  }
+
+  const lines = [
+    pc.bold(pc.cyan(`Recent Activity${username ? ` for ${username}` : ''}`)),
+    '',
+  ];
+
+  for (const activity of activities) {
+    const typeIcon = activity.type === 'vouch' ? '🤝' : activity.type === 'review' ? '📝' : '❌';
+    const typeLabel = activity.type.charAt(0).toUpperCase() + activity.type.slice(1);
+    const date = formatTimestamp(activity.timestamp);
+    
+    lines.push(`${typeIcon} ${pc.bold(typeLabel)} ${pc.dim(`• ${date}`)}`);
+    
+    const authorName = activity.author.username ? `@${activity.author.username}` : activity.author.name;
+    const subjectName = activity.subject.username ? `@${activity.subject.username}` : activity.subject.name;
+    lines.push(`   ${pc.dim('From:')} ${authorName} ${pc.dim('→')} ${subjectName}`);
+    
+    if (activity.data.comment) {
+      const comment = activity.data.comment.length > 60 
+        ? activity.data.comment.substring(0, 57) + '...'
+        : activity.data.comment;
+      lines.push(`   ${pc.dim('Title:')} ${comment}`);
+    }
+    
+    if (activity.data.score) {
+      const scoreColor = activity.data.score === 'positive' ? pc.green : 
+                         activity.data.score === 'negative' ? pc.red : pc.dim;
+      lines.push(`   ${pc.dim('Score:')} ${scoreColor(activity.data.score)}`);
+    }
+    
+    const meta = parseMetadata(activity.data.metadata);
+    if (meta.description) {
+      const desc = meta.description.length > 80 
+        ? meta.description.substring(0, 77) + '...'
+        : meta.description;
+      lines.push(`   ${pc.dim(desc)}`);
+    }
+    
     lines.push('');
   }
 

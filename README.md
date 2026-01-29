@@ -179,6 +179,7 @@ USAGE
 <!-- usagestop -->
 <!-- commands -->
 * [`ethos help [COMMAND]`](#ethos-help-command)
+* [`ethos user activity IDENTIFIER`](#ethos-user-activity-identifier)
 * [`ethos user info IDENTIFIER`](#ethos-user-info-identifier)
 * [`ethos user search QUERY`](#ethos-user-search-query)
 * [`ethos xp rank IDENTIFIER`](#ethos-xp-rank-identifier)
@@ -203,6 +204,35 @@ DESCRIPTION
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.2.37/src/commands/help.ts)_
+
+## `ethos user activity IDENTIFIER`
+
+Show recent reviews and vouches for a user
+
+```
+USAGE
+  $ ethos user activity IDENTIFIER [-j] [-l <value>] [-v]
+
+ARGUMENTS
+  IDENTIFIER  Twitter username, ETH address, or ENS name
+
+FLAGS
+  -j, --json           Output as JSON
+  -l, --limit=<value>  [default: 10] Maximum number of activities
+  -v, --verbose        Show detailed error information
+
+DESCRIPTION
+  Show recent reviews and vouches for a user
+
+EXAMPLES
+  $ ethos user activity 0xNowater
+
+  $ ethos user activity vitalik.eth --limit 5
+
+  $ ethos user activity 0xNowater --json
+```
+
+_See code: [src/commands/user/activity.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/user/activity.ts)_
 
 ## `ethos user info IDENTIFIER`
 

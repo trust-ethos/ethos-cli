@@ -58,17 +58,30 @@ export interface SeasonsResponse {
   currentSeason: Season;
 }
 
-export interface Activity {
-  id: number;
-  type: string;
-  timestamp: string;
-  data: Record<string, unknown>;
+export interface ActivityAuthor {
+  userkey: string;
+  profileId: number | null;
+  name: string;
+  username: string | null;
+  avatar: string | null;
+  score: number;
 }
 
-export interface ActivitiesResponse {
-  values: Activity[];
-  total: number;
+export interface Activity {
+  type: 'review' | 'vouch' | 'unvouch';
+  timestamp: number;
+  data: {
+    id: number;
+    comment?: string;
+    score?: 'positive' | 'neutral' | 'negative';
+    metadata?: string;
+  };
+  author: ActivityAuthor;
+  subject: ActivityAuthor;
+  link: string;
 }
+
+export type ActivityType = 'review' | 'vouch';
 
 export class EchoClient {
   private baseUrl: string;
@@ -217,9 +230,12 @@ export class EchoClient {
     return this.request<number>(`/api/v2/xp/user/${encodeURIComponent(userkey)}/leaderboard-rank`, 'Leaderboard Rank');
   }
 
-  async getActivities(profileId: number, direction: 'all' | 'given' | 'received' = 'all'): Promise<ActivitiesResponse> {
-    const params = new URLSearchParams({ profileId: String(profileId) });
-    return this.request<ActivitiesResponse>(`/api/v2/activities/profile/${direction}?${params}`, 'Activities');
+  async getActivities(userkey: string, types: ActivityType[] = ['review', 'vouch'], limit = 10): Promise<Activity[]> {
+    const params = new URLSearchParams({ userkey, limit: String(limit) });
+    for (const type of types) {
+      params.append('activityType', type);
+    }
+    return this.request<Activity[]>(`/api/v2/activities/userkey?${params}`, 'Activities');
   }
 
   getPrimaryUserkey(user: EthosUser): string | null {
