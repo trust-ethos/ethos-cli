@@ -329,18 +329,18 @@ export interface ValidatorListingsResponse {
 
 export interface Auction {
   id: number;
-  tokenId: string;
-  name?: string;
-  imageUrl?: string;
+  nftTokenId: number;
+  nftContract: string;
+  creatorAddress: string;
+  startPrice: string;  // wei
+  reservePrice: string;  // wei
+  duration: number;
   startTime: string;
-  endTime: string;
-  reservePrice: string;
-  currentBid?: string;
-  currentBidder?: string;
-  status: 'pending' | 'active' | 'ended' | 'settled';
-  winner?: string;
-  winningBid?: string;
-  bidsCount: number;
+  status: 'PENDING' | 'ENABLED' | 'ENDED' | 'SOLD';
+  buyerAddress: string | null;
+  pricePaid: string | null;  // wei
+  soldTime: string | null;
+  createdAt: string;
 }
 
 export interface AuctionsResponse {

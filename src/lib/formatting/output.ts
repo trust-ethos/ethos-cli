@@ -446,64 +446,59 @@ export function formatValidatorListings(listings: any[], total: number): string 
 
 export function formatAuction(auction: Auction): string {
   const statusColors: Record<string, (s: string) => string> = {
-    'pending': pc.yellow,
-    'active': pc.green,
-    'ended': pc.gray,
-    'settled': pc.blue,
+    'PENDING': pc.yellow,
+    'ENABLED': pc.green,
+    'ENDED': pc.gray,
+    'SOLD': pc.blue,
   };
   const statusFn = statusColors[auction.status] || pc.white;
+  const reserveEth = formatWeiToEth(auction.reservePrice);
+  const startEth = formatWeiToEth(auction.startPrice);
 
   const lines = [
     pc.bold(`🔨 Auction #${auction.id}`),
-    auction.name ? pc.cyan(auction.name) : '',
+    `Validator #${auction.nftTokenId}`,
     '',
-    `${pc.dim('Status:')} ${statusFn(auction.status.toUpperCase())}`,
-    `${pc.dim('Token ID:')} ${auction.tokenId}`,
-    `${pc.dim('Reserve Price:')} ${auction.reservePrice} ETH`,
+    `${pc.dim('Status:')} ${statusFn(auction.status)}`,
+    `${pc.dim('Token ID:')} ${auction.nftTokenId}`,
+    `${pc.dim('Start Price:')} ${startEth} ETH`,
+    `${pc.dim('Reserve Price:')} ${reserveEth} ETH`,
   ];
 
-  if (auction.currentBid) {
-    lines.push(`${pc.dim('Current Bid:')} ${pc.green(auction.currentBid + ' ETH')}`);
-    if (auction.currentBidder) {
-      lines.push(`${pc.dim('Current Bidder:')} ${auction.currentBidder.slice(0, 10)}...`);
-    }
+  if (auction.pricePaid) {
+    lines.push(`${pc.dim('Sold For:')} ${pc.green(formatWeiToEth(auction.pricePaid) + ' ETH')}`);
   }
 
-  lines.push(`${pc.dim('Bids:')} ${auction.bidsCount}`);
+  const startTime = new Date(auction.startTime);
+  lines.push(`${pc.dim('Starts:')} ${startTime.toLocaleString()}`);
 
-  if (auction.status === 'active') {
-    const endTime = new Date(auction.endTime);
-    lines.push(`${pc.dim('Ends:')} ${endTime.toLocaleString()}`);
-  }
-
-  if (auction.winner) {
-    lines.push('', pc.green(`🏆 Winner: ${auction.winner.slice(0, 10)}...`));
-    lines.push(`   Winning Bid: ${auction.winningBid} ETH`);
+  if (auction.buyerAddress) {
+    lines.push('', pc.green(`🏆 Winner: ${auction.buyerAddress.slice(0, 10)}...`));
   }
 
   return lines.filter(Boolean).join('\n');
 }
 
 export function formatAuctions(auctions: Auction[], total: number): string {
-   if (!auctions.length) {
-     return pc.yellow('No auctions found.');
-   }
+  if (!auctions.length) {
+    return pc.yellow('No auctions found.');
+  }
 
-   const lines = [pc.bold(`🎫 Validator Auctions (${total} total)`), ''];
+  const lines = [pc.bold(`🎫 Validator Auctions (${total} total)`), ''];
 
-   for (const a of auctions) {
-     const statusColor = a.status === 'active' ? pc.green : a.status === 'ended' ? pc.red : pc.yellow;
-     lines.push(`🎫 ${pc.bold(a.name || `Validator #${a.tokenId}`)} ${statusColor(`[${a.status.toUpperCase()}]`)}`);
-     lines.push(`   ${pc.dim('Reserve:')} ${a.reservePrice} ETH`);
-     if (a.currentBid) {
-       lines.push(`   ${pc.dim('Current Bid:')} ${pc.green(a.currentBid + ' ETH')} ${pc.dim('by')} ${a.currentBidder?.slice(0, 10)}...`);
-     }
-     lines.push(`   ${pc.dim('Bids:')} ${a.bidsCount}`);
-     lines.push(`   ${pc.dim('Ends:')} ${new Date(a.endTime).toLocaleDateString()}`);
-     lines.push('');
-   }
+  for (const a of auctions) {
+    const statusColor = a.status === 'ENABLED' ? pc.green : a.status === 'SOLD' ? pc.blue : pc.yellow;
+    const startEth = formatWeiToEth(a.startPrice);
+    lines.push(`🎫 ${pc.bold(`Validator #${a.nftTokenId}`)} ${statusColor(`[${a.status}]`)}`);
+    lines.push(`   ${pc.dim('Start Price:')} ${startEth} ETH`);
+    if (a.pricePaid) {
+      lines.push(`   ${pc.dim('Sold For:')} ${pc.green(formatWeiToEth(a.pricePaid) + ' ETH')}`);
+    }
+    lines.push(`   ${pc.dim('Starts:')} ${new Date(a.startTime).toLocaleDateString()}`);
+    lines.push('');
+  }
 
-   return lines.join('\n');
+  return lines.join('\n');
 }
 
 function formatWeiToEth(wei: string): string {
