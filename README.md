@@ -94,11 +94,47 @@ ethos user search vitalik --json | jq '.values[0].username'
 ethos xp rank 0xNowater --json | jq .rank
 ```
 
+## Shell Completions
+
+Generate shell completions for your shell:
+
+```bash
+# Bash
+ethos autocomplete bash
+
+# Zsh
+ethos autocomplete zsh
+
+# Fish
+ethos autocomplete fish
+```
+
+Follow the printed instructions to add completions to your shell.
+
+## Configuration
+
+Create `~/.config/ethos/config.json` to set defaults:
+
+```json
+{
+  "environment": "prod",
+  "apiUrl": "https://api.ethos.network",
+  "defaultOutput": "text"
+}
+```
+
+All fields are optional. Environment variables override config file settings.
+
 ## Environment Variables
 
-- `ETHOS_ENV` - Environment (prod|staging|dev), defaults to prod
-- `ETHOS_API_URL` - Custom API endpoint for testing
+- `ETHOS_ENV` - Override environment (prod|staging|dev)
+- `ETHOS_API_URL` - Override API endpoint for testing
 - `ETHOS_OUTPUT` - Output format (json|text)
+
+**Priority order** (highest to lowest):
+1. Environment variables
+2. Config file (`~/.config/ethos/config.json`)
+3. Defaults (prod environment, standard API URL)
 
 ## Exit Codes
 

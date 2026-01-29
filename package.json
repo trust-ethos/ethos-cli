@@ -9,6 +9,7 @@
   "bugs": "https://github.com/ethos-network/ethos-cli/issues",
   "dependencies": {
     "@oclif/core": "^4",
+    "@oclif/plugin-autocomplete": "^3.2.40",
     "@oclif/plugin-help": "^6",
     "picocolors": "^1.1.1",
     "zod": "^3.24.1"
@@ -47,7 +48,8 @@
     "dirname": "ethos",
     "commands": "./dist/commands",
     "plugins": [
-      "@oclif/plugin-help"
+      "@oclif/plugin-help",
+      "@oclif/plugin-autocomplete"
     ],
     "topicSeparator": " ",
     "topics": {
