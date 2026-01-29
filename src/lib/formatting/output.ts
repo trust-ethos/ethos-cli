@@ -1,5 +1,5 @@
 import pc from 'picocolors';
-import type { Activity, BrokerPost, EthosUser, Project, ProjectVoter, Season, Slash } from '../api/echo-client.js';
+import type { Activity, BrokerPost, EthosUser, Project, ProjectVoter, ProjectVotersTotals, Season, Slash } from '../api/echo-client.js';
 
 export function output<T>(data: T): string {
   return JSON.stringify(data, null, 2);
@@ -209,15 +209,15 @@ export function formatActivities(activities: Activity[], username?: string): str
 }
 
 export function formatSlash(slash: Slash): string {
-  const isClosed = slash.closedAt > 0;
-  const statusIcon = isClosed ? pc.gray('✓ CLOSED') : pc.red('⚔️ OPEN');
+  const isOpen = !slash.closedAt && !slash.cancelledAt;
+  const statusIcon = isOpen ? pc.red('⚔️ OPEN') : pc.gray('✓ CLOSED');
   
   const lines = [
     pc.bold(`Slash #${slash.id}`),
     statusIcon,
     '',
-    `${pc.dim('Author Profile ID:')} ${slash.authorProfileId}`,
-    `${pc.dim('Subject Profile ID:')} ${slash.subject || 'N/A'}`,
+    `${pc.dim('Author Profile:')} ${slash.authorProfileId}`,
+    `${pc.dim('Subject:')} ${slash.subject || 'Unknown'}`,
     `${pc.dim('Amount:')} ${slash.amount}`,
     `${pc.dim('Type:')} ${slash.slashType}`,
     '',
@@ -225,19 +225,7 @@ export function formatSlash(slash: Slash): string {
     slash.comment || 'No reason provided',
   ];
 
-  if (slash.attestationDetails) {
-    lines.push(
-      '',
-      pc.bold('Attestation'),
-      `  ${pc.dim('Service:')} ${slash.attestationDetails.service}`,
-      `  ${pc.dim('Account:')} ${slash.attestationDetails.account}`
-    );
-  }
-
   lines.push('', `${pc.dim('Created:')} ${new Date(slash.createdAt * 1000).toLocaleString()}`);
-  if (isClosed) {
-    lines.push(`${pc.dim('Closed:')} ${new Date(slash.closedAt * 1000).toLocaleString()}`);
-  }
 
   return lines.join('\n');
 }
@@ -250,10 +238,10 @@ export function formatSlashes(slashes: Slash[], total: number): string {
   const lines = [pc.bold(`Slashes (${total} total)`), ''];
 
   for (const s of slashes) {
-    const isClosed = s.closedAt > 0;
-    const statusIcon = isClosed ? pc.gray('✓') : pc.red('⚔️');
+    const isOpen = !s.closedAt && !s.cancelledAt;
+    const statusIcon = isOpen ? pc.red('⚔️') : pc.gray('✓');
     
-    lines.push(`${statusIcon} ${pc.bold('#' + s.id)} Profile #${s.authorProfileId} → Profile #${s.subject || 'N/A'}`);
+    lines.push(`${statusIcon} ${pc.bold('#' + s.id)} Author: ${s.authorProfileId} → Subject: ${s.subject || 'Unknown'}`);
     const commentPreview = s.comment ? (s.comment.slice(0, 40) + (s.comment.length > 40 ? '...' : '')) : 'No reason';
     lines.push(`   ${pc.dim('Amount:')} ${s.amount} ${pc.dim('|')} ${commentPreview}`);
     lines.push('');
@@ -331,11 +319,15 @@ export function formatBrokerPosts(posts: BrokerPost[], total: number): string {
 }
 
 export function formatListing(project: Project): string {
+  const name = project.user?.displayName || 'Unknown';
+  const username = project.user?.username;
+  
   const lines = [
-    pc.bold(pc.cyan(`${project.name}`)),
-    project.username ? pc.dim(`@${project.username}`) : '',
+    pc.bold(pc.cyan(name)),
+    username ? pc.dim(`@${username}`) : '',
     '',
     `${pc.dim('Status:')} ${project.status === 'ACTIVE' ? pc.green('ACTIVE') : pc.yellow(project.status)}`,
+    `${pc.dim('Score:')} ${pc.green(String(project.user?.score || 0))}`,
   ];
 
   if (project.description) {
@@ -360,8 +352,9 @@ export function formatListing(project: Project): string {
     lines.push(`${pc.dim('Chains:')} ${project.chains.map((c) => c.name).join(', ')}`);
   }
 
-  if (project.websiteUrl) lines.push(`${pc.dim('Website:')} ${project.websiteUrl}`);
-  if (project.twitterUrl) lines.push(`${pc.dim('Twitter:')} ${project.twitterUrl}`);
+  if (project.user?.links?.profile) {
+    lines.push(`${pc.dim('Profile:')} ${project.user.links.profile}`);
+  }
 
   return lines.filter(Boolean).join('\n');
 }
@@ -374,9 +367,12 @@ export function formatListings(projects: Project[], total: number): string {
   const lines = [pc.bold(`Listings (${total} total)`), ''];
 
   for (const p of projects) {
+    const name = p.user?.displayName || 'Unknown';
+    const username = p.user?.username || 'unknown';
+    const score = p.user?.score || 0;
     const bullish = p.votes?.bullish?.percentage || 0;
     const sentiment = bullish >= 60 ? pc.green('>>') : bullish <= 40 ? pc.red('<<') : pc.yellow('==');
-    lines.push(`${sentiment} ${pc.bold(p.name)} ${pc.dim('@' + p.username)}`);
+    lines.push(`${sentiment} ${pc.bold(name)} ${pc.dim('@' + username)} (Score: ${score})`);
     if (p.votes) {
       lines.push(`   ${pc.green(bullish + '% bullish')} | ${p.votes.all?.totalVoters || 0} voters`);
     }
@@ -386,24 +382,26 @@ export function formatListings(projects: Project[], total: number): string {
   return lines.join('\n');
 }
 
-export function formatListingVoters(voters: ProjectVoter[], totals: { bullish: number; bearish: number }): string {
+export function formatListingVoters(voters: ProjectVoter[], totals: ProjectVotersTotals): string {
   if (!voters.length) {
     return pc.yellow('No voters found.');
   }
 
   const lines = [
-    pc.bold(`Project Voters`),
-    `${pc.green('Bullish:')} ${totals.bullish}  ${pc.red('Bearish:')} ${totals.bearish}`,
+    pc.bold(`Project Voters (${totals.totalVoters} total)`),
+    `${pc.green('Bullish Voters:')} ${totals.totalBullishVoters} (${totals.totalBullishVotes} votes)`,
+    `${pc.red('Bearish Voters:')} ${totals.totalBearishVoters} (${totals.totalBearishVotes} votes)`,
     '',
   ];
 
   for (const v of voters) {
-    const name = v.username ? `@${v.username}` : v.displayName || `Profile #${v.profileId}`;
-    const sentiment = v.bullishVotes > v.bearishVotes ? pc.green('>>') : pc.red('<<');
-    lines.push(`${sentiment} ${pc.bold(name)} (Score: ${v.score})`);
-    lines.push(`   Bullish: ${v.bullishVotes} | Bearish: ${v.bearishVotes}`);
-    if (v.voteReasons?.length) {
-      lines.push(`   ${pc.dim('Reasons:')} ${v.voteReasons.slice(0, 3).join(', ')}`);
+    const name = v.user?.username ? `@${v.user.username}` : v.user?.displayName || 'Unknown';
+    const sentiment = v.bullishCount > v.bearishCount ? pc.green('>>') : pc.red('<<');
+    lines.push(`${sentiment} ${pc.bold(name)} (Score: ${v.user?.score || 0})`);
+    lines.push(`   Bullish: ${v.bullishCount} | Bearish: ${v.bearishCount} | Total: ${v.totalVotes}`);
+    const reasons = [...(v.bullishReasons || []), ...(v.bearishReasons || [])];
+    if (reasons.length) {
+      lines.push(`   ${pc.dim('Reasons:')} ${reasons.slice(0, 3).join(', ')}`);
     }
     lines.push('');
   }

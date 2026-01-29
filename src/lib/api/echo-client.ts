@@ -170,27 +170,28 @@ export interface ProjectVotes {
 
 export interface Project {
   id: number;
-  name: string;
-  username: string;
-  description: string;
-  logoUrl?: string;
-  websiteUrl?: string;
-  twitterUrl?: string;
+  userkey: string;
   status: 'ACTIVE' | 'PENDING' | 'ARCHIVED';
-  categories: string[];
-  chains: ProjectChain[];
+  description: string;
+  bannerImageUrl?: string;
+  isPromoted?: boolean;
+  createdAt: string;
+  updatedAt: string;
+  user: EthosUser;
+  categories?: string[];
+  chains?: ProjectChain[];
   votes?: ProjectVotes;
 }
 
 export interface ProjectVoter {
-  profileId: number;
-  username?: string;
-  displayName?: string;
-  avatarUrl?: string;
-  score: number;
-  bullishVotes: number;
-  bearishVotes: number;
-  voteReasons: string[];
+  user: EthosUser;
+  bullishCount: number;
+  bearishCount: number;
+  totalVotes: number;
+  firstVoteAt: string;
+  lastVoteAt: string;
+  bullishReasons: string[];
+  bearishReasons: string[];
 }
 
 export interface ProjectListResponse {
@@ -198,10 +199,20 @@ export interface ProjectListResponse {
   total: number;
 }
 
+export interface ProjectVotersTotals {
+  totalVoters: number;
+  totalBullishVoters: number;
+  totalBearishVoters: number;
+  totalBullishVotes: number;
+  totalBearishVotes: number;
+}
+
 export interface ProjectVotersResponse {
   values: ProjectVoter[];
   total: number;
-  totals: { bullish: number; bearish: number };
+  limit: number;
+  offset: number;
+  totals: ProjectVotersTotals;
 }
 
 export class EchoClient {
@@ -442,7 +453,7 @@ export class EchoClient {
 
   async getProjects(params: { status?: string[]; limit?: number; offset?: number } = {}): Promise<ProjectListResponse> {
     const query = new URLSearchParams();
-    if (params.status) params.status.forEach(s => query.append('status', s));
+    if (params.status) params.status.forEach(s => query.append('status[]', s));
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
     return this.request<ProjectListResponse>(`/api/v2/projects${query.toString() ? '?' + query.toString() : ''}`, 'Projects');

@@ -211,6 +211,9 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 <!-- toc -->
 * [@ethos/cli](#ethoscli)
 * [or](#or)
+* [Bash](#bash)
+* [Zsh](#zsh)
+* [Fish](#fish)
 <!-- tocstop -->
 <!-- usage -->
 ```sh-session
@@ -226,12 +229,111 @@ USAGE
 ```
 <!-- usagestop -->
 <!-- commands -->
+* [`ethos autocomplete [SHELL]`](#ethos-autocomplete-shell)
+* [`ethos broker info ID`](#ethos-broker-info-id)
+* [`ethos broker list`](#ethos-broker-list)
 * [`ethos help [COMMAND]`](#ethos-help-command)
+* [`ethos listing info IDENTIFIER`](#ethos-listing-info-identifier)
+* [`ethos listing list`](#ethos-listing-list)
+* [`ethos listing voters PROJECTID`](#ethos-listing-voters-projectid)
+* [`ethos slash info ID`](#ethos-slash-info-id)
+* [`ethos slash list`](#ethos-slash-list)
 * [`ethos user activity IDENTIFIER`](#ethos-user-activity-identifier)
 * [`ethos user info IDENTIFIER`](#ethos-user-info-identifier)
 * [`ethos user search QUERY`](#ethos-user-search-query)
 * [`ethos xp rank IDENTIFIER`](#ethos-xp-rank-identifier)
 * [`ethos xp seasons`](#ethos-xp-seasons)
+
+## `ethos autocomplete [SHELL]`
+
+Display autocomplete installation instructions.
+
+```
+USAGE
+  $ ethos autocomplete [SHELL] [-r]
+
+ARGUMENTS
+  [SHELL]  (zsh|bash|powershell) Shell type
+
+FLAGS
+  -r, --refresh-cache  Refresh cache (ignores displaying instructions)
+
+DESCRIPTION
+  Display autocomplete installation instructions.
+
+EXAMPLES
+  $ ethos autocomplete
+
+  $ ethos autocomplete bash
+
+  $ ethos autocomplete zsh
+
+  $ ethos autocomplete powershell
+
+  $ ethos autocomplete --refresh-cache
+```
+
+_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v3.2.40/src/commands/autocomplete/index.ts)_
+
+## `ethos broker info ID`
+
+Get details of a specific broker post
+
+```
+USAGE
+  $ ethos broker info ID [-j] [-v]
+
+ARGUMENTS
+  ID  Broker post ID
+
+FLAGS
+  -j, --json     Output as JSON
+  -v, --verbose  Show detailed error information
+
+DESCRIPTION
+  Get details of a specific broker post
+
+EXAMPLES
+  $ ethos broker info 123
+
+  $ ethos broker info 123 --json
+```
+
+_See code: [src/commands/broker/info.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/broker/info.ts)_
+
+## `ethos broker list`
+
+List broker posts (jobs, services, bounties)
+
+```
+USAGE
+  $ ethos broker list [-j] [-v] [-t sell|buy|hire|for-hire|bounty] [-s <value>] [--sort newest|top|hot] [-l
+    <value>]
+
+FLAGS
+  -j, --json            Output as JSON
+  -l, --limit=<value>   [default: 10] Max results
+  -s, --search=<value>  Search in title/description
+  -t, --type=<option>   Filter by post type
+                        <options: sell|buy|hire|for-hire|bounty>
+  -v, --verbose         Show detailed error information
+      --sort=<option>   [default: hot] Sort order
+                        <options: newest|top|hot>
+
+DESCRIPTION
+  List broker posts (jobs, services, bounties)
+
+EXAMPLES
+  $ ethos broker list
+
+  $ ethos broker list --type hire
+
+  $ ethos broker list --search "solidity developer"
+
+  $ ethos broker list --type sell --limit 5 --json
+```
+
+_See code: [src/commands/broker/list.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/broker/list.ts)_
 
 ## `ethos help [COMMAND]`
 
@@ -253,13 +355,158 @@ DESCRIPTION
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.2.37/src/commands/help.ts)_
 
+## `ethos listing info IDENTIFIER`
+
+Get details of a specific listing/project
+
+```
+USAGE
+  $ ethos listing info IDENTIFIER [-j] [-v]
+
+ARGUMENTS
+  IDENTIFIER  Project ID or username
+
+FLAGS
+  -j, --json     Output as JSON
+  -v, --verbose  Show detailed error information
+
+DESCRIPTION
+  Get details of a specific listing/project
+
+EXAMPLES
+  $ ethos listing info 123
+
+  $ ethos listing info uniswap
+
+  $ ethos listing info uniswap --json
+```
+
+_See code: [src/commands/listing/info.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/listing/info.ts)_
+
+## `ethos listing list`
+
+List projects on Ethos Listings
+
+```
+USAGE
+  $ ethos listing list [-j] [-v] [--status active|pending|archived] [-l <value>]
+
+FLAGS
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Max results
+  -v, --verbose          Show detailed error information
+      --status=<option>  [default: active] Filter by status
+                         <options: active|pending|archived>
+
+DESCRIPTION
+  List projects on Ethos Listings
+
+EXAMPLES
+  $ ethos listing list
+
+  $ ethos listing list --status active
+
+  $ ethos listing list --limit 20 --json
+```
+
+_See code: [src/commands/listing/list.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/listing/list.ts)_
+
+## `ethos listing voters PROJECTID`
+
+Show voters for a listing/project
+
+```
+USAGE
+  $ ethos listing voters PROJECTID [-j] [-v] [--sentiment bullish|bearish] [-l <value>]
+
+ARGUMENTS
+  PROJECTID  Project ID
+
+FLAGS
+  -j, --json                Output as JSON
+  -l, --limit=<value>       [default: 10] Max results
+  -v, --verbose             Show detailed error information
+      --sentiment=<option>  Filter by sentiment
+                            <options: bullish|bearish>
+
+DESCRIPTION
+  Show voters for a listing/project
+
+EXAMPLES
+  $ ethos listing voters 123
+
+  $ ethos listing voters 123 --sentiment bullish
+
+  $ ethos listing voters 123 --limit 20 --json
+```
+
+_See code: [src/commands/listing/voters.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/listing/voters.ts)_
+
+## `ethos slash info ID`
+
+Get details of a specific slash
+
+```
+USAGE
+  $ ethos slash info ID [-j] [-v]
+
+ARGUMENTS
+  ID  Slash ID
+
+FLAGS
+  -j, --json     Output as JSON
+  -v, --verbose  Show detailed error information
+
+DESCRIPTION
+  Get details of a specific slash
+
+EXAMPLES
+  $ ethos slash info 123
+
+  $ ethos slash info 123 --json
+```
+
+_See code: [src/commands/slash/info.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/slash/info.ts)_
+
+## `ethos slash list`
+
+List reputation slashes
+
+```
+USAGE
+  $ ethos slash list [-j] [-v] [--status open|closed] [--author <value>] [--subject <value>] [-l <value>]
+
+FLAGS
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Max results
+  -v, --verbose          Show detailed error information
+      --author=<value>   Filter by slasher userkey
+      --status=<option>  Filter by status
+                         <options: open|closed>
+      --subject=<value>  Filter by subject userkey
+
+DESCRIPTION
+  List reputation slashes
+
+EXAMPLES
+  $ ethos slash list
+
+  $ ethos slash list --status open
+
+  $ ethos slash list --subject twitter:0xNowater
+
+  $ ethos slash list --limit 5 --json
+```
+
+_See code: [src/commands/slash/list.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/slash/list.ts)_
+
 ## `ethos user activity IDENTIFIER`
 
 Show recent reviews and vouches for a user
 
 ```
 USAGE
-  $ ethos user activity IDENTIFIER [-j] [-l <value>] [-v]
+  $ ethos user activity IDENTIFIER [-j] [-l <value>] [-t vouch|review] [-v]
 
 ARGUMENTS
   IDENTIFIER  Twitter username, ETH address, or ENS name
@@ -267,6 +514,8 @@ ARGUMENTS
 FLAGS
   -j, --json           Output as JSON
   -l, --limit=<value>  [default: 10] Maximum number of activities
+  -t, --type=<option>  Filter by activity type
+                       <options: vouch|review>
   -v, --verbose        Show detailed error information
 
 DESCRIPTION
@@ -275,7 +524,9 @@ DESCRIPTION
 EXAMPLES
   $ ethos user activity 0xNowater
 
-  $ ethos user activity vitalik.eth --limit 5
+  $ ethos user activity 0xNowater --type vouch
+
+  $ ethos user activity 0xNowater --type review --limit 5
 
   $ ethos user activity 0xNowater --json
 ```
@@ -349,14 +600,15 @@ Show leaderboard rank for a user
 
 ```
 USAGE
-  $ ethos xp rank IDENTIFIER [-j] [-v]
+  $ ethos xp rank IDENTIFIER [-j] [-s <value>] [-v]
 
 ARGUMENTS
   IDENTIFIER  Twitter username, ETH address, or ENS name
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json            Output as JSON
+  -s, --season=<value>  Show XP for specific season
+  -v, --verbose         Show detailed error information
 
 DESCRIPTION
   Show leaderboard rank for a user
@@ -364,7 +616,7 @@ DESCRIPTION
 EXAMPLES
   $ ethos xp rank 0xNowater
 
-  $ ethos xp rank 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
+  $ ethos xp rank 0xNowater --season 2
 
   $ ethos xp rank 0xNowater --json
 ```
