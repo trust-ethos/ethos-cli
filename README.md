@@ -28,6 +28,18 @@ brew install ethos
 curl -fsSL https://ethos.network/install | bash
 ```
 
+### From Source
+
+```bash
+git clone https://github.com/ethos-network/ethos-cli.git
+cd ethos-cli
+bun install
+bun run build
+npm link
+```
+
+To unlink: `npm unlink -g @ethos/cli`
+
 ## Usage
 
 ### User Commands
