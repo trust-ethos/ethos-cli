@@ -1,0 +1,21 @@
+*-debug.log
+*-error.log
+**/.DS_Store
+/.idea
+/dist
+/tmp
+/node_modules
+oclif.manifest.json
+
+# Environment
+.env
+.env.local
+
+# Package managers
+yarn.lock
+pnpm-lock.yaml
+
+# Build artifacts
+*.tgz
+coverage/
+
