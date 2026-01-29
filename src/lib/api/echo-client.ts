@@ -1,5 +1,6 @@
 import { APIError, NetworkError, NotFoundError } from '../errors/cli-error.js';
 import { parseIdentifier, type ParsedIdentifier } from '../validation/userkey.js';
+import { loadConfig } from '../config/index.js';
 
 const API_URLS = {
   dev: 'https://api.dev.ethos.network',
@@ -88,8 +89,12 @@ export class EchoClient {
   private debug: boolean;
 
   constructor(env?: Environment) {
-    const environment = env || (process.env.ETHOS_ENV as Environment) || 'prod';
-    this.baseUrl = process.env.ETHOS_API_URL || API_URLS[environment];
+    const config = loadConfig();
+    const environment = env || 
+      (process.env.ETHOS_ENV as Environment) || 
+      config.environment || 
+      'prod';
+    this.baseUrl = process.env.ETHOS_API_URL || config.apiUrl || API_URLS[environment];
     this.debug = process.env.ETHOS_DEBUG === 'true' || process.env.DEBUG === 'ethos:*';
   }
 
@@ -237,6 +242,13 @@ export class EchoClient {
 
   async getLeaderboardRank(userkey: string): Promise<number> {
     return this.request<number>(`/api/v2/xp/user/${encodeURIComponent(userkey)}/leaderboard-rank`, 'Leaderboard Rank');
+  }
+
+  async getXpBySeason(userkey: string, seasonId: number): Promise<number> {
+    return this.request<number>(
+      `/api/v2/xp/user/${encodeURIComponent(userkey)}/season/${seasonId}`,
+      'XP for Season'
+    );
   }
 
   async getActivities(userkey: string, types: ActivityType[] = ['review', 'vouch'], limit = 10): Promise<Activity[]> {

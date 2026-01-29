@@ -15,7 +15,8 @@ export default class UserActivity extends Command {
 
   static examples = [
     '<%= config.bin %> <%= command.id %> 0xNowater',
-    '<%= config.bin %> <%= command.id %> vitalik.eth --limit 5',
+    '<%= config.bin %> <%= command.id %> 0xNowater --type vouch',
+    '<%= config.bin %> <%= command.id %> 0xNowater --type review --limit 5',
     '<%= config.bin %> <%= command.id %> 0xNowater --json',
   ];
 
@@ -29,6 +30,11 @@ export default class UserActivity extends Command {
       char: 'l',
       description: 'Maximum number of activities',
       default: 10,
+    }),
+    type: Flags.string({
+      char: 't',
+      description: 'Filter by activity type',
+      options: ['vouch', 'review'],
     }),
     verbose: Flags.boolean({
       char: 'v',
@@ -46,15 +52,19 @@ export default class UserActivity extends Command {
 
     const client = new EchoClient();
 
-     try {
-       const user = await client.resolveUser(args.identifier);
-       const userkey = client.getPrimaryUserkey(user);
-       
-       if (!userkey) {
-         throw new Error('User has no valid userkey for activity lookup');
-       }
+       try {
+        const user = await client.resolveUser(args.identifier);
+        const userkey = client.getPrimaryUserkey(user);
+        
+        if (!userkey) {
+          throw new Error('User has no valid userkey for activity lookup');
+        }
 
-       const activities = await client.getActivities(userkey, ['review', 'vouch'], flags.limit);
+        const types: Array<'review' | 'vouch'> = flags.type 
+          ? [flags.type as 'review' | 'vouch'] 
+          : ['review', 'vouch'];
+
+        const activities = await client.getActivities(userkey, types, flags.limit);
 
         if (flags.json) {
           this.log(output({ user: user.username || user.displayName, activities }));

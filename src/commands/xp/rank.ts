@@ -15,7 +15,7 @@ export default class XpRank extends Command {
 
   static examples = [
     '<%= config.bin %> <%= command.id %> 0xNowater',
-    '<%= config.bin %> <%= command.id %> 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+    '<%= config.bin %> <%= command.id %> 0xNowater --season 2',
     '<%= config.bin %> <%= command.id %> 0xNowater --json',
   ];
 
@@ -24,6 +24,10 @@ export default class XpRank extends Command {
       char: 'j',
       description: 'Output as JSON',
       default: false,
+    }),
+    season: Flags.integer({
+      char: 's',
+      description: 'Show XP for specific season',
     }),
     verbose: Flags.boolean({
       char: 'v',
@@ -36,27 +40,42 @@ export default class XpRank extends Command {
     const { args, flags } = await this.parse(XpRank);
     const client = new EchoClient();
 
-     try {
-       const user = await client.resolveUser(args.identifier);
-       const userkey = client.getPrimaryUserkey(user);
-       
-       if (!userkey) {
-         throw new Error('User has no valid userkey for XP lookup');
+      try {
+        const user = await client.resolveUser(args.identifier);
+        const userkey = client.getPrimaryUserkey(user);
+        
+        if (!userkey) {
+          throw new Error('User has no valid userkey for XP lookup');
+        }
+
+        const rankIndex = await client.getLeaderboardRank(userkey);
+        const rank = rankIndex + 1;
+
+        let seasonXp: number | undefined;
+        if (flags.season) {
+          seasonXp = await client.getXpBySeason(userkey, flags.season);
+        }
+
+         if (flags.json) {
+           const output_data: any = { rank, user: user.username || user.displayName, userkey };
+           if (seasonXp !== undefined) {
+             output_data.seasonXp = seasonXp;
+             output_data.season = flags.season;
+           }
+           this.log(output(output_data));
+         } else {
+           const formatData: any = { rank, userkey, username: user.username || user.displayName };
+           if (seasonXp !== undefined) {
+             formatData.seasonXp = seasonXp;
+             formatData.season = flags.season;
+           }
+           this.log(formatRank(formatData));
+         }
+       } catch (error) {
+         if (error instanceof Error) {
+           this.log(formatError(error, flags.verbose));
+           this.exit(1);
+         }
        }
-
-       const rankIndex = await client.getLeaderboardRank(userkey);
-       const rank = rankIndex + 1;
-
-        if (flags.json) {
-          this.log(output({ rank, user: user.username || user.displayName, userkey }));
-        } else {
-          this.log(formatRank({ rank, userkey, username: user.username || user.displayName }));
-        }
-      } catch (error) {
-        if (error instanceof Error) {
-          this.log(formatError(error, flags.verbose));
-          this.exit(1);
-        }
-      }
   }
 }

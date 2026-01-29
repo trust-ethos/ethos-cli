@@ -98,7 +98,7 @@ export function formatSeasons(seasons: Season[], currentSeason?: Season): string
   return lines.join('\n');
 }
 
-export function formatRank(data: { rank: number; totalXp?: number; userkey?: string; username?: string }): string {
+export function formatRank(data: { rank: number; totalXp?: number; userkey?: string; username?: string; seasonXp?: number; season?: number }): string {
   const lines = [
     pc.bold(pc.cyan('Leaderboard Rank')),
     '',
@@ -107,6 +107,10 @@ export function formatRank(data: { rank: number; totalXp?: number; userkey?: str
 
   if (data.totalXp !== undefined) {
     lines.push(`${pc.dim('Total XP:')} ${pc.green(data.totalXp.toLocaleString())}`);
+  }
+
+  if (data.seasonXp !== undefined && data.season !== undefined) {
+    lines.push(`${pc.dim(`Season ${data.season} XP:`)} ${pc.green(data.seasonXp.toLocaleString())}`);
   }
 
   if (data.username) {

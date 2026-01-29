@@ -60,6 +60,60 @@ ethos user info vitalik.eth --json | jq .username
 ethos user info address:0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045 --json
 ```
 
+#### `ethos user activity <identifier>`
+
+Show recent reviews and vouches for a user.
+
+**Arguments:**
+- `identifier` - Username, Ethereum address, or ENS name
+
+**Flags:**
+- `-j, --json` - Output as JSON
+- `-l, --limit <number>` - Maximum number of activities (default: 10)
+- `-t, --type <type>` - Filter by activity type: `vouch` or `review`
+- `-v, --verbose` - Show detailed error information
+
+**Exit Codes:**
+- `0` - Activities retrieved
+- `1` - User not found or API error
+- `2` - Invalid arguments
+
+**JSON Output Schema:**
+```json
+{
+  "user": "vitalik.eth",
+  "activities": [
+    {
+      "type": "vouch",
+      "timestamp": 1704067200,
+      "author": {
+        "username": "0xNowater",
+        "score": 1500
+      },
+      "subject": {
+        "username": "vitalik.eth",
+        "score": 2000
+      }
+    }
+  ]
+}
+```
+
+**Example Usage:**
+```bash
+# Show all activities (reviews and vouches)
+ethos user activity 0xNowater
+
+# Filter by vouch only
+ethos user activity 0xNowater --type vouch
+
+# Filter by review with custom limit
+ethos user activity 0xNowater --type review --limit 5
+
+# JSON output
+ethos user activity 0xNowater --json | jq '.activities[].type'
+```
+
 #### `ethos user search <query>`
 
 Search for users by name, username, or partial address.
