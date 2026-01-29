@@ -241,10 +241,12 @@ export interface MarketHolder {
   percentage: number;
 }
 
+export type MarketOrderBy = 'marketCapWei' | 'volumeTotalWei' | 'volume24hWei' | 'trustRatio' | 'distrustRatio' | 'score' | 'createdAt' | 'priceChange24hPercent' | 'marketCapChange24hPercent' | 'scoreDifferential';
+
 export interface MarketListParams {
   limit?: number;
   offset?: number;
-  orderBy?: 'marketCap' | 'price' | 'priceChange24hPercent' | 'volume24h';
+  orderBy?: MarketOrderBy;
   orderDirection?: 'asc' | 'desc';
   filterQuery?: string;
 }
