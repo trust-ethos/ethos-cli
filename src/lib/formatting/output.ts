@@ -1,5 +1,5 @@
 import pc from 'picocolors';
-import type { Activity, Auction, BrokerPost, EthosUser, FeaturedMarketsResponse, Market, MarketHolder, Project, ProjectVoter, ProjectVotersTotals, ScoreLevel, ScoreResponse, ScoreStatus, Season, Slash, Validator, Vote, VoteStats, Vouch, VouchUser } from '../api/echo-client.js';
+import type { Activity, Auction, BrokerPost, EthosUser, FeaturedMarketsResponse, Market, MarketHolder, Project, ProjectVoter, ProjectVotersTotals, Review, ScoreLevel, ScoreResponse, ScoreStatus, Season, Slash, Validator, Vote, VoteStats, Vouch, VouchUser } from '../api/echo-client.js';
 
 export function output<T>(data: T): string {
   return JSON.stringify(data, null, 2);
@@ -254,6 +254,87 @@ export function formatSlashes(slashes: Slash[], total: number): string {
     lines.push(`${statusIcon} ${pc.bold('#' + s.id)} Author: ${s.authorProfileId} → Subject: ${s.subject || 'Unknown'}`);
     const commentPreview = s.comment ? (s.comment.slice(0, 40) + (s.comment.length > 40 ? '...' : '')) : 'No reason';
     lines.push(`   ${pc.dim('Amount:')} ${s.amount} ${pc.dim('|')} ${commentPreview}`);
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+const REVIEW_SCORE_COLORS: Record<string, (s: string) => string> = {
+  positive: pc.green,
+  neutral: pc.yellow,
+  negative: pc.red,
+};
+
+const REVIEW_SCORE_ICONS: Record<string, string> = {
+  positive: '👍',
+  neutral: '😐',
+  negative: '👎',
+};
+
+export function formatReview(review: Review): string {
+  const score = review.data.score;
+  const scoreColor = REVIEW_SCORE_COLORS[score] || pc.white;
+  const scoreIcon = REVIEW_SCORE_ICONS[score] || '📝';
+  
+  const authorName = review.author?.username ? `@${review.author.username}` : review.author?.name || `Profile #${review.data.authorProfileId}`;
+  const subjectName = review.subject?.username ? `@${review.subject.username}` : review.subject?.name || review.data.subject;
+  
+  const lines = [
+    pc.bold(`${scoreIcon} Review #${review.data.id}`),
+    scoreColor(score.toUpperCase()),
+    '',
+    `${pc.dim('From:')} ${authorName}`,
+    `${pc.dim('To:')} ${subjectName}`,
+    `${pc.dim('Score:')} ${scoreColor(score)}`,
+  ];
+
+  if (review.data.comment) {
+    lines.push('', pc.dim('Comment:'), review.data.comment);
+  }
+
+  lines.push('');
+  lines.push(`${pc.dim('Votes:')} 👍 ${review.votes?.upvotes || 0}  👎 ${review.votes?.downvotes || 0}`);
+  
+  if (review.replySummary?.count > 0) {
+    lines.push(`${pc.dim('Replies:')} ${review.replySummary.count}`);
+  }
+
+  lines.push(`${pc.dim('Created:')} ${new Date(review.data.createdAt * 1000).toLocaleString()}`);
+
+  if (review.link) {
+    lines.push('', `${pc.dim('Link:')} ${review.link}`);
+  }
+
+  return lines.join('\n');
+}
+
+export function formatReviews(activities: Activity[], total?: number): string {
+  const reviews = activities.filter(a => a.type === 'review');
+  
+  if (!reviews.length) {
+    return pc.yellow('No reviews found.');
+  }
+
+  const lines = [pc.bold(`Reviews${total !== undefined ? ` (${total} total)` : ''}`), ''];
+
+  for (const r of reviews) {
+    const score = r.data.score || 'neutral';
+    const scoreColor = REVIEW_SCORE_COLORS[score] || pc.white;
+    const scoreIcon = REVIEW_SCORE_ICONS[score] || '📝';
+    
+    const authorName = r.author?.username ? `@${r.author.username}` : r.author?.name || 'Unknown';
+    const subjectName = r.subject?.username ? `@${r.subject.username}` : r.subject?.name || 'Unknown';
+    const date = new Date(r.timestamp * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    lines.push(`${scoreIcon} ${pc.bold('#' + r.data.id)} ${authorName} → ${subjectName} ${scoreColor(`[${score.toUpperCase()}]`)}`);
+    
+    if (r.data.comment) {
+      const preview = r.data.comment.slice(0, 60) + (r.data.comment.length > 60 ? '...' : '');
+      lines.push(`   ${pc.dim(preview)}`);
+    }
+    
+    lines.push(`   ${pc.dim(date)}`);
     lines.push('');
   }
 

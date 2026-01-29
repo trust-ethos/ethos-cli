@@ -76,6 +76,29 @@ export interface Activity {
 
 export type ActivityType = 'review' | 'vouch';
 
+export interface Review {
+  type: 'review';
+  data: {
+    id: number;
+    authorProfileId: number;
+    author: string;
+    subject: string;
+    score: 'positive' | 'neutral' | 'negative';
+    comment: string;
+    metadata: string;
+    createdAt: number;
+    archived: boolean;
+  };
+  votes: { upvotes: number; downvotes: number };
+  replySummary: { count: number; participated: boolean };
+  timestamp: number;
+  author: ActivityAuthor;
+  subject: ActivityAuthor;
+  authorUser?: EthosUser;
+  subjectUser?: EthosUser;
+  link: string;
+}
+
 export interface Slash {
   id: number;
   authorProfileId: number;
@@ -902,5 +925,17 @@ export class EchoClient {
   async getValidatorByTokenId(tokenId: string): Promise<Validator | null> {
     const validators = await this.getValidators();
     return validators.find(v => v.tokenId === tokenId) || null;
+  }
+
+  async getReview(reviewId: number): Promise<Review> {
+    return this.request<Review>(`/api/v2/activities/review/${reviewId}`, 'Review');
+  }
+
+  async getReviewsForUser(userkey: string, params: { limit?: number; offset?: number } = {}): Promise<Activity[]> {
+    const query = new URLSearchParams({ userkey });
+    query.append('activityType', 'review');
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    return this.request<Activity[]>(`/api/v2/activities/userkey?${query}`, 'Reviews');
   }
 }
