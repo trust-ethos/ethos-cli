@@ -201,6 +201,7 @@ Get user's leaderboard rank.
 
 **Flags:**
 - `-j, --json` - Output as JSON
+- `-s, --season <number>` - Show XP for specific season
 
 **Exit Codes:**
 - `0` - Rank retrieved
@@ -211,7 +212,19 @@ Get user's leaderboard rank.
 ```json
 {
   "rank": 42,
-  "totalXp": 15000
+  "user": "vitalik.eth",
+  "userkey": "address:0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
+}
+```
+
+**With Season Flag:**
+```json
+{
+  "rank": 42,
+  "user": "vitalik.eth",
+  "userkey": "address:0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+  "seasonXp": 5000,
+  "season": 2
 }
 ```
 
@@ -220,8 +233,11 @@ Get user's leaderboard rank.
 # Get rank
 ethos xp rank vitalik.eth --json | jq .rank
 
-# Get both rank and XP
-ethos xp rank vitalik.eth --json | jq '{rank, totalXp}'
+# Get rank for specific season
+ethos xp rank vitalik.eth --season 2 --json | jq .seasonXp
+
+# Get both rank and season XP
+ethos xp rank vitalik.eth --season 2 --json | jq '{rank, seasonXp}'
 ```
 
 ## User Key Formats
