@@ -46,7 +46,7 @@ export default class UserSearch extends Command {
       const response = await client.searchUsers(args.query, flags.limit);
 
       if (flags.json) {
-        this.log(output(response, flags));
+        this.log(output(response));
       } else {
         this.log(formatSearchResults(response.values));
       }

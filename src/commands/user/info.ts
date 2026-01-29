@@ -41,7 +41,7 @@ export default class UserInfo extends Command {
       const user = await client.resolveUser(args.identifier);
 
       if (flags.json) {
-        this.log(output(user, flags));
+        this.log(output(user));
       } else {
         this.log(formatUser(user));
       }

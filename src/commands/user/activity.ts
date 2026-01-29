@@ -41,27 +41,27 @@ export default class UserActivity extends Command {
     const { args, flags } = await this.parse(UserActivity);
     const client = new EchoClient();
 
-    try {
-      const user = await client.resolveUser(args.identifier);
-      const userkey = client.getPrimaryUserkey(user);
-      
-      if (!userkey) {
-        this.error('User has no valid userkey for activity lookup', { exit: 1 });
-      }
+     try {
+       const user = await client.resolveUser(args.identifier);
+       const userkey = client.getPrimaryUserkey(user);
+       
+       if (!userkey) {
+         throw new Error('User has no valid userkey for activity lookup');
+       }
 
-      const activities = await client.getActivities(userkey, ['review', 'vouch'], flags.limit);
+       const activities = await client.getActivities(userkey, ['review', 'vouch'], flags.limit);
 
-      if (flags.json) {
-        this.log(output({ user: user.username || user.displayName, activities }, flags));
-      } else {
-        this.log(formatActivities(activities, user.username || user.displayName));
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
-      throw error;
-    }
+        if (flags.json) {
+          this.log(output({ user: user.username || user.displayName, activities }));
+        } else {
+          this.log(formatActivities(activities, user.username || user.displayName));
+        }
+     } catch (error) {
+       if (error instanceof Error) {
+         this.log(formatError(error, flags.verbose));
+         this.exit(1);
+       }
+       throw error;
+     }
   }
 }

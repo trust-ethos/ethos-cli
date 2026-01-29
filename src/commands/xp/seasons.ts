@@ -31,11 +31,11 @@ export default class XpSeasons extends Command {
     try {
       const response = await client.getSeasons();
 
-      if (flags.json) {
-        this.log(output(response, flags));
-      } else {
-        this.log(formatSeasons(response.seasons, response.currentSeason));
-      }
+       if (flags.json) {
+         this.log(output(response));
+       } else {
+         this.log(formatSeasons(response.seasons, response.currentSeason));
+       }
     } catch (error) {
       if (error instanceof Error) {
         this.log(formatError(error, flags.verbose));

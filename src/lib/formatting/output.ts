@@ -1,7 +1,7 @@
 import pc from 'picocolors';
 import type { Activity, EthosUser, Season } from '../api/echo-client.js';
 
-export function output<T>(data: T, _flags: { json?: boolean }): string {
+export function output<T>(data: T): string {
   return JSON.stringify(data, null, 2);
 }
 
