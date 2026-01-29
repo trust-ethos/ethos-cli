@@ -44,7 +44,8 @@ export default class XpRank extends Command {
         this.error('User has no valid userkey for XP lookup', { exit: 1 });
       }
 
-      const rank = await client.getLeaderboardRank(userkey);
+      const rankIndex = await client.getLeaderboardRank(userkey);
+      const rank = rankIndex + 1;
 
       if (flags.json) {
         this.log(output({ rank, user: user.username || user.displayName, userkey }, flags));
