@@ -41,8 +41,13 @@ export default class VouchList extends Command {
     }),
     limit: Flags.integer({
       char: 'l',
-      description: 'Max results',
+      description: 'Max results per request',
       default: 10,
+    }),
+    offset: Flags.integer({
+      char: 'o',
+      description: 'Number of results to skip',
+      default: 0,
     }),
   };
 
@@ -51,8 +56,9 @@ export default class VouchList extends Command {
     const client = new EchoClient();
 
     try {
-      const params: { subjectUserkeys?: string[]; authorProfileIds?: number[]; archived?: boolean; limit?: number } = {
+      const params: { subjectUserkeys?: string[]; authorProfileIds?: number[]; archived?: boolean; limit?: number; offset?: number } = {
         limit: flags.limit,
+        offset: flags.offset,
       };
 
       if (flags.active) {

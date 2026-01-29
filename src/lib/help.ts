@@ -17,3 +17,4 @@ export default class EthosHelp extends Help {
     await super.showRootHelp();
   }
 }
+

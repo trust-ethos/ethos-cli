@@ -24,10 +24,13 @@ export default class NftValidators extends Command {
     }),
     limit: Flags.integer({
       char: 'l',
-      description: 'Max results',
+      description: 'Max results per request',
       default: 10,
-      min: 1,
-      max: 100,
+    }),
+    offset: Flags.integer({
+      char: 'o',
+      description: 'Number of results to skip',
+      default: 0,
     }),
   };
 
@@ -36,7 +39,7 @@ export default class NftValidators extends Command {
     const client = new EchoClient();
 
     try {
-      const response = await client.getValidatorListings({ limit: flags.limit });
+      const response = await client.getValidatorListings({ limit: flags.limit, offset: flags.offset });
 
       if (flags.json) {
         this.log(output(response));

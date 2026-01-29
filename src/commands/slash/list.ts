@@ -22,7 +22,8 @@ export default class SlashList extends Command {
     }),
     author: Flags.string({ description: 'Filter by slasher userkey' }),
     subject: Flags.string({ description: 'Filter by subject userkey' }),
-    limit: Flags.integer({ char: 'l', description: 'Max results', default: 10, min: 1, max: 100 }),
+    limit: Flags.integer({ char: 'l', description: 'Max results per request', default: 10 }),
+    offset: Flags.integer({ char: 'o', description: 'Number of results to skip', default: 0 }),
   };
 
   async run(): Promise<void> {
@@ -35,6 +36,7 @@ export default class SlashList extends Command {
         subject: flags.subject,
         status: flags.status as any,
         limit: flags.limit,
+        offset: flags.offset,
       });
 
       if (flags.json) {

@@ -46,8 +46,13 @@ export default class VoteList extends Command {
     }),
     limit: Flags.integer({
       char: 'l',
-      description: 'Max results',
+      description: 'Max results per request',
       default: 10,
+    }),
+    offset: Flags.integer({
+      char: 'o',
+      description: 'Number of results to skip',
+      default: 0,
     }),
   };
 
@@ -56,8 +61,9 @@ export default class VoteList extends Command {
     const client = new EchoClient();
 
     try {
-      const params: { isUpvote?: boolean; limit?: number } = {
+      const params: { isUpvote?: boolean; limit?: number; offset?: number } = {
         limit: flags.limit,
+        offset: flags.offset,
       };
 
       if (flags.upvotes) params.isUpvote = true;

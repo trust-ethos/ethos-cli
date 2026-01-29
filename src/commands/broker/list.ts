@@ -35,7 +35,8 @@ export default class BrokerList extends Command {
       options: ['newest', 'top', 'hot'],
       default: 'hot',
     }),
-    limit: Flags.integer({ char: 'l', description: 'Max results', default: 10, min: 1, max: 100 }),
+    limit: Flags.integer({ char: 'l', description: 'Max results per request', default: 10 }),
+    offset: Flags.integer({ char: 'o', description: 'Number of results to skip', default: 0 }),
   };
 
   async run(): Promise<void> {
@@ -48,6 +49,7 @@ export default class BrokerList extends Command {
         search: flags.search,
         sortBy: flags.sort as BrokerSortBy,
         limit: flags.limit,
+        offset: flags.offset,
       });
 
       if (flags.json) {

@@ -26,7 +26,8 @@ export default class MarketList extends Command {
       default: 'desc',
     }),
     search: Flags.string({ char: 's', description: 'Search by name/username' }),
-    limit: Flags.integer({ char: 'l', description: 'Max results', default: 10, min: 1, max: 100 }),
+    limit: Flags.integer({ char: 'l', description: 'Max results per request', default: 10 }),
+    offset: Flags.integer({ char: 'o', description: 'Number of results to skip', default: 0 }),
   };
 
   async run(): Promise<void> {
@@ -39,6 +40,7 @@ export default class MarketList extends Command {
         orderDirection: flags.order as 'asc' | 'desc',
         filterQuery: flags.search,
         limit: flags.limit,
+        offset: flags.offset,
       });
 
       if (flags.json) {

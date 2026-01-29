@@ -672,12 +672,13 @@ export class EchoClient {
      return this.getXpTotal(userkey);
    }
 
-   async getSlashes(params: { author?: string; subject?: string; status?: 'open' | 'closed'; limit?: number } = {}): Promise<SlashesResponse> {
+   async getSlashes(params: { author?: string; subject?: string; status?: 'open' | 'closed'; limit?: number; offset?: number } = {}): Promise<SlashesResponse> {
      const query = new URLSearchParams();
      if (params.author) query.set('author', params.author);
      if (params.subject) query.set('subject', params.subject);
      if (params.status) query.set('status', params.status);
      if (params.limit) query.set('limit', String(params.limit));
+     if (params.offset) query.set('offset', String(params.offset));
      const path = `/api/v1/slashes${query.toString() ? '?' + query.toString() : ''}`;
      return this.request<SlashesResponse>(path, 'Slashes');
    }
@@ -728,9 +729,10 @@ export class EchoClient {
     return this.request<Project>(`/api/v2/projects/username/${encodeURIComponent(username)}`, 'Project');
   }
 
-  async getProjectVoters(projectId: number, params: { limit?: number; sentiment?: 'bullish' | 'bearish' } = {}): Promise<ProjectVotersResponse> {
+  async getProjectVoters(projectId: number, params: { limit?: number; offset?: number; sentiment?: 'bullish' | 'bearish' } = {}): Promise<ProjectVotersResponse> {
     const query = new URLSearchParams();
     if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
     if (params.sentiment) query.set('sentiment', params.sentiment);
     return this.request<ProjectVotersResponse>(`/api/v2/projects/${projectId}/voters${query.toString() ? '?' + query.toString() : ''}`, 'Voters');
   }
@@ -739,9 +741,10 @@ export class EchoClient {
      return this.request<EthosUser[]>(`/api/v2/projects/${projectId}/team`, 'Team');
    }
 
-   async getNftsForUser(userkey: string, params: { limit?: number } = {}): Promise<NftsResponse> {
+   async getNftsForUser(userkey: string, params: { limit?: number; offset?: number } = {}): Promise<NftsResponse> {
      const query = new URLSearchParams();
      if (params.limit) query.set('limit', String(params.limit));
+     if (params.offset) query.set('offset', String(params.offset));
      const path = `/api/v2/nfts/user/${encodeURIComponent(userkey)}${query.toString() ? '?' + query.toString() : ''}`;
      return this.request<NftsResponse>(path, 'User NFTs');
    }
@@ -750,16 +753,18 @@ export class EchoClient {
      return this.request<NFT[]>(`/api/v2/nfts/user/${encodeURIComponent(userkey)}/owns-validator`, 'Validator Check');
    }
 
-    async getValidatorListings(params: { limit?: number } = {}): Promise<ValidatorListingsResponse> {
+    async getValidatorListings(params: { limit?: number; offset?: number } = {}): Promise<ValidatorListingsResponse> {
       const query = new URLSearchParams();
       if (params.limit) query.set('limit', String(params.limit));
+      if (params.offset) query.set('offset', String(params.offset));
       const path = `/api/v2/nfts/validators/listings${query.toString() ? '?' + query.toString() : ''}`;
       return this.request<ValidatorListingsResponse>(path, 'Validator Listings');
     }
 
-    async getAuctions(params: { limit?: number; status?: string } = {}): Promise<AuctionsResponse> {
+    async getAuctions(params: { limit?: number; offset?: number; status?: string } = {}): Promise<AuctionsResponse> {
       const query = new URLSearchParams();
       if (params.limit) query.set('limit', String(params.limit));
+      if (params.offset) query.set('offset', String(params.offset));
       if (params.status) query.set('status', params.status);
       const path = `/api/v2/auctions${query.toString() ? '?' + query.toString() : ''}`;
       return this.request<AuctionsResponse>(path, 'Auctions');
@@ -852,12 +857,13 @@ export class EchoClient {
     return this.request<{ values: VouchUser[]; total: number }>(`/api/v1/vouches/mutual-vouchers?${query}`, 'Mutual Vouchers');
   }
 
-  async getVotes(activityId: number, type: VoteType, params: { isUpvote?: boolean; limit?: number } = {}): Promise<VotesResponse> {
+  async getVotes(activityId: number, type: VoteType, params: { isUpvote?: boolean; limit?: number; offset?: number } = {}): Promise<VotesResponse> {
     const query = new URLSearchParams();
     query.set('activityId', String(activityId));
     query.set('type', type);
     if (params.isUpvote !== undefined) query.set('isUpvote', String(params.isUpvote));
     if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
     return this.request<VotesResponse>(`/api/v1/votes?${query}`, 'Votes');
   }
 
