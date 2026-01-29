@@ -506,30 +506,42 @@ export function formatAuctions(auctions: Auction[], total: number): string {
    return lines.join('\n');
 }
 
+function formatWeiToEth(wei: string): string {
+  const eth = Number(BigInt(wei)) / 1e18;
+  if (eth >= 1) return eth.toFixed(4);
+  if (eth >= 0.001) return eth.toFixed(6);
+  return eth.toExponential(4);
+}
+
 export function formatMarket(market: Market): string {
-  const name = market.displayName || market.username || 'Unknown';
-  const priceChange = market.priceChange24hPercent || 0;
+  const name = market.user?.displayName || market.user?.username || 'Unknown';
+  const priceChange = market.stats?.priceChange24hPercent || 0;
   const priceChangeColor = priceChange >= 0 ? pc.green : pc.red;
+  const positivePrice = formatWeiToEth(market.positivePrice);
+  const marketCap = formatWeiToEth(market.stats?.marketCapWei || '0');
+  const totalHolders = market.trustVotes + market.distrustVotes;
 
   const lines = [
     pc.bold(pc.cyan(name)),
+    market.user?.username ? pc.dim(`@${market.user.username}`) : '',
     '',
-    `${pc.dim('Price:')} ${market.price} ETH ${priceChangeColor(`(${priceChange >= 0 ? '+' : ''}${priceChange}%)`)}`,
-    `${pc.dim('Market Cap:')} ${market.marketCap} ETH`,
-    `${pc.dim('Holders:')} ${market.holdersCount}`,
+    `${pc.dim('Trust Price:')} ${positivePrice} ETH ${priceChangeColor(`(${priceChange >= 0 ? '+' : ''}${priceChange.toFixed(1)}%)`)}`,
+    `${pc.dim('Market Cap:')} ${marketCap} ETH`,
+    `${pc.dim('Score:')} ${pc.green(String(market.user?.score || 0))}`,
+    `${pc.dim('Trust/Distrust:')} ${pc.green(String(market.trustVotes))} / ${pc.red(String(market.distrustVotes))}`,
   ];
 
-  if (market.volume24h) {
-    lines.push(`${pc.dim('24h Volume:')} ${market.volume24h} ETH`);
+  if (market.stats?.volume24hWei) {
+    lines.push(`${pc.dim('24h Volume:')} ${formatWeiToEth(market.stats.volume24hWei)} ETH`);
   }
 
-  if (market.marketCapChange24hPercent !== undefined) {
-    const mcChange = market.marketCapChange24hPercent;
+  if (market.stats?.marketCapChange24hPercent !== undefined) {
+    const mcChange = market.stats.marketCapChange24hPercent;
     const mcChangeColor = mcChange >= 0 ? pc.green : pc.red;
-    lines.push(`${pc.dim('Market Cap Change (24h):')} ${mcChangeColor(`${mcChange >= 0 ? '+' : ''}${mcChange}%`)}`);
+    lines.push(`${pc.dim('Market Cap 24h:')} ${mcChangeColor(`${mcChange >= 0 ? '+' : ''}${mcChange.toFixed(1)}%`)}`);
   }
 
-  return lines.join('\n');
+  return lines.filter(Boolean).join('\n');
 }
 
 export function formatMarkets(markets: Market[], total: number): string {
@@ -537,19 +549,18 @@ export function formatMarkets(markets: Market[], total: number): string {
     return pc.yellow('No markets found.');
   }
 
-  const lines = [pc.bold(`📊 Markets (${total} total)`), ''];
+  const lines = [pc.bold(`Trust Markets (${total} total)`), ''];
 
   for (const m of markets) {
-    const name = m.displayName || m.username || 'Unknown';
-    const priceChange = m.priceChange24hPercent || 0;
+    const name = m.user?.displayName || m.user?.username || 'Unknown';
+    const priceChange = m.stats?.priceChange24hPercent || 0;
     const priceChangeColor = priceChange >= 0 ? pc.green : pc.red;
-    lines.push(`📊 ${pc.bold(name)}`);
-    lines.push(`   ${pc.dim('Price:')} ${m.price} ETH ${priceChangeColor(`(${priceChange >= 0 ? '+' : ''}${priceChange}%)`)}`);
-    lines.push(`   ${pc.dim('Market Cap:')} ${m.marketCap} ETH`);
-    lines.push(`   ${pc.dim('Holders:')} ${m.holdersCount}`);
-    if (m.volume24h) {
-      lines.push(`   ${pc.dim('24h Volume:')} ${m.volume24h} ETH`);
-    }
+    const marketCap = formatWeiToEth(m.stats?.marketCapWei || '0');
+    const totalHolders = m.trustVotes + m.distrustVotes;
+    
+    lines.push(`${pc.bold(name)} ${m.user?.username ? pc.dim('@' + m.user.username) : ''}`);
+    lines.push(`   Cap: ${marketCap} ETH | ${priceChangeColor(`${priceChange >= 0 ? '+' : ''}${priceChange.toFixed(1)}%`)} | Score: ${m.user?.score || 0}`);
+    lines.push(`   Trust: ${pc.green(String(m.trustVotes))} | Distrust: ${pc.red(String(m.distrustVotes))}`);
     lines.push('');
   }
 
@@ -561,17 +572,16 @@ export function formatMarketHolders(holders: MarketHolder[], total: number): str
     return pc.yellow('No holders found.');
   }
 
-  const lines = [pc.bold(`👥 Market Holders (${total} total)`), ''];
+  const lines = [pc.bold(`Market Holders (${total} total)`), ''];
 
   for (const h of holders) {
-    const name = h.displayName || h.username || 'Unknown';
-    const netPosition = parseFloat(h.netPosition);
-    const netColor = netPosition >= 0 ? pc.green : pc.red;
-    lines.push(`👥 ${pc.bold(name)}`);
-    lines.push(`   ${pc.dim('Trust Balance:')} ${h.trustBalance}`);
-    lines.push(`   ${pc.dim('Distrust Balance:')} ${h.distrustBalance}`);
-    lines.push(`   ${pc.dim('Net Position:')} ${netColor(h.netPosition)}`);
-    lines.push(`   ${pc.dim('Percentage:')} ${h.percentage}%`);
+    const name = h.user?.displayName || h.user?.username || 'Unknown';
+    const voteColor = h.voteType === 'trust' ? pc.green : pc.red;
+    const voteIcon = h.voteType === 'trust' ? '📈' : '📉';
+    
+    lines.push(`${voteIcon} ${pc.bold(name)} ${h.user?.username ? pc.dim('@' + h.user.username) : ''}`);
+    lines.push(`   ${voteColor(h.voteType.toUpperCase())}: ${h.total} votes`);
+    lines.push(`   Score: ${h.user?.score || 0}`);
     lines.push('');
   }
 
@@ -579,27 +589,30 @@ export function formatMarketHolders(holders: MarketHolder[], total: number): str
 }
 
 export function formatFeaturedMarkets(response: FeaturedMarketsResponse): string {
-  const lines = [pc.bold(pc.cyan('Featured Markets')), ''];
-
-  if (response.topGainers && response.topGainers.length > 0) {
-    lines.push(pc.bold(pc.green('🚀 Top Gainers')));
-    for (const m of response.topGainers) {
-      const name = m.displayName || m.username || 'Unknown';
-      const priceChange = m.priceChange24hPercent || 0;
-      lines.push(`  ${pc.bold(name)} ${pc.green(`+${priceChange}%`)}`);
-      lines.push(`    Price: ${m.price} ETH | Market Cap: ${m.marketCap} ETH`);
-    }
-    lines.push('');
+  if (!response.length) {
+    return pc.yellow('No featured markets found.');
   }
 
-  if (response.topLosers && response.topLosers.length > 0) {
-    lines.push(pc.bold(pc.red('📉 Top Losers')));
-    for (const m of response.topLosers) {
-      const name = m.displayName || m.username || 'Unknown';
-      const priceChange = m.priceChange24hPercent || 0;
-      lines.push(`  ${pc.bold(name)} ${pc.red(`${priceChange}%`)}`);
-      lines.push(`    Price: ${m.price} ETH | Market Cap: ${m.marketCap} ETH`);
-    }
+  const lines = [pc.bold(pc.cyan('Featured Markets')), ''];
+
+  const typeLabels: Record<string, { label: string; icon: string; color: (s: string) => string }> = {
+    'top-volume': { label: 'Top Volume', icon: '📈', color: pc.green },
+    'undervalued': { label: 'Undervalued', icon: '💎', color: pc.blue },
+    'rugging': { label: 'Rugging', icon: '⚠️', color: pc.red },
+  };
+
+  for (const featured of response) {
+    const m = featured.market;
+    const typeInfo = typeLabels[featured.type] || { label: featured.type, icon: '📊', color: pc.white };
+    const name = m.user?.displayName || m.user?.username || 'Unknown';
+    const priceChange = m.stats?.priceChange24hPercent || 0;
+    const marketCap = formatWeiToEth(m.stats?.marketCapWei || '0');
+    const mcChange = m.stats?.marketCapChange24hPercent || 0;
+
+    lines.push(`${typeInfo.icon} ${typeInfo.color(pc.bold(typeInfo.label))}`);
+    lines.push(`   ${pc.bold(name)} ${m.user?.username ? pc.dim('@' + m.user.username) : ''}`);
+    lines.push(`   Cap: ${marketCap} ETH (${mcChange >= 0 ? pc.green(`+${mcChange}%`) : pc.red(`${mcChange}%`)})`);
+    lines.push(`   Score: ${m.user?.score || 0} | Price: ${priceChange >= 0 ? '+' : ''}${priceChange.toFixed(1)}%`);
     lines.push('');
   }
 

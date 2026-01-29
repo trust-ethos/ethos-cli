@@ -215,30 +215,43 @@ export interface ProjectVotersResponse {
   totals: ProjectVotersTotals;
 }
 
-export interface Market {
+export interface MarketUser {
   profileId: number;
-  username?: string;
-  displayName?: string;
-  avatarUrl?: string;
-  price: string;
-  priceUsd?: number;
-  marketCap: string;
-  marketCapUsd?: number;
-  holdersCount: number;
-  volume24h?: string;
-  priceChange24hPercent?: number;
+  displayName: string;
+  username: string | null;
+  avatarUrl: string | null;
+  score: number;
+}
+
+export interface MarketStats {
+  marketCapWei: string;
+  marketCapChange24hWei?: string;
   marketCapChange24hPercent?: number;
+  volumeTotalWei: string;
+  volume24hWei?: string;
+  priceChange24hPercent?: number;
+}
+
+export interface Market {
+  id: number;
+  creatorAddress: string;
+  positivePrice: string;
+  negativePrice: string;
+  trustVotes: number;
+  distrustVotes: number;
+  createdAt: string;
+  updatedAt: string;
+  basePrice: string;
+  user: MarketUser;
+  stats: MarketStats;
 }
 
 export interface MarketHolder {
-  profileId: number;
-  username?: string;
-  displayName?: string;
-  avatarUrl?: string;
-  trustBalance: string;
-  distrustBalance: string;
-  netPosition: string;
-  percentage: number;
+  actorAddress: string;
+  marketId: number;
+  voteType: 'trust' | 'distrust';
+  total: string;
+  user: MarketUser;
 }
 
 export type MarketOrderBy = 'marketCapWei' | 'volumeTotalWei' | 'volume24hWei' | 'trustRatio' | 'distrustRatio' | 'score' | 'createdAt' | 'priceChange24hPercent' | 'marketCapChange24hPercent' | 'scoreDifferential';
@@ -258,14 +271,25 @@ export interface MarketListResponse {
   offset: number;
 }
 
-export interface FeaturedMarketsResponse {
-  topGainers: Market[];
-  topLosers: Market[];
+export interface FeaturedMarket {
+  type: 'top-volume' | 'undervalued' | 'rugging' | string;
+  market: Market;
 }
+
+export type FeaturedMarketsResponse = FeaturedMarket[];
 
 export interface MarketHoldersResponse {
   values: MarketHolder[];
   total: number;
+}
+
+export interface MarketUserByTwitter {
+  profileId: number;
+  twitterUsername: string;
+  twitterName: string;
+  twitterUserId: string;
+  walletAddress: string;
+  avatarUrl: string;
 }
 
 export interface NFT {
@@ -652,7 +676,7 @@ export class EchoClient {
     return this.request<MarketHoldersResponse>(`/api/v2/markets/${profileId}/holders${query.toString() ? '?' + query.toString() : ''}`, 'Market Holders');
   }
 
-  async getMarketByTwitter(username: string): Promise<Market> {
-    return this.request<Market>(`/api/v2/markets/users/by/x/${encodeURIComponent(username)}`, 'Market User');
+  async getMarketByTwitter(username: string): Promise<MarketUserByTwitter> {
+    return this.request<MarketUserByTwitter>(`/api/v2/markets/users/by/x/${encodeURIComponent(username)}`, 'Market User');
   }
 }

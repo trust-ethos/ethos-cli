@@ -33,7 +33,6 @@ export default class MarketInfo extends Command {
       if (isNumeric) {
         market = await client.getMarketInfo(parseInt(args.identifier));
       } else {
-        // Get market user by Twitter, then get full info
         const marketUser = await client.getMarketByTwitter(args.identifier);
         market = await client.getMarketInfo(marketUser.profileId);
       }
