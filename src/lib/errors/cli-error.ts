@@ -1,7 +1,3 @@
-/**
- * Custom error classes for better error handling and user-friendly messages
- */
-
 export class CLIError extends Error {
   constructor(
     message: string,
@@ -33,16 +29,20 @@ export class NetworkError extends CLIError {
 }
 
 export class NotFoundError extends CLIError {
+  public readonly identifier: string;
+
   constructor(resourceType: string, identifier: string) {
     super(
       `${resourceType} not found: ${identifier}`,
       'NOT_FOUND',
       [
-        'Verify the identifier is correct',
-        'Try searching for the user first',
+        `Try: ethos user search "${identifier}"`,
+        'For Twitter users, use their Twitter username (e.g., @username)',
+        'For ETH addresses, use the full 0x... address',
       ],
     );
     this.name = 'NotFoundError';
+    this.identifier = identifier;
   }
 }
 
@@ -61,7 +61,7 @@ export class APIError extends CLIError {
   constructor(
     message: string,
     public readonly statusCode?: number,
-    public readonly response?: any,
+    public readonly response?: unknown,
   ) {
     super(
       message,

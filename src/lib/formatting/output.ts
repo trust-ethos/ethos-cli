@@ -1,101 +1,104 @@
-/**
- * Output formatting utilities for human-readable and JSON output
- */
-
 import pc from 'picocolors';
+import type { EthosUser, Season } from '../api/echo-client.js';
 
-/**
- * Output data in either JSON or human-readable format based on flags
- */
-export function output<T>(data: T, flags: { json?: boolean }): string {
-  if (flags.json) {
-    return JSON.stringify(data, null, 2);
-  }
-
-  // For non-JSON output, use custom formatters
+export function output<T>(data: T, _flags: { json?: boolean }): string {
   return JSON.stringify(data, null, 2);
 }
 
-/**
- * Format user profile for human-readable display
- */
-export function formatUser(user: any): string {
+function pluralize(count: number, singular: string, plural?: string): string {
+  return count === 1 ? singular : (plural || `${singular}s`);
+}
+
+export function formatUser(user: EthosUser): string {
+  const displayName = user.displayName || user.username || 'Unknown';
   const lines = [
-    pc.bold(pc.cyan(`User Profile: ${user.username || 'Unknown'}`)),
+    pc.bold(pc.cyan(`User Profile: ${displayName}`)),
     '',
   ];
 
-  if (user.id) {
-    lines.push(`${pc.dim('ID:')} ${user.id}`);
+  if (user.username) {
+    lines.push(`${pc.dim('Username:')} @${user.username}`);
   }
 
-  if (user.address) {
-    lines.push(`${pc.dim('Address:')} ${user.address}`);
+  if (user.profileId) {
+    lines.push(`${pc.dim('Profile ID:')} ${user.profileId}`);
   }
 
-  if (user.score !== undefined) {
-    lines.push(`${pc.dim('Reputation Score:')} ${pc.green(String(user.score))}`);
+  lines.push(`${pc.dim('Score:')} ${pc.green(String(user.score))}`);
+  lines.push(`${pc.dim('Status:')} ${user.status}`);
+  lines.push(`${pc.dim('XP:')} ${pc.green(user.xpTotal.toLocaleString())}`);
+  
+  if (user.xpStreakDays > 0) {
+    const dayWord = pluralize(user.xpStreakDays, 'day');
+    lines.push(`${pc.dim('Streak:')} ${user.xpStreakDays} ${dayWord}`);
   }
 
-  if (user.createdAt) {
-    lines.push(`${pc.dim('Member Since:')} ${new Date(user.createdAt).toLocaleDateString()}`);
+  if (user.stats) {
+    lines.push('');
+    lines.push(pc.bold('Stats'));
+    
+    const reviews = user.stats.review.received;
+    const reviewTotal = reviews.positive + reviews.neutral + reviews.negative;
+    if (reviewTotal > 0) {
+      lines.push(`${pc.dim('Reviews Received:')} ${pc.green(`${reviews.positive} positive`)}, ${reviews.neutral} neutral, ${pc.red(`${reviews.negative} negative`)}`);
+    }
+
+    const vouches = user.stats.vouch;
+    if (vouches.received.count > 0 || vouches.given.count > 0) {
+      lines.push(`${pc.dim('Vouches:')} ${vouches.received.count} received, ${vouches.given.count} given`);
+    }
+  }
+
+  if (user.links?.profile) {
+    lines.push('');
+    lines.push(`${pc.dim('Profile:')} ${user.links.profile}`);
   }
 
   return lines.join('\n');
 }
 
-/**
- * Format XP balance for human-readable display
- */
-export function formatXP(data: { totalXp: number; userkey?: string }): string {
+export function formatXP(data: { totalXp: number; userkey?: string; username?: string }): string {
   const lines = [
     pc.bold(pc.cyan('XP Balance')),
     '',
     `${pc.dim('Total XP:')} ${pc.green(data.totalXp.toLocaleString())}`,
   ];
 
-  if (data.userkey) {
-    lines.push(`${pc.dim('User:')} ${data.userkey}`);
+  if (data.username) {
+    lines.push(`${pc.dim('User:')} ${data.username}`);
+  } else if (data.userkey) {
+    lines.push(`${pc.dim('Userkey:')} ${data.userkey}`);
   }
 
   return lines.join('\n');
 }
 
-/**
- * Format XP seasons list for human-readable display
- */
-export function formatSeasons(seasons: any[]): string {
+export function formatSeasons(seasons: Season[], currentSeason?: Season): string {
   if (!seasons || seasons.length === 0) {
     return pc.yellow('No seasons found');
   }
 
-  const lines = [
-    pc.bold(pc.cyan('XP Seasons')),
-    '',
-  ];
+  const lines = [pc.bold(pc.cyan('XP Seasons')), ''];
+
+  if (currentSeason) {
+    lines.push(`${pc.dim('Current:')} Season ${currentSeason.id} (Week ${currentSeason.week || 1})`);
+    lines.push('');
+  }
 
   for (const season of seasons) {
-    const seasonId = season.id !== undefined ? season.id : season.season;
-    lines.push(pc.bold(`Season ${seasonId}`));
-    if (season.name) {
-      lines.push(`  ${pc.dim('Name:')} ${season.name}`);
-    }
-    if (season.startDate) {
-      lines.push(`  ${pc.dim('Start:')} ${new Date(season.startDate).toLocaleDateString()}`);
-    }
+    const isCurrent = currentSeason && season.id === currentSeason.id;
+    const prefix = isCurrent ? pc.green('*') : ' ';
+    lines.push(`${prefix} ${pc.bold(`Season ${season.id}`)}`);
+    lines.push(`    ${pc.dim('Start:')} ${new Date(season.startDate).toLocaleDateString()}`);
     if (season.endDate) {
-      lines.push(`  ${pc.dim('End:')} ${new Date(season.endDate).toLocaleDateString()}`);
+      lines.push(`    ${pc.dim('End:')} ${new Date(season.endDate).toLocaleDateString()}`);
     }
-    lines.push('');
   }
 
   return lines.join('\n');
 }
 
-/**
- * Format leaderboard rank for human-readable display
- */
-export function formatRank(data: { rank: number; totalXp?: number; userkey?: string }): string {
+export function formatRank(data: { rank: number; totalXp?: number; userkey?: string; username?: string }): string {
   const lines = [
     pc.bold(pc.cyan('Leaderboard Rank')),
     '',
@@ -106,17 +109,16 @@ export function formatRank(data: { rank: number; totalXp?: number; userkey?: str
     lines.push(`${pc.dim('Total XP:')} ${pc.green(data.totalXp.toLocaleString())}`);
   }
 
-  if (data.userkey) {
-    lines.push(`${pc.dim('User:')} ${data.userkey}`);
+  if (data.username) {
+    lines.push(`${pc.dim('User:')} ${data.username}`);
+  } else if (data.userkey) {
+    lines.push(`${pc.dim('Userkey:')} ${data.userkey}`);
   }
 
   return lines.join('\n');
 }
 
-/**
- * Format search results for human-readable display
- */
-export function formatSearchResults(results: any[]): string {
+export function formatSearchResults(results: EthosUser[]): string {
   if (!results || results.length === 0) {
     return pc.yellow('No users found');
   }
@@ -127,13 +129,13 @@ export function formatSearchResults(results: any[]): string {
   ];
 
   for (const user of results) {
-    lines.push(pc.bold(user.username || user.address || 'Unknown'));
-    if (user.score !== undefined) {
-      lines.push(`  ${pc.dim('Score:')} ${pc.green(String(user.score))}`);
+    const displayName = user.displayName || user.username || 'Unknown';
+    lines.push(pc.bold(displayName));
+    if (user.username) {
+      lines.push(`  ${pc.dim('Username:')} @${user.username}`);
     }
-    if (user.address) {
-      lines.push(`  ${pc.dim('Address:')} ${user.address}`);
-    }
+    lines.push(`  ${pc.dim('Score:')} ${pc.green(String(user.score))}`);
+    lines.push(`  ${pc.dim('XP:')} ${user.xpTotal.toLocaleString()}`);
     lines.push('');
   }
 

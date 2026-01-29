@@ -14,9 +14,10 @@ export default class UserSearch extends Command {
   static description = 'Search for users by name, username, or address';
 
   static examples = [
+    '<%= config.bin %> <%= command.id %> vitalik',
     '<%= config.bin %> <%= command.id %> "crypto developer"',
     '<%= config.bin %> <%= command.id %> vitalik --json',
-    '<%= config.bin %> <%= command.id %> "web3" --limit 5',
+    '<%= config.bin %> <%= command.id %> web3 --limit 5',
   ];
 
   static flags = {
@@ -42,13 +43,12 @@ export default class UserSearch extends Command {
     const client = new EchoClient();
 
     try {
-      const response = await client.searchUsers(args.query, flags.limit) as any;
-      const results = response.values || response;
+      const response = await client.searchUsers(args.query, flags.limit);
 
       if (flags.json) {
         this.log(output(response, flags));
       } else {
-        this.log(formatSearchResults(Array.isArray(results) ? results : []));
+        this.log(formatSearchResults(response.values));
       }
     } catch (error) {
       if (error instanceof Error) {

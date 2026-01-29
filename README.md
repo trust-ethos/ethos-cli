@@ -32,28 +32,22 @@ curl -fsSL https://ethos.network/install | bash
 
 ### User Commands
 
-**Get user information**
+**Get user profile** (includes score, XP, stats)
 ```bash
-ethos user info vitalik.eth
-ethos user info address:0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
-ethos user info vitalik.eth --json
+ethos user info 0xNowater              # Twitter username
+ethos user info vitalik.eth            # ENS name
+ethos user info 0xd8dA6BF2...          # ETH address
+ethos user info 0xNowater --json       # JSON output
 ```
 
 **Search for users**
 ```bash
-ethos user search "crypto developer"
-ethos user search vitalik --json
-ethos user search "web3" --limit 5
+ethos user search vitalik
+ethos user search "crypto developer" --limit 5
+ethos user search web3 --json
 ```
 
 ### XP Commands
-
-**Check XP balance**
-```bash
-ethos xp balance vitalik.eth
-ethos xp balance address:0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
-ethos xp balance vitalik.eth --json
-```
 
 **List XP seasons**
 ```bash
@@ -63,27 +57,29 @@ ethos xp seasons --json
 
 **Check leaderboard rank**
 ```bash
-ethos xp rank vitalik.eth
-ethos xp rank address:0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
+ethos xp rank 0xNowater
 ethos xp rank vitalik.eth --json
 ```
 
-## User Key Formats
+## Identifier Formats
 
-The CLI accepts various user identifier formats:
+The CLI intelligently detects identifier types:
 
-- **Username**: `vitalik.eth`
-- **Ethereum Address**: `address:0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045` or `0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045`
-- **Discord**: `service:discord:<discordUserId>`
-- **Twitter**: `service:x.com:<twitterUserId>` or `service:x.com:username:<twitterUsername>`
+| Format | Example | Detection |
+|--------|---------|-----------|
+| Twitter username | `0xNowater` | Default (plain text) |
+| ETH address | `0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045` | 0x + 40 hex chars |
+| ENS name | `vitalik.eth` | Ends with .eth |
+| Explicit prefix | `twitter:name`, `address:0x...`, `profileId:21` | Colon-prefixed |
 
 ## JSON Output
 
 All commands support `--json` (or `-j`) flag for machine-readable output:
 
 ```bash
-ethos user info vitalik.eth --json | jq .username
-ethos xp balance vitalik.eth --json | jq .totalXp
+ethos user info 0xNowater --json | jq .score
+ethos user search vitalik --json | jq '.values[0].username'
+ethos xp rank 0xNowater --json | jq .rank
 ```
 
 ## Environment Variables
@@ -185,8 +181,7 @@ USAGE
 * [`ethos help [COMMAND]`](#ethos-help-command)
 * [`ethos user info IDENTIFIER`](#ethos-user-info-identifier)
 * [`ethos user search QUERY`](#ethos-user-search-query)
-* [`ethos xp balance USERKEY`](#ethos-xp-balance-userkey)
-* [`ethos xp rank USERKEY`](#ethos-xp-rank-userkey)
+* [`ethos xp rank IDENTIFIER`](#ethos-xp-rank-identifier)
 * [`ethos xp seasons`](#ethos-xp-seasons)
 
 ## `ethos help [COMMAND]`
@@ -211,27 +206,30 @@ _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.2.3
 
 ## `ethos user info IDENTIFIER`
 
-Display user profile by username or address
+Display user profile by username, address, or ENS name
 
 ```
 USAGE
-  $ ethos user info IDENTIFIER [-j]
+  $ ethos user info IDENTIFIER [-j] [-v]
 
 ARGUMENTS
-  IDENTIFIER  Username or Ethereum address
+  IDENTIFIER  Twitter username, ETH address, or ENS name
 
 FLAGS
-  -j, --json  Output as JSON
+  -j, --json     Output as JSON
+  -v, --verbose  Show detailed error information
 
 DESCRIPTION
-  Display user profile by username or address
+  Display user profile by username, address, or ENS name
 
 EXAMPLES
+  $ ethos user info 0xNowater
+
+  $ ethos user info 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
+
   $ ethos user info vitalik.eth
 
-  $ ethos user info address:0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
-
-  $ ethos user info vitalik.eth --json
+  $ ethos user info 0xNowater --json
 ```
 
 _See code: [src/commands/user/info.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/user/info.ts)_
@@ -242,7 +240,7 @@ Search for users by name, username, or address
 
 ```
 USAGE
-  $ ethos user search QUERY [-j] [-l <value>]
+  $ ethos user search QUERY [-j] [-l <value>] [-v]
 
 ARGUMENTS
   QUERY  Search query
@@ -250,70 +248,47 @@ ARGUMENTS
 FLAGS
   -j, --json           Output as JSON
   -l, --limit=<value>  [default: 10] Maximum number of results
+  -v, --verbose        Show detailed error information
 
 DESCRIPTION
   Search for users by name, username, or address
 
 EXAMPLES
+  $ ethos user search vitalik
+
   $ ethos user search "crypto developer"
 
   $ ethos user search vitalik --json
 
-  $ ethos user search "web3" --limit 5
+  $ ethos user search web3 --limit 5
 ```
 
 _See code: [src/commands/user/search.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/user/search.ts)_
 
-## `ethos xp balance USERKEY`
-
-Check total XP balance for a user
-
-```
-USAGE
-  $ ethos xp balance USERKEY [-j]
-
-ARGUMENTS
-  USERKEY  Username, address, or userkey identifier
-
-FLAGS
-  -j, --json  Output as JSON
-
-DESCRIPTION
-  Check total XP balance for a user
-
-EXAMPLES
-  $ ethos xp balance vitalik.eth
-
-  $ ethos xp balance address:0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
-
-  $ ethos xp balance vitalik.eth --json
-```
-
-_See code: [src/commands/xp/balance.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/xp/balance.ts)_
-
-## `ethos xp rank USERKEY`
+## `ethos xp rank IDENTIFIER`
 
 Show leaderboard rank for a user
 
 ```
 USAGE
-  $ ethos xp rank USERKEY [-j]
+  $ ethos xp rank IDENTIFIER [-j] [-v]
 
 ARGUMENTS
-  USERKEY  Username, address, or userkey identifier
+  IDENTIFIER  Twitter username, ETH address, or ENS name
 
 FLAGS
-  -j, --json  Output as JSON
+  -j, --json     Output as JSON
+  -v, --verbose  Show detailed error information
 
 DESCRIPTION
   Show leaderboard rank for a user
 
 EXAMPLES
-  $ ethos xp rank vitalik.eth
+  $ ethos xp rank 0xNowater
 
-  $ ethos xp rank address:0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
+  $ ethos xp rank 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
 
-  $ ethos xp rank vitalik.eth --json
+  $ ethos xp rank 0xNowater --json
 ```
 
 _See code: [src/commands/xp/rank.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/xp/rank.ts)_
@@ -324,10 +299,11 @@ List all XP seasons
 
 ```
 USAGE
-  $ ethos xp seasons [-j]
+  $ ethos xp seasons [-j] [-v]
 
 FLAGS
-  -j, --json  Output as JSON
+  -j, --json     Output as JSON
+  -v, --verbose  Show detailed error information
 
 DESCRIPTION
   List all XP seasons

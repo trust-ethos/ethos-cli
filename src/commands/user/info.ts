@@ -2,23 +2,22 @@ import { Args, Command, Flags } from '@oclif/core';
 import { EchoClient } from '../../lib/api/echo-client.js';
 import { formatError } from '../../lib/formatting/error.js';
 import { formatUser, output } from '../../lib/formatting/output.js';
-import { parseUserkey } from '../../lib/validation/userkey.js';
 
 export default class UserInfo extends Command {
   static args = {
     identifier: Args.string({
-      description: 'Username or Ethereum address',
+      description: 'Twitter username, ETH address, or ENS name',
       required: true,
     }),
   };
 
-  static description = 'Display user profile by username or address';
+  static description = 'Display user profile by username, address, or ENS name';
 
   static examples = [
+    '<%= config.bin %> <%= command.id %> 0xNowater',
+    '<%= config.bin %> <%= command.id %> 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
     '<%= config.bin %> <%= command.id %> vitalik.eth',
-    '<%= config.bin %> <%= command.id %> address:0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
-    '<%= config.bin %> <%= command.id %> vitalik.eth --json',
-    '<%= config.bin %> <%= command.id %> vitalik.eth --verbose',
+    '<%= config.bin %> <%= command.id %> 0xNowater --json',
   ];
 
   static flags = {
@@ -37,19 +36,9 @@ export default class UserInfo extends Command {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(UserInfo);
     const client = new EchoClient();
-    const userkey = parseUserkey(args.identifier);
 
     try {
-      let user;
-
-      // Try to determine if it's an address or username
-      if (userkey.startsWith('address:')) {
-        const address = userkey.replace('address:', '');
-        user = await client.getUserByAddress(address);
-      } else {
-        // Treat as username
-        user = await client.getUserByUsername(userkey);
-      }
+      const user = await client.resolveUser(args.identifier);
 
       if (flags.json) {
         this.log(output(user, flags));
@@ -58,7 +47,6 @@ export default class UserInfo extends Command {
       }
     } catch (error) {
       if (error instanceof Error) {
-        // Don't use oclif's error handler - format our own
         this.log(formatError(error, flags.verbose));
         this.exit(1);
       }

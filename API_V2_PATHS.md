@@ -1,6 +1,6 @@
 # API v2 Paths - Reference
 
-This document outlines the correct API v2 endpoints used by the Ethos CLI.
+This document outlines the API v2 endpoints used by the Ethos CLI.
 
 ## Base URLs
 
@@ -16,23 +16,7 @@ GET /api/v2/user/by/x/{accountIdOrUsername}
 ```
 
 **Parameters:**
-- `accountIdOrUsername` (path) - Twitter/X username OR Twitter ID (e.g., "0xNoWater" or "1826469318311165952")
-
-**Response:**
-```json
-{
-  "id": 3,
-  "profileId": 11,
-  "username": "0xNoWater",
-  "displayName": "0xNoWater.eth",
-  "avatarUrl": "https://...",
-  "score": 1785,
-  "status": "ACTIVE",
-  "userkeys": ["profileId:11", "address:0x..."],
-  "xpTotal": 677040,
-  ...
-}
-```
+- `accountIdOrUsername` (path) - Twitter/X username OR Twitter ID
 
 **CLI Usage:**
 ```bash
@@ -46,25 +30,25 @@ GET /api/v2/user/by/address/{address}
 ```
 
 **Parameters:**
-- `address` (path) - Ethereum address (e.g., "0xA6a665b705f7Bf2eCa315047f6ffbb557b2106ca")
-
-**Response:**
-```json
-{
-  "id": 3,
-  "profileId": 11,
-  "username": "0xNoWater",
-  "address": "0xA6a665b705f7Bf2eCa315047f6ffbb557b2106ca",
-  "score": 1785,
-  ...
-}
-```
+- `address` (path) - Ethereum address (42 chars including 0x)
 
 **CLI Usage:**
 ```bash
-ethos user info 0xA6a665b705f7Bf2eCa315047f6ffbb557b2106ca
-# or
-ethos user info address:0xA6a665b705f7Bf2eCa315047f6ffbb557b2106ca
+ethos user info 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
+```
+
+### Get User by Profile ID
+
+```
+GET /api/v2/user/by/profile-id/{profileId}
+```
+
+**Parameters:**
+- `profileId` (path) - Numeric Ethos profile ID
+
+**CLI Usage:**
+```bash
+ethos user info profileId:21
 ```
 
 ### Search Users
@@ -76,55 +60,13 @@ GET /api/v2/users/search
 **Query Parameters:**
 - `query` (string) - Search query
 - `limit` (number) - Maximum results (default: 10)
-- `offset` (number, optional) - Pagination offset
-
-**Response:**
-```json
-{
-  "values": [
-    {
-      "id": 123,
-      "username": "...",
-      "address": "0x...",
-      "score": 1850
-    }
-  ],
-  "total": 1,
-  "limit": 10,
-  "offset": 0
-}
-```
 
 **CLI Usage:**
 ```bash
-ethos user search "crypto developer"
-ethos user search "vitalik" --limit 5
+ethos user search vitalik --limit 5
 ```
 
 ## XP Endpoints
-
-### Get XP Balance
-
-```
-GET /api/v2/xp/user/{userkey}
-```
-
-**Parameters:**
-- `userkey` (path) - Username, address, or userkey identifier (e.g., "address:0x...")
-
-**Response:**
-```
-677040
-```
-Returns the total XP as a number.
-
-**CLI Usage:**
-```bash
-ethos xp balance address:0xA6a665b705f7Bf2eCa315047f6ffbb557b2106ca
-# Output:
-# XP Balance
-# Total XP: 677,040
-```
 
 ### Get XP Seasons
 
@@ -135,36 +77,14 @@ GET /api/v2/xp/seasons
 **Response:**
 ```json
 {
-  "seasons": [
-    {
-      "id": 2,
-      "name": "Season 2",
-      "startDate": "2026-01-01T00:00:00.000Z"
-    },
-    {
-      "id": 1,
-      "name": "Season 1",
-      "startDate": "2025-05-14T00:00:00.000Z"
-    },
-    {
-      "id": 0,
-      "name": "Season 0",
-      "startDate": "2025-01-01T00:00:00.000Z"
-    }
-  ],
-  "currentSeason": {
-    "id": 2,
-    "name": "Season 2",
-    "startDate": "2026-01-01T00:00:00.000Z",
-    "week": 1
-  }
+  "seasons": [...],
+  "currentSeason": { "id": 2, "name": "Season 2", "week": 1 }
 }
 ```
 
 **CLI Usage:**
 ```bash
 ethos xp seasons
-ethos xp seasons --json
 ```
 
 ### Get Leaderboard Rank
@@ -174,129 +94,68 @@ GET /api/v2/xp/user/{userkey}/leaderboard-rank
 ```
 
 **Parameters:**
-- `userkey` (path) - Username, address, or userkey identifier (e.g., "address:0x...")
-
-**Response:**
-```
-4
-```
-Returns the leaderboard rank as a number.
+- `userkey` (path) - Valid userkey format (e.g., `profileId:21`, `address:0x...`)
 
 **CLI Usage:**
 ```bash
-ethos xp rank address:0xA6a665b705f7Bf2eCa315047f6ffbb557b2106ca
-# Output:
-# Leaderboard Rank
-# Rank: #4
+ethos xp rank 0xNoWater
 ```
 
-## Response Patterns
+Note: The CLI auto-resolves identifiers to userkeys by first fetching user info.
 
-### v2 API Response Structure
+## Smart Identifier Detection
 
-The v2 API typically returns objects with nested data:
+The CLI automatically routes requests based on identifier format:
 
-1. **Collections** (search, seasons):
-   ```json
-   {
-     "values": [...],    // or "seasons": [...]
-     "total": 10,
-     "limit": 10,
-     "offset": 0
-   }
-   ```
+| Input Format | Detection Method | API Endpoint |
+|--------------|------------------|--------------|
+| `0xNoWater` | Default (plain text) | `/user/by/x/0xNoWater` |
+| `0xd8dA...` (40 hex) | Regex: `^0x[a-fA-F0-9]{40}$` | `/user/by/address/0xd8dA...` |
+| `vitalik.eth` | Ends with `.eth` | Search, then best match |
+| `address:0x...` | Explicit prefix | `/user/by/address/0x...` |
+| `twitter:name` | Explicit prefix | `/user/by/x/name` |
+| `profileId:21` | Explicit prefix | `/user/by/profile-id/21` |
 
-2. **Single Resources** (user, xp):
-   ```json
-   {
-     "field1": "value",
-     "field2": "value"
-   }
-   ```
+## Response Structure
 
-### Error Responses
+### User Object
+
+```json
+{
+  "id": 13467,
+  "profileId": 21,
+  "displayName": "0xNoWater.eth",
+  "username": "0xNoWater",
+  "avatarUrl": "https://...",
+  "score": 1501,
+  "status": "ACTIVE",
+  "userkeys": ["profileId:21", "address:0x...", "service:x.com:..."],
+  "xpTotal": 76125,
+  "xpStreakDays": 1,
+  "stats": {
+    "review": { "received": { "positive": 2, "neutral": 6, "negative": 0 } },
+    "vouch": { "given": { "count": 1 }, "received": { "count": 3 } }
+  },
+  "links": {
+    "profile": "https://app.ethos.network/profile/x/0xNoWater"
+  }
+}
+```
+
+## Error Handling
 
 All errors return:
 ```json
 {
   "message": "Error message",
   "code": "ERROR_CODE",
-  "data": {
-    "code": "ERROR_CODE",
-    "httpStatus": 400,
-    "path": "endpoint.path",
-    "reqId": "request-id"
-  },
-  "issues": [...]  // Optional validation errors
+  "data": { "httpStatus": 400, "path": "...", "reqId": "..." }
 }
 ```
 
-## Implementation Notes
-
-### CLI Command → API Mapping
-
-The CLI automatically routes requests based on the identifier format:
-
-| Identifier Format | API Endpoint |
-|------------------|--------------|
-| `0xNoWater` (username) | `GET /api/v2/users/by/x/0xNoWater` |
-| `0xd8dA...` (Ethereum address) | `GET /api/v2/users/by/address/0xd8dA...` |
-| `address:0xd8dA...` (explicit) | `GET /api/v2/users/by/address/0xd8dA...` |
-
-### Response Unwrapping
-
-The CLI unwraps nested responses for human-readable output:
-
-```typescript
-// API returns: { seasons: [...] }
-// CLI displays: formatted list of seasons
-
-// API returns: { values: [...] }
-// CLI displays: formatted search results
+The CLI formats errors with actionable suggestions:
 ```
+⚠ User not found: videvian
 
-### Debug Mode
-
-Use `ETHOS_DEBUG=true` to see the exact API calls:
-
-```bash
-ETHOS_ENV=dev ETHOS_DEBUG=true ethos user info 0xNoWater
-```
-
-Output:
-```
-[DEBUG] Fetching https://api.dev.ethos.network/api/v2/users/by/x/0xNoWater
-[DEBUG] Response status: 404
-⚠ User not found: 0xNoWater
-```
-
-## Migration from v1 to v2
-
-| v1 Endpoint | v2 Endpoint |
-|-------------|-------------|
-| `/api/v1/user/username/{username}` | `/api/v2/users/by/x/{username}` |
-| `/api/v1/user/address/{address}` | `/api/v2/users/by/address/{address}` |
-| `/api/v1/user/search` | `/api/v2/users/search` |
-| `/api/v1/xp/total/{userkey}` | `/api/v2/xp/total/{userkey}` |
-| `/api/v1/xp/seasons` | `/api/v2/xp/seasons` |
-| `/api/v1/xp/rank/{userkey}` | `/api/v2/xp/rank/{userkey}` |
-
-## External Documentation
-
-- **Swagger Docs**: https://api.dev.ethos.network/docs
-- **Production API**: https://api.ethos.network
-
-## Testing
-
-All endpoints can be tested with curl:
-
-```bash
-# Get user by Twitter username
-curl https://api.dev.ethos.network/api/v2/users/by/x/0xNoWater
-
-# Get XP seasons
-curl https://api.dev.ethos.network/api/v2/xp/seasons
-
-# Search users
-curl "https://api.dev.ethos.network/api/v2/users/search?query=test&limit=10"
+💡 Try: ethos user search "videvian"
 ```

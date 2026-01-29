@@ -29,13 +29,12 @@ export default class XpSeasons extends Command {
     const client = new EchoClient();
 
     try {
-      const response = await client.getSeasons() as any;
-      const seasons = response.seasons || response;
+      const response = await client.getSeasons();
 
       if (flags.json) {
         this.log(output(response, flags));
       } else {
-        this.log(formatSeasons(Array.isArray(seasons) ? seasons : []));
+        this.log(formatSeasons(response.seasons, response.currentSeason));
       }
     } catch (error) {
       if (error instanceof Error) {

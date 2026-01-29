@@ -1,17 +1,74 @@
-/**
- * Lightweight Echo API client for Ethos CLI
- * Uses native fetch for minimal dependencies
- */
-
 import { APIError, NetworkError, NotFoundError } from '../errors/cli-error.js';
+import { parseIdentifier, type ParsedIdentifier } from '../validation/userkey.js';
 
 const API_URLS = {
   dev: 'https://api.dev.ethos.network',
-  staging: 'https://api.dev.ethos.network', // Using dev for staging until staging is available
+  staging: 'https://api.dev.ethos.network',
   prod: 'https://api.ethos.network',
 } as const;
 
 type Environment = keyof typeof API_URLS;
+
+export interface EthosUser {
+  id: number;
+  profileId: number | null;
+  displayName: string;
+  username: string | null;
+  avatarUrl: string | null;
+  description: string | null;
+  score: number;
+  status: string;
+  userkeys: string[];
+  xpTotal: number;
+  xpStreakDays: number;
+  influenceFactor: number;
+  influenceFactorPercentile: number;
+  links?: {
+    profile: string;
+    scoreBreakdown: string;
+  };
+  stats?: {
+    review: {
+      received: { negative: number; neutral: number; positive: number };
+    };
+    vouch: {
+      given: { amountWeiTotal: string; count: number };
+      received: { amountWeiTotal: string; count: number };
+    };
+  };
+}
+
+export interface SearchResult {
+  values: EthosUser[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface Season {
+  id: number;
+  name: string;
+  startDate: string;
+  endDate?: string;
+  week?: number;
+}
+
+export interface SeasonsResponse {
+  seasons: Season[];
+  currentSeason: Season;
+}
+
+export interface Activity {
+  id: number;
+  type: string;
+  timestamp: string;
+  data: Record<string, unknown>;
+}
+
+export interface ActivitiesResponse {
+  values: Activity[];
+  total: number;
+}
 
 export class EchoClient {
   private baseUrl: string;
@@ -23,7 +80,7 @@ export class EchoClient {
     this.debug = process.env.ETHOS_DEBUG === 'true' || process.env.DEBUG === 'ethos:*';
   }
 
-  private log(message: string, data?: any): void {
+  private log(message: string, data?: unknown): void {
     if (this.debug) {
       console.error(`[DEBUG] ${message}`, data || '');
     }
@@ -36,21 +93,17 @@ export class EchoClient {
 
     try {
       const response = await fetch(url, {
-        headers: {
-          'Accept': 'application/json',
-        },
+        headers: { 'Accept': 'application/json' },
       });
 
       this.log(`Response status: ${response.status}`);
 
       if (!response.ok) {
-        // Handle 404 specifically
         if (response.status === 404) {
           const identifier = path.split('/').pop() || 'unknown';
           throw new NotFoundError(resourceType || 'Resource', decodeURIComponent(identifier));
         }
 
-        // Try to parse error response
         let errorMessage = `API request failed with status ${response.status}`;
         let errorBody;
 
@@ -59,38 +112,28 @@ export class EchoClient {
           errorMessage = errorBody.message || errorBody.error || errorMessage;
         } catch {
           const errorText = await response.text();
-          if (errorText) {
-            errorMessage = errorText;
-          }
+          if (errorText) errorMessage = errorText;
         }
 
         this.log('API Error', { status: response.status, body: errorBody });
-
         throw new APIError(errorMessage, response.status, errorBody);
       }
 
       const data = await response.json() as T;
       this.log('Response data', data);
-
       return data;
     } catch (error) {
-      // Re-throw our custom errors
       if (error instanceof NotFoundError || error instanceof APIError) {
         throw error;
       }
 
-      // Network/connection errors
       if (error instanceof Error) {
         this.log('Network error', error.message);
 
-        // Check for common network error patterns
         if (error.message.includes('fetch failed') ||
             error.message.includes('ECONNREFUSED') ||
             error.message.includes('ENOTFOUND')) {
-          throw new NetworkError(
-            `Cannot connect to API at ${this.baseUrl}`,
-            url,
-          );
+          throw new NetworkError(`Cannot connect to API at ${this.baseUrl}`, url);
         }
 
         throw new NetworkError(error.message, url);
@@ -100,33 +143,103 @@ export class EchoClient {
     }
   }
 
-  async getUserByUsername(username: string) {
-    // Single user lookup - uses singular /user/by/x/{accountIdOrUsername}
-    return this.request(`/api/v2/user/by/x/${encodeURIComponent(username)}`, 'User');
+  async getUserByTwitter(username: string): Promise<EthosUser> {
+    return this.request<EthosUser>(`/api/v2/user/by/x/${encodeURIComponent(username)}`, 'User');
   }
 
-  async getUserByAddress(address: string) {
-    // Single user lookup - uses singular /user/by/address/{address}
-    return this.request(`/api/v2/user/by/address/${encodeURIComponent(address)}`, 'User');
+  async getUserByAddress(address: string): Promise<EthosUser> {
+    return this.request<EthosUser>(`/api/v2/user/by/address/${encodeURIComponent(address)}`, 'User');
   }
 
-  async searchUsers(query: string, limit = 10) {
-    const params = new URLSearchParams({
-      query,
-      limit: String(limit),
-    });
-    return this.request(`/api/v2/users/search?${params}`, 'Users');
+  async getUserByProfileId(profileId: string): Promise<EthosUser> {
+    return this.request<EthosUser>(`/api/v2/user/by/profile-id/${encodeURIComponent(profileId)}`, 'User');
   }
 
-  async getTotalXp(userkey: string) {
-    return this.request(`/api/v2/xp/user/${encodeURIComponent(userkey)}`, 'XP Balance');
+  async searchUsers(query: string, limit = 10): Promise<SearchResult> {
+    const params = new URLSearchParams({ query, limit: String(limit) });
+    return this.request<SearchResult>(`/api/v2/users/search?${params}`, 'Users');
   }
 
-  async getSeasons() {
-    return this.request('/api/v2/xp/seasons', 'XP Seasons');
+  async resolveUser(identifier: string): Promise<EthosUser> {
+    const parsed = parseIdentifier(identifier);
+    return this.resolveUserFromParsed(parsed);
   }
 
-  async getLeaderboardRank(userkey: string) {
-    return this.request(`/api/v2/xp/user/${encodeURIComponent(userkey)}/leaderboard-rank`, 'Leaderboard Rank');
+  async resolveUserFromParsed(parsed: ParsedIdentifier): Promise<EthosUser> {
+    switch (parsed.type) {
+      case 'address':
+        return this.getUserByAddress(parsed.value);
+      
+      case 'ens':
+        return this.resolveEnsUser(parsed.value);
+      
+      case 'profileId':
+        return this.getUserByProfileId(parsed.value);
+      
+      case 'twitter':
+      default:
+        return this.getUserByTwitter(parsed.value);
+    }
+  }
+
+  private async resolveEnsUser(ensName: string): Promise<EthosUser> {
+    const searchResult = await this.searchUsers(ensName, 5);
+    
+    const exactMatch = searchResult.values.find(u => 
+      u.displayName?.toLowerCase() === ensName.toLowerCase() ||
+      u.username?.toLowerCase() === ensName.toLowerCase()
+    );
+    
+    if (exactMatch) return exactMatch;
+    
+    const addressMatch = searchResult.values.find(u =>
+      u.userkeys?.some(uk => uk.startsWith('address:'))
+    );
+    
+    if (addressMatch) return addressMatch;
+    
+    if (searchResult.values.length > 0) {
+      return searchResult.values[0];
+    }
+    
+    throw new NotFoundError('User', ensName);
+  }
+
+  async getXpTotal(userkey: string): Promise<number> {
+    return this.request<number>(`/api/v2/xp/user/${encodeURIComponent(userkey)}`, 'XP Balance');
+  }
+
+  async getSeasons(): Promise<SeasonsResponse> {
+    return this.request<SeasonsResponse>('/api/v2/xp/seasons', 'XP Seasons');
+  }
+
+  async getLeaderboardRank(userkey: string): Promise<number> {
+    return this.request<number>(`/api/v2/xp/user/${encodeURIComponent(userkey)}/leaderboard-rank`, 'Leaderboard Rank');
+  }
+
+  async getActivities(profileId: number, direction: 'all' | 'given' | 'received' = 'all'): Promise<ActivitiesResponse> {
+    const params = new URLSearchParams({ profileId: String(profileId) });
+    return this.request<ActivitiesResponse>(`/api/v2/activities/profile/${direction}?${params}`, 'Activities');
+  }
+
+  getPrimaryUserkey(user: EthosUser): string | null {
+    if (user.profileId) {
+      return `profileId:${user.profileId}`;
+    }
+    
+    const addressKey = user.userkeys?.find(uk => uk.startsWith('address:'));
+    if (addressKey) return addressKey;
+    
+    return user.userkeys?.[0] || null;
+  }
+
+  /** @deprecated Use resolveUser instead */
+  async getUserByUsername(username: string): Promise<EthosUser> {
+    return this.getUserByTwitter(username);
+  }
+
+  /** @deprecated Use getXpTotal instead */
+  async getTotalXp(userkey: string): Promise<number> {
+    return this.getXpTotal(userkey);
   }
 }
