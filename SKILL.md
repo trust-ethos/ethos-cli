@@ -102,37 +102,6 @@ ethos user search "web3" --json | jq '.[0].username'
 
 ### XP Commands
 
-#### `ethos xp balance <userkey>`
-
-Check total XP balance for a user.
-
-**Arguments:**
-- `userkey` - Username, address, or userkey identifier
-
-**Flags:**
-- `-j, --json` - Output as JSON
-
-**Exit Codes:**
-- `0` - Balance retrieved
-- `1` - User not found or API error
-- `2` - Invalid arguments
-
-**JSON Output Schema:**
-```json
-{
-  "totalXp": 15000
-}
-```
-
-**Example Usage:**
-```bash
-# Check balance
-ethos xp balance vitalik.eth --json | jq .totalXp
-
-# By address
-ethos xp balance address:0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045 --json
-```
-
 #### `ethos xp seasons`
 
 List all XP seasons.
@@ -286,15 +255,15 @@ if [ "$SCORE" -gt 1000 ]; then
 fi
 ```
 
-### Workflow 2: XP Balance Check
+### Workflow 2: User Score Check
 
 ```bash
-# Get XP balance
-XP=$(ethos xp balance vitalik.eth --json | jq -r .totalXp)
+# Get user score
+SCORE=$(ethos user info vitalik.eth --json | jq -r .score)
 
 # Compare with threshold
-if [ "$XP" -gt 10000 ]; then
-  echo "User has sufficient XP"
+if [ "$SCORE" -gt 1000 ]; then
+  echo "User has high reputation"
 fi
 ```
 
