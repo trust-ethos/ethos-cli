@@ -369,6 +369,29 @@ export interface AuctionsResponse {
   total: number;
 }
 
+export interface Invitation {
+  id: number;
+  senderProfileId: number;
+  recipientAddress: string;
+  status: 'INVITED' | 'ACCEPTED';
+  recipientScoreImpact: { value: number; impact: string };
+  senderScoreImpact: { value: number; impact: string };
+  dateInvited: string;
+  dateAccepted: string | null;
+}
+
+export interface InvitationWithUser {
+  invitation: Invitation;
+  invitedUser: EthosUser;
+}
+
+export interface InvitationsResponse {
+  values: InvitationWithUser[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export interface Validator {
   tokenId: string;
   name: string;
@@ -937,5 +960,14 @@ export class EchoClient {
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
     return this.request<Activity[]>(`/api/v2/activities/userkey?${query}`, 'Reviews');
+  }
+
+  async getInvitations(params: { senderProfileId?: number; status?: 'INVITED' | 'ACCEPTED'; limit?: number; offset?: number } = {}): Promise<InvitationsResponse> {
+    const query = new URLSearchParams();
+    if (params.senderProfileId) query.set('senderProfileId', String(params.senderProfileId));
+    if (params.status) query.set('status', params.status);
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    return this.request<InvitationsResponse>(`/api/v2/invitations${query.toString() ? '?' + query.toString() : ''}`, 'Invitations');
   }
 }

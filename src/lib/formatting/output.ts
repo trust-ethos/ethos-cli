@@ -1,5 +1,5 @@
 import pc from 'picocolors';
-import type { Activity, Auction, BrokerPost, EthosUser, FeaturedMarketsResponse, Market, MarketHolder, Project, ProjectVoter, ProjectVotersTotals, Review, ScoreLevel, ScoreResponse, ScoreStatus, Season, Slash, Validator, Vote, VoteStats, Vouch, VouchUser } from '../api/echo-client.js';
+import type { Activity, Auction, BrokerPost, EthosUser, FeaturedMarketsResponse, InvitationWithUser, Market, MarketHolder, Project, ProjectVoter, ProjectVotersTotals, Review, ScoreLevel, ScoreResponse, ScoreStatus, Season, Slash, Validator, Vote, VoteStats, Vouch, VouchUser } from '../api/echo-client.js';
 
 export function output<T>(data: T): string {
   return JSON.stringify(data, null, 2);
@@ -67,17 +67,33 @@ export function formatUser(user: EthosUser): string {
   return lines.join('\n');
 }
 
-export function formatXP(data: { totalXp: number; userkey?: string; username?: string }): string {
-  const lines = [
-    pc.bold(pc.cyan('XP Balance')),
-    '',
-    `${pc.dim('Total XP:')} ${pc.green(data.totalXp.toLocaleString())}`,
-  ];
+export function formatInvitations(invitations: InvitationWithUser[], total: number): string {
+  if (!invitations.length) {
+    return pc.yellow('No invitations found.');
+  }
 
-  if (data.username) {
-    lines.push(`${pc.dim('User:')} ${data.username}`);
-  } else if (data.userkey) {
-    lines.push(`${pc.dim('Userkey:')} ${data.userkey}`);
+  const lines = [pc.bold(`Invitations (${total} total)`), ''];
+
+  for (const inv of invitations) {
+    const i = inv.invitation;
+    const user = inv.invitedUser;
+    const statusIcon = i.status === 'ACCEPTED' ? pc.green('✓') : pc.yellow('○');
+    const userName = user?.username ? `@${user.username}` : user?.displayName || i.recipientAddress.slice(0, 10) + '...';
+    const date = new Date(i.dateInvited).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    lines.push(`${statusIcon} ${pc.bold(userName)} ${pc.dim(`(${i.status})`)}`);
+    lines.push(`   ${pc.dim('Invited:')} ${date}`);
+    
+    if (i.dateAccepted) {
+      const acceptedDate = new Date(i.dateAccepted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      lines.push(`   ${pc.dim('Accepted:')} ${acceptedDate}`);
+    }
+
+    if (user?.score) {
+      lines.push(`   ${pc.dim('Score:')} ${user.score}`);
+    }
+
+    lines.push('');
   }
 
   return lines.join('\n');
