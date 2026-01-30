@@ -115,3 +115,91 @@ jobs:
           files: |
             dist/*.tar.gz
             dist/*.tar.xz
+
+  update-homebrew:
+    needs: [check-version, build-binaries]
+    if: needs.check-version.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate and push Homebrew formula
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          VERSION: ${{ needs.check-version.outputs.version }}
+          TAG: ${{ needs.check-version.outputs.tag }}
+        run: |
+          set -e
+          
+          # Get SHA256 for each platform
+          get_sha256() {
+            local platform=$1
+            local asset_name=$(gh release view "$TAG" --repo trust-ethos/ethos-cli --json assets --jq ".assets[].name" | grep "${platform}.tar.gz$")
+            local url="https://github.com/trust-ethos/ethos-cli/releases/download/${TAG}/${asset_name}"
+            curl -sL "$url" | sha256sum | cut -d' ' -f1
+          }
+          
+          SHA_DARWIN_ARM64=$(get_sha256 "darwin-arm64")
+          SHA_DARWIN_X64=$(get_sha256 "darwin-x64")
+          SHA_LINUX_ARM64=$(get_sha256 "linux-arm64")
+          SHA_LINUX_X64=$(get_sha256 "linux-x64")
+          
+          # Get asset filenames
+          ASSETS=$(gh release view "$TAG" --repo trust-ethos/ethos-cli --json assets --jq '.assets[].name')
+          ASSET_DARWIN_ARM64=$(echo "$ASSETS" | grep "darwin-arm64.tar.gz$")
+          ASSET_DARWIN_X64=$(echo "$ASSETS" | grep "darwin-x64.tar.gz$")
+          ASSET_LINUX_ARM64=$(echo "$ASSETS" | grep "linux-arm64.tar.gz$")
+          ASSET_LINUX_X64=$(echo "$ASSETS" | grep "linux-x64.tar.gz$")
+          
+          # Generate formula
+          cat > /tmp/ethos.rb << EOF
+          class Ethos < Formula
+            desc "CLI for querying Ethos user profiles, XP balances, and reputation data"
+            homepage "https://github.com/trust-ethos/ethos-cli"
+            version "${VERSION}"
+            license "MIT"
+
+            on_macos do
+              on_arm do
+                url "https://github.com/trust-ethos/ethos-cli/releases/download/${TAG}/${ASSET_DARWIN_ARM64}"
+                sha256 "${SHA_DARWIN_ARM64}"
+              end
+              on_intel do
+                url "https://github.com/trust-ethos/ethos-cli/releases/download/${TAG}/${ASSET_DARWIN_X64}"
+                sha256 "${SHA_DARWIN_X64}"
+              end
+            end
+
+            on_linux do
+              on_arm do
+                url "https://github.com/trust-ethos/ethos-cli/releases/download/${TAG}/${ASSET_LINUX_ARM64}"
+                sha256 "${SHA_LINUX_ARM64}"
+              end
+              on_intel do
+                url "https://github.com/trust-ethos/ethos-cli/releases/download/${TAG}/${ASSET_LINUX_X64}"
+                sha256 "${SHA_LINUX_X64}"
+              end
+            end
+
+            def install
+              libexec.install Dir["*"]
+              bin.install_symlink libexec/"bin/ethos"
+            end
+
+            test do
+              assert_match version.to_s, shell_output("#{bin}/ethos --version")
+            end
+          end
+          EOF
+          
+          # Remove leading whitespace from heredoc
+          sed -i 's/^          //' /tmp/ethos.rb
+          
+          # Clone tap repo and update formula
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/trust-ethos/homebrew-tap.git" /tmp/homebrew-tap
+          cp /tmp/ethos.rb /tmp/homebrew-tap/Formula/ethos.rb
+          
+          cd /tmp/homebrew-tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/ethos.rb
+          git commit -m "Update ethos to ${TAG}"
+          git push

@@ -53,11 +53,23 @@ get_latest_version() {
 }
 
 download_and_install() {
-  DOWNLOAD_URL="https://github.com/$REPO/releases/download/$VERSION/ethos-$VERSION-$PLATFORM.tar.gz"
   VERSION_DIR="$INSTALL_DIR/versions/$VERSION"
   TARBALL="/tmp/ethos-$VERSION.tar.gz"
 
   info "Downloading ethos $VERSION for $PLATFORM..."
+  
+  # Find the actual asset name (oclif includes commit hash in filename)
+  if command -v curl >/dev/null 2>&1; then
+    ASSET_NAME=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/tags/$VERSION" | grep -o "\"name\": \"ethos-$VERSION-[^\"]*-$PLATFORM.tar.gz\"" | head -1 | sed 's/"name": "\(.*\)"/\1/')
+  else
+    ASSET_NAME=$(wget -qO- "https://api.github.com/repos/$REPO/releases/tags/$VERSION" | grep -o "\"name\": \"ethos-$VERSION-[^\"]*-$PLATFORM.tar.gz\"" | head -1 | sed 's/"name": "\(.*\)"/\1/')
+  fi
+
+  if [ -z "$ASSET_NAME" ]; then
+    error "Could not find release asset for $PLATFORM"
+  fi
+
+  DOWNLOAD_URL="https://github.com/$REPO/releases/download/$VERSION/$ASSET_NAME"
   
   if command -v curl >/dev/null 2>&1; then
     curl -fsSL "$DOWNLOAD_URL" -o "$TARBALL" || error "Download failed. Check if release exists for $PLATFORM"
