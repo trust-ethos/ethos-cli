@@ -2,29 +2,21 @@
 
 ## Overview
 
-The Ethos CLI is a standalone command-line tool for querying Ethos user profiles, XP balances, and reputation data. Built with:
+CLI for querying Ethos user profiles, XP balances, reputation data, trust markets, vouches, and more.
 
-- **Runtime**: Bun (native TypeScript, fast startup)
+**Stack:**
+- **Runtime**: Bun (TypeScript, fast startup)
 - **Framework**: oclif (plugin architecture, auto-docs)
-- **Testing**: bun test (built-in, fast)
-- **Distribution**: npm, Homebrew (planned), curl install (planned)
+- **Testing**: bun test
+- **Distribution**: npm (`@ethos/cli`)
 
 ## Quick Start
 
 ```bash
-# Clone and install
-git clone https://github.com/ethos-network/ethos-cli.git
-cd ethos-cli
 bun install
-
-# Development
-bun run dev user info vitalik.eth
-
-# Build
-bun run build
-
-# Test
-bun test
+bun run dev user info vitalik.eth   # Development
+bun run build                        # Build
+bun test                             # Test
 ```
 
 ## Project Structure
@@ -32,64 +24,77 @@ bun test
 ```
 ethos-cli/
 ├── src/
-│   ├── commands/          # Command implementations
-│   │   ├── user/          # User-related commands
-│   │   │   ├── info.ts    # Template for all commands
-│   │   │   └── search.ts
-│   │   └── xp/            # XP-related commands
-│   │       ├── balance.ts
-│   │       ├── rank.ts
-│   │       └── seasons.ts
+│   ├── commands/           # 37 commands across 13 topics
+│   │   ├── auction/        # active, info, list
+│   │   ├── broker/         # info, list
+│   │   ├── config/         # get, path, set
+│   │   ├── listing/        # info, list, voters
+│   │   ├── market/         # featured, holders, info, list
+│   │   ├── nft/            # list
+│   │   ├── review/         # info, list, votes
+│   │   ├── score/          # status
+│   │   ├── slash/          # info, list, votes
+│   │   ├── user/           # activity, info, invitations, search, summary
+│   │   ├── validator/      # info, list, sales
+│   │   ├── vouch/          # info, list, mutual, votes
+│   │   └── xp/             # rank, seasons
 │   ├── lib/
 │   │   ├── api/
-│   │   │   └── echo-client.ts  # Lightweight API wrapper
+│   │   │   └── echo-client.ts   # API wrapper (~970 lines, all types + methods)
+│   │   ├── config/
+│   │   │   └── index.ts         # ~/.config/ethos/config.json
+│   │   ├── errors/
+│   │   │   └── cli-error.ts     # CLIError, NetworkError, NotFoundError, APIError
 │   │   ├── formatting/
-│   │   │   └── output.ts       # Human + JSON output
-│   │   └── validation/
-│   │       └── userkey.ts      # Userkey parsing
+│   │   │   ├── colors.ts        # Color utilities
+│   │   │   ├── error.ts         # Error formatting
+│   │   │   └── output.ts        # All formatters (~930 lines)
+│   │   ├── validation/
+│   │   │   └── userkey.ts       # Identifier parsing
+│   │   └── help.ts              # Custom help class
 │   └── index.ts
 ├── test/
-│   ├── commands/          # Command tests
-│   └── lib/               # Library tests
+│   ├── commands/           # Command tests (oclif runCommand)
+│   ├── lib/                # Library tests
+│   └── helpers/            # Mock utilities
 ├── bin/
-│   ├── dev.js             # Development entry (Bun)
-│   └── run.js             # Production entry
-├── dist/                  # Compiled output
-└── package.json
+│   ├── dev.js              # Development entry
+│   └── run.js              # Production entry
+└── dist/                   # Compiled output
 ```
 
 ## Architecture
 
-### Command Structure
+### Command Pattern
 
-All commands follow the same pattern (see `src/commands/user/info.ts`):
+All commands follow this structure:
 
 ```typescript
 import { Args, Command, Flags } from '@oclif/core';
 import { EchoClient } from '../../lib/api/echo-client.js';
+import { formatError } from '../../lib/formatting/error.js';
 import { formatUser, output } from '../../lib/formatting/output.js';
 
 export default class UserInfo extends Command {
+  static aliases = ['u', 'ui'];  // Short aliases
+
   static args = {
     identifier: Args.string({
-      description: 'Username or Ethereum address',
+      description: 'Twitter username, ETH address, or ENS name',
       required: true,
     }),
   };
 
-  static description = 'Display user profile by username or address';
+  static description = 'Display user profile by username, address, or ENS name';
 
   static examples = [
-    '<%= config.bin %> <%= command.id %> vitalik.eth',
+    '<%= config.bin %> <%= command.id %> 0xNowater',
     '<%= config.bin %> <%= command.id %> vitalik.eth --json',
   ];
 
   static flags = {
-    json: Flags.boolean({
-      char: 'j',
-      description: 'Output as JSON',
-      default: false,
-    }),
+    json: Flags.boolean({ char: 'j', description: 'Output as JSON' }),
+    verbose: Flags.boolean({ char: 'v', description: 'Show detailed error information' }),
   };
 
   async run(): Promise<void> {
@@ -97,353 +102,181 @@ export default class UserInfo extends Command {
     const client = new EchoClient();
 
     try {
-      const user = await client.getUserByUsername(args.identifier);
+      const user = await client.resolveUser(args.identifier);
 
       if (flags.json) {
-        this.log(output(user, flags));
+        this.log(output(user));
       } else {
         this.log(formatUser(user));
       }
     } catch (error) {
       if (error instanceof Error) {
-        this.error(error.message, { exit: 1 });
+        this.log(formatError(error, flags.verbose));
+        this.exit(1);
       }
-      throw error;
     }
   }
 }
 ```
 
-**Key Patterns:**
-1. Extend `Command` from `@oclif/core`
-2. Define `args`, `flags`, `description`, and `examples` as static properties
-3. Implement `async run()` method
-4. Support both JSON and human-readable output
-5. Use semantic exit codes (0 = success, 1 = error, 2 = invalid usage)
+**Key patterns:**
+1. `static aliases` - Short command aliases
+2. `static flags` - Always include `--json` and `--verbose`
+3. `EchoClient` for all API calls
+4. `formatError()` for error output
+5. Dedicated formatter function per entity type
+6. `output()` for JSON serialization
 
-### API Client
+### API Client (`echo-client.ts`)
 
-`EchoClient` is a lightweight wrapper around native `fetch`:
+Single file containing:
+- All TypeScript interfaces for API responses
+- `EchoClient` class with methods for each endpoint
+- Built-in timeout (10s), debug logging, error handling
 
 ```typescript
-export class EchoClient {
-  private baseUrl: string;
+const client = new EchoClient();
 
-  constructor(env?: Environment) {
-    const environment = env || (process.env.ETHOS_ENV as Environment) || 'prod';
-    this.baseUrl = process.env.ETHOS_API_URL || API_URLS[environment];
-  }
+// User resolution (auto-detects identifier type)
+const user = await client.resolveUser('vitalik.eth');
 
-  private async request<T>(path: string): Promise<T> {
-    const url = `${this.baseUrl}${path}`;
-    const response = await fetch(url, {
-      headers: { 'Accept': 'application/json' },
-    });
+// Direct lookups
+const user = await client.getUserByTwitter('0xNowater');
+const user = await client.getUserByAddress('0x...');
+const user = await client.getUserByProfileId('123');
 
-    if (!response.ok) {
-      throw new Error(`API request failed (${response.status})`);
-    }
+// Lists with pagination
+const markets = await client.getMarkets({ limit: 10, offset: 0, orderBy: 'marketCapWei' });
+const vouches = await client.getVouches({ subjectUserkeys: ['service:x.com:user'] });
+```
 
-    return await response.json() as T;
-  }
+### Error Handling
 
-  async getUserByUsername(username: string) {
-    return this.request(`/api/v1/user/username/${encodeURIComponent(username)}`);
+Custom error classes in `lib/errors/cli-error.ts`:
+
+```typescript
+CLIError          // Base class with code + suggestions
+├── NetworkError  // Connection failures, timeouts
+├── NotFoundError // 404 responses
+├── APIError      // Other API errors
+└── ValidationError
+```
+
+Commands catch errors and use `formatError()`:
+```typescript
+catch (error) {
+  if (error instanceof Error) {
+    this.log(formatError(error, flags.verbose));
+    this.exit(1);
   }
 }
 ```
 
-**Design Principles:**
-- No dependencies beyond native fetch
-- Simple error handling with descriptive messages
-- Environment-aware (prod/staging/dev)
-- Type-safe responses (TypeScript)
+### Identifier Parsing (`lib/validation/userkey.ts`)
+
+Auto-detects identifier type:
+- `0x...` (40 hex chars) → address
+- `*.eth` → ENS
+- Pure digits → profileId
+- Everything else → Twitter username
+
+Explicit prefixes supported: `twitter:`, `address:`, `profileId:`, `service:x.com:`
 
 ### Output Formatting
 
-Two output modes: JSON and human-readable.
+Two modes: JSON (`output()`) and human-readable (dedicated formatters).
 
-**JSON Output:**
 ```typescript
-export function output<T>(data: T, flags: { json?: boolean }): string {
-  if (flags.json) {
-    return JSON.stringify(data, null, 2);
-  }
-  // ... human-readable formatting
-}
+// JSON - always use output()
+this.log(output(data));
+
+// Human-readable - use specific formatter
+this.log(formatUser(user));
+this.log(formatMarkets(markets, total));
+this.log(formatVouches(vouches, total));
 ```
 
-**Human-Readable Output:**
+Use `picocolors` for terminal colors:
 ```typescript
 import pc from 'picocolors';
-
-export function formatUser(user: any): string {
-  return [
-    pc.bold(pc.cyan(`User Profile: ${user.username}`)),
-    '',
-    `${pc.dim('ID:')} ${user.id}`,
-    `${pc.dim('Score:')} ${pc.green(String(user.score))}`,
-  ].join('\n');
-}
+pc.bold(), pc.dim(), pc.green(), pc.red(), pc.yellow(), pc.cyan()
 ```
-
-**Guidelines:**
-- Use `picocolors` for terminal colors (lightweight, fast)
-- Keep formatters simple and focused
-- Test both JSON and human output
-- Ensure JSON output is parseable by `jq`
 
 ## Development Workflow
 
 ### Adding a New Command
 
-1. Create command file in appropriate directory:
-   ```bash
-   touch src/commands/user/new-command.ts
-   ```
+1. Create file: `src/commands/<topic>/<command>.ts`
+2. Follow command pattern above
+3. Add formatter to `lib/formatting/output.ts` if needed
+4. Add API method to `lib/api/echo-client.ts` if needed
+5. Test: `bun run dev <topic> <command> --help`
+6. Add test: `test/commands/<topic>/<command>.test.ts`
+7. Regenerate README: `bun run readme`
 
-2. Copy template from `src/commands/user/info.ts`
+### Testing
 
-3. Update command class, args, flags, and logic
+```bash
+bun test                    # Run all tests
+bun test --watch            # Watch mode
+bun test test/commands/     # Run specific directory
+```
 
-4. Add formatter to `src/lib/formatting/output.ts` (if needed)
-
-5. Build and test:
-   ```bash
-   bun run build
-   bun run dev user new-command --help
-   bun run dev user new-command test-arg
-   ```
-
-6. Add tests:
-   ```bash
-   touch test/commands/user/new-command.test.ts
-   bun test
-   ```
-
-7. Update README:
-   ```bash
-   bun run readme
-   ```
-
-### Testing Strategy
-
-**Unit Tests** (`bun test`):
-- Test library functions (validation, formatting)
-- Mock API responses
-- Fast feedback loop
-
-**Integration Tests** (manual):
-- Test actual API calls
-- Verify output formatting
-- Test error handling
-
-**Example Unit Test:**
+Tests use `@oclif/test`:
 ```typescript
-import { describe, expect, test } from 'bun:test';
-import { parseUserkey } from '../../../src/lib/validation/userkey.js';
+import { describe, test, expect } from 'bun:test';
+import { runCommand } from '@oclif/test';
 
-describe('parseUserkey', () => {
-  test('parses Ethereum address', () => {
-    const result = parseUserkey('0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045');
-    expect(result).toBe('address:0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045');
+describe('user info', () => {
+  test('runs with valid identifier', async () => {
+    const { error } = await runCommand(['user', 'info', 'vitalik.eth']);
+    expect(error).toBeUndefined();
   });
 });
 ```
 
 ### Code Style
 
-**TypeScript:**
-- Use explicit return types for public functions
-- Prefer `const` over `let`
-- Use template literals for strings
-- Enable strict mode
-
-**Naming:**
-- Commands: kebab-case (`user-info.ts` → `user info`)
-- Functions: camelCase (`getUserByUsername`)
-- Classes: PascalCase (`EchoClient`)
-- Constants: UPPER_SNAKE_CASE (`API_URLS`)
-
-**Imports:**
 - Use `.js` extension for local imports (ESM requirement)
 - Sort imports: external first, then local
-- One import per line
+- Explicit return types for public functions
+- `const` over `let`
+- Exit code 1 for runtime errors, 2 for invalid usage
 
-**Error Handling:**
-- Use `try/catch` in command `run()` methods
-- Exit code 1 for runtime errors
-- Exit code 2 for invalid usage (oclif handles this)
-- Include helpful error messages
+## Configuration
 
-## Environment Variables
+Config stored at `~/.config/ethos/config.json`:
 
-**Development:**
 ```bash
-# Use local API
-export ETHOS_ENV=dev
-export ETHOS_API_URL=http://localhost:4000
-
-# Use staging API
-export ETHOS_ENV=staging
-
-# Enable verbose logging (future)
-export DEBUG=ethos:*
+ethos config get              # Show current config
+ethos config set apiUrl=...   # Set API URL
+ethos config path             # Show config file path
 ```
 
-**Production:**
-```bash
-# Default (production API)
-ethos user info vitalik.eth
-
-# Custom endpoint
-ETHOS_API_URL=https://custom-api.example.com ethos user info vitalik.eth
-```
+Environment override: `ETHOS_API_URL=http://localhost:4000 ethos user info ...`
 
 ## Build & Release
 
-### Local Development Build
-
 ```bash
-# TypeScript → JavaScript
-bun run build
-
-# Run built version
-./bin/run.js user info vitalik.eth
-```
-
-### npm Package Build
-
-```bash
-# Prepare for publishing
-bun run prepack
-
-# This runs:
-# 1. oclif manifest (generates oclif.manifest.json)
-# 2. oclif readme (updates README.md)
-
-# Publish to npm
-npm publish --access public
-```
-
-### Binary Build (Future)
-
-```bash
-# Build standalone binary with Bun
-bun build ./bin/run.js \
-  --compile \
-  --minify \
-  --sourcemap \
-  --outfile dist/ethos
-
-# Result: Single executable, no Node.js or Bun required
-./dist/ethos user info vitalik.eth
-```
-
-## Troubleshooting
-
-### TypeScript Errors
-
-**Problem:** `error TS2694: Namespace has no exported member`
-
-**Solution:** Add `"skipLibCheck": true` to `tsconfig.json`
-
-### Import Errors
-
-**Problem:** `Cannot find module './lib/api/echo-client'`
-
-**Solution:** Add `.js` extension: `import { EchoClient } from './lib/api/echo-client.js'`
-
-### Command Not Found
-
-**Problem:** `ethos: command not found` after `bun run build`
-
-**Solution:** Use `./bin/dev.js` for development or install globally:
-```bash
-npm link
-# or
-bun link
-```
-
-## Performance
-
-**Target Metrics:**
-- Cold start: < 300ms (Bun) / < 500ms (Node.js)
-- Warm start: < 100ms
-- Package size: < 5MB (npm tarball)
-- Test suite: < 1s
-
-**Profiling:**
-```bash
-# Measure startup time
-time ethos user info vitalik.eth
-
-# Check package size
-npm pack
-ls -lh ethos-cli-*.tgz
+bun run build       # TypeScript → JavaScript
+bun run prepack     # Generate manifest + README
+npm publish         # Publish to npm
 ```
 
 ## Dependencies
 
 **Runtime:**
 - `@oclif/core` - CLI framework
+- `@oclif/plugin-autocomplete` - Shell completions
+- `@oclif/plugin-help` - Help system
 - `picocolors` - Terminal colors
-- `zod` - Schema validation (optional)
+- `zod` - Schema validation
 
 **Development:**
-- `@types/bun` - Bun type definitions
-- `typescript` - Type checking
-- `oclif` - CLI development tools
-
-**Philosophy:**
-- Minimize dependencies for faster installs
-- Use native APIs where possible (fetch, JSON)
-- Prefer Bun built-ins over external packages
-
-## Contributing
-
-1. Fork repository
-2. Create feature branch: `git checkout -b feature/new-command`
-3. Make changes and test: `bun test`
-4. Build: `bun run build`
-5. Update README: `bun run readme`
-6. Commit: `git commit -m "Add new command"`
-7. Push: `git push origin feature/new-command`
-8. Open Pull Request
-
-**PR Checklist:**
-- [ ] Tests pass (`bun test`)
-- [ ] TypeScript compiles (`bun run typecheck`)
-- [ ] README updated (`bun run readme`)
-- [ ] Examples added to command
-- [ ] SKILL.md updated (for new commands)
-- [ ] No new dependencies (unless justified)
-
-## Future Enhancements
-
-**Phase 2 - Distribution:**
-- [ ] Homebrew formula
-- [ ] Curl install script
-- [ ] Binary builds (macOS, Linux)
-- [ ] GitHub Actions CI/CD
-
-**Phase 3 - Features:**
-- [ ] Review commands (read-only)
-- [ ] Vouch commands (read-only)
-- [ ] Interactive prompts (`@clack/prompts`)
-- [ ] Shell completions (bash, zsh, fish)
-- [ ] Configuration file (`~/.config/ethos/config.json`)
-- [ ] Verbose mode (`--verbose`)
-
-**Phase 4 - Advanced:**
-- [ ] Blockchain read queries (via viem)
-- [ ] Caching layer (local SQLite)
-- [ ] Batch operations
-- [ ] GraphQL support
+- `@types/bun`, `typescript`, `oclif`
 
 ## Links
 
 - [oclif Documentation](https://oclif.io)
 - [Bun Documentation](https://bun.sh/docs)
-- [Ethos API Documentation](https://docs.ethos.network/api)
 - [GitHub Repository](https://github.com/ethos-network/ethos-cli)

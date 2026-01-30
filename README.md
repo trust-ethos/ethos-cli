@@ -233,30 +233,45 @@ USAGE
 * [`ethos config get`](#ethos-config-get)
 * [`ethos config path`](#ethos-config-path)
 * [`ethos config set VALUE`](#ethos-config-set-value)
+* [`ethos find QUERY`](#ethos-find-query)
 * [`ethos help [COMMAND]`](#ethos-help-command)
 * [`ethos listing info IDENTIFIER`](#ethos-listing-info-identifier)
 * [`ethos listing list`](#ethos-listing-list)
 * [`ethos listing voters PROJECTID`](#ethos-listing-voters-projectid)
 * [`ethos market featured`](#ethos-market-featured)
-* [`ethos market holders PROFILEID`](#ethos-market-holders-profileid)
+* [`ethos market holders IDENTIFIER`](#ethos-market-holders-identifier)
 * [`ethos market info IDENTIFIER`](#ethos-market-info-identifier)
 * [`ethos market list`](#ethos-market-list)
-* [`ethos nft list USERKEY`](#ethos-nft-list-userkey)
-* [`ethos score lookup IDENTIFIER`](#ethos-score-lookup-identifier)
+* [`ethos mi IDENTIFIER`](#ethos-mi-identifier)
+* [`ethos ml`](#ethos-ml)
+* [`ethos nft list IDENTIFIER`](#ethos-nft-list-identifier)
+* [`ethos rank IDENTIFIER`](#ethos-rank-identifier)
+* [`ethos review info ID`](#ethos-review-info-id)
+* [`ethos review list IDENTIFIER`](#ethos-review-list-identifier)
+* [`ethos review votes ID`](#ethos-review-votes-id)
+* [`ethos ri ID`](#ethos-ri-id)
+* [`ethos rl IDENTIFIER`](#ethos-rl-identifier)
 * [`ethos score status IDENTIFIER`](#ethos-score-status-identifier)
 * [`ethos slash info ID`](#ethos-slash-info-id)
 * [`ethos slash list`](#ethos-slash-list)
+* [`ethos slash votes ID`](#ethos-slash-votes-id)
+* [`ethos u IDENTIFIER`](#ethos-u-identifier)
+* [`ethos ui IDENTIFIER`](#ethos-ui-identifier)
+* [`ethos us IDENTIFIER`](#ethos-us-identifier)
 * [`ethos user activity IDENTIFIER`](#ethos-user-activity-identifier)
 * [`ethos user info IDENTIFIER`](#ethos-user-info-identifier)
+* [`ethos user invitations IDENTIFIER`](#ethos-user-invitations-identifier)
 * [`ethos user search QUERY`](#ethos-user-search-query)
+* [`ethos user summary IDENTIFIER`](#ethos-user-summary-identifier)
 * [`ethos validator info TOKENID`](#ethos-validator-info-tokenid)
 * [`ethos validator list`](#ethos-validator-list)
 * [`ethos validator sales`](#ethos-validator-sales)
-* [`ethos vote list ID`](#ethos-vote-list-id)
-* [`ethos vote stats ID`](#ethos-vote-stats-id)
+* [`ethos vi ID`](#ethos-vi-id)
+* [`ethos vl [IDENTIFIER]`](#ethos-vl-identifier)
 * [`ethos vouch info ID`](#ethos-vouch-info-id)
 * [`ethos vouch list [IDENTIFIER]`](#ethos-vouch-list-identifier)
 * [`ethos vouch mutual VIEWER TARGET`](#ethos-vouch-mutual-viewer-target)
+* [`ethos vouch votes ID`](#ethos-vouch-votes-id)
 * [`ethos xp rank IDENTIFIER`](#ethos-xp-rank-identifier)
 * [`ethos xp seasons`](#ethos-xp-seasons)
 
@@ -491,6 +506,38 @@ EXAMPLES
 
 _See code: [src/commands/config/set.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/config/set.ts)_
 
+## `ethos find QUERY`
+
+Search for users by name, username, or address
+
+```
+USAGE
+  $ ethos find QUERY [-j] [-l <value>] [-v]
+
+ARGUMENTS
+  QUERY  Search query
+
+FLAGS
+  -j, --json           Output as JSON
+  -l, --limit=<value>  [default: 10] Maximum number of results
+  -v, --verbose        Show detailed error information
+
+DESCRIPTION
+  Search for users by name, username, or address
+
+ALIASES
+  $ ethos find
+
+EXAMPLES
+  $ ethos find vitalik
+
+  $ ethos find "crypto developer"
+
+  $ ethos find vitalik --json
+
+  $ ethos find web3 --limit 5
+```
+
 ## `ethos help [COMMAND]`
 
 Display help for ethos.
@@ -623,16 +670,16 @@ EXAMPLES
 
 _See code: [src/commands/market/featured.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/market/featured.ts)_
 
-## `ethos market holders PROFILEID`
+## `ethos market holders IDENTIFIER`
 
 Show who holds trust/distrust in a user
 
 ```
 USAGE
-  $ ethos market holders PROFILEID [-j] [-v] [-l <value>]
+  $ ethos market holders IDENTIFIER [-j] [-v] [-l <value>]
 
 ARGUMENTS
-  PROFILEID  Profile ID
+  IDENTIFIER  Twitter username, ETH address, or ENS name
 
 FLAGS
   -j, --json           Output as JSON
@@ -643,9 +690,11 @@ DESCRIPTION
   Show who holds trust/distrust in a user
 
 EXAMPLES
-  $ ethos market holders 123
+  $ ethos market holders sethgho
 
-  $ ethos market holders 123 --limit 20 --json
+  $ ethos market holders 0xNowater --limit 20
+
+  $ ethos market holders vitalik.eth --json
 ```
 
 _See code: [src/commands/market/holders.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/market/holders.ts)_
@@ -667,6 +716,9 @@ FLAGS
 
 DESCRIPTION
   Get trust market info for a user
+
+ALIASES
+  $ ethos mi
 
 EXAMPLES
   $ ethos market info 123
@@ -701,6 +753,9 @@ FLAGS
 DESCRIPTION
   List trust markets
 
+ALIASES
+  $ ethos ml
+
 EXAMPLES
   $ ethos market list
 
@@ -711,16 +766,79 @@ EXAMPLES
 
 _See code: [src/commands/market/list.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/market/list.ts)_
 
-## `ethos nft list USERKEY`
+## `ethos mi IDENTIFIER`
+
+Get trust market info for a user
+
+```
+USAGE
+  $ ethos mi IDENTIFIER [-j] [-v]
+
+ARGUMENTS
+  IDENTIFIER  Profile ID or Twitter username
+
+FLAGS
+  -j, --json     Output as JSON
+  -v, --verbose  Show detailed error information
+
+DESCRIPTION
+  Get trust market info for a user
+
+ALIASES
+  $ ethos mi
+
+EXAMPLES
+  $ ethos mi 123
+
+  $ ethos mi vitalik
+
+  $ ethos mi vitalik --json
+```
+
+## `ethos ml`
+
+List trust markets
+
+```
+USAGE
+  $ ethos ml [-j] [-v] [--sort marketCapWei|volume24hWei|priceChange24hPercent|score|createdAt] [--order
+    asc|desc] [-s <value>] [-l <value>] [-o <value>]
+
+FLAGS
+  -j, --json            Output as JSON
+  -l, --limit=<value>   [default: 10] Max results per request
+  -o, --offset=<value>  Number of results to skip
+  -s, --search=<value>  Search by name/username
+  -v, --verbose         Show detailed error information
+      --order=<option>  [default: desc] Sort direction
+                        <options: asc|desc>
+      --sort=<option>   [default: marketCapWei] Sort by field
+                        <options: marketCapWei|volume24hWei|priceChange24hPercent|score|createdAt>
+
+DESCRIPTION
+  List trust markets
+
+ALIASES
+  $ ethos ml
+
+EXAMPLES
+  $ ethos ml
+
+  $ ethos ml --sort priceChange24hPercent --order desc
+
+  $ ethos ml --search "vitalik" --json
+```
+
+## `ethos nft list IDENTIFIER`
 
 List NFTs owned by a user
 
 ```
 USAGE
-  $ ethos nft list USERKEY [-j] [-v] [-l <value>] [-o <value>]
+  $ ethos nft list IDENTIFIER [-j] [-v] [-l <value>] [-o <value>]
 
 ARGUMENTS
-  USERKEY  User key (address, profileId, or twitter:username)
+  IDENTIFIER  Twitter username, ETH address, or ENS name
 
 FLAGS
   -j, --json            Output as JSON
@@ -732,45 +850,199 @@ DESCRIPTION
   List NFTs owned by a user
 
 EXAMPLES
-  $ ethos nft list 0x1234...
+  $ ethos nft list sethgho
 
-  $ ethos nft list twitter:vitalik
+  $ ethos nft list 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
 
-  $ ethos nft list profileId:123 --json
+  $ ethos nft list vitalik.eth --json
 ```
 
 _See code: [src/commands/nft/list.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/nft/list.ts)_
 
-## `ethos score lookup IDENTIFIER`
+## `ethos rank IDENTIFIER`
 
-Look up reputation score for a user
+Show leaderboard rank for a user
 
 ```
 USAGE
-  $ ethos score lookup IDENTIFIER [-j] [-v] [-b]
+  $ ethos rank IDENTIFIER [-j] [-s <value>] [-v]
 
 ARGUMENTS
   IDENTIFIER  Twitter username, ETH address, or ENS name
 
 FLAGS
-  -b, --breakdown  Show full score breakdown
-  -j, --json       Output as JSON
-  -v, --verbose    Show detailed error information
+  -j, --json            Output as JSON
+  -s, --season=<value>  Show XP for specific season
+  -v, --verbose         Show detailed error information
 
 DESCRIPTION
-  Look up reputation score for a user
+  Show leaderboard rank for a user
+
+ALIASES
+  $ ethos rank
 
 EXAMPLES
-  $ ethos score lookup 0xNowater
+  $ ethos rank 0xNowater
 
-  $ ethos score lookup vitalik.eth
+  $ ethos rank 0xNowater --season 2
 
-  $ ethos score lookup 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
-
-  $ ethos score lookup 0xNowater --json
+  $ ethos rank 0xNowater --json
 ```
 
-_See code: [src/commands/score/lookup.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/score/lookup.ts)_
+## `ethos review info ID`
+
+Get details of a specific review
+
+```
+USAGE
+  $ ethos review info ID [-j] [-v]
+
+ARGUMENTS
+  ID  Review ID
+
+FLAGS
+  -j, --json     Output as JSON
+  -v, --verbose  Show detailed error information
+
+DESCRIPTION
+  Get details of a specific review
+
+ALIASES
+  $ ethos ri
+
+EXAMPLES
+  $ ethos review info 1139
+
+  $ ethos review info 1139 --json
+```
+
+_See code: [src/commands/review/info.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/review/info.ts)_
+
+## `ethos review list IDENTIFIER`
+
+List reviews for a user
+
+```
+USAGE
+  $ ethos review list IDENTIFIER [-j] [-v] [-l <value>] [-o <value>]
+
+ARGUMENTS
+  IDENTIFIER  Twitter username, ETH address, or ENS name
+
+FLAGS
+  -j, --json            Output as JSON
+  -l, --limit=<value>   [default: 10] Max results per request
+  -o, --offset=<value>  Number of results to skip
+  -v, --verbose         Show detailed error information
+
+DESCRIPTION
+  List reviews for a user
+
+ALIASES
+  $ ethos rl
+
+EXAMPLES
+  $ ethos review list sethgho
+
+  $ ethos review list 0xNowater --limit 20
+
+  $ ethos review list vitalik.eth --json
+```
+
+_See code: [src/commands/review/list.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/review/list.ts)_
+
+## `ethos review votes ID`
+
+Show votes on a review
+
+```
+USAGE
+  $ ethos review votes ID [-j] [-v] [-s] [--upvotes | --downvotes] [-l <value>] [-o <value>]
+
+ARGUMENTS
+  ID  Review ID
+
+FLAGS
+  -j, --json            Output as JSON
+  -l, --limit=<value>   [default: 10] Max results per request
+  -o, --offset=<value>  Number of results to skip
+  -s, --stats           Show vote statistics only
+  -v, --verbose         Show detailed error information
+      --downvotes       Show only downvotes
+      --upvotes         Show only upvotes
+
+DESCRIPTION
+  Show votes on a review
+
+EXAMPLES
+  $ ethos review votes 123
+
+  $ ethos review votes 123 --stats
+
+  $ ethos review votes 123 --upvotes
+
+  $ ethos review votes 123 --json
+```
+
+_See code: [src/commands/review/votes.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/review/votes.ts)_
+
+## `ethos ri ID`
+
+Get details of a specific review
+
+```
+USAGE
+  $ ethos ri ID [-j] [-v]
+
+ARGUMENTS
+  ID  Review ID
+
+FLAGS
+  -j, --json     Output as JSON
+  -v, --verbose  Show detailed error information
+
+DESCRIPTION
+  Get details of a specific review
+
+ALIASES
+  $ ethos ri
+
+EXAMPLES
+  $ ethos ri 1139
+
+  $ ethos ri 1139 --json
+```
+
+## `ethos rl IDENTIFIER`
+
+List reviews for a user
+
+```
+USAGE
+  $ ethos rl IDENTIFIER [-j] [-v] [-l <value>] [-o <value>]
+
+ARGUMENTS
+  IDENTIFIER  Twitter username, ETH address, or ENS name
+
+FLAGS
+  -j, --json            Output as JSON
+  -l, --limit=<value>   [default: 10] Max results per request
+  -o, --offset=<value>  Number of results to skip
+  -v, --verbose         Show detailed error information
+
+DESCRIPTION
+  List reviews for a user
+
+ALIASES
+  $ ethos rl
+
+EXAMPLES
+  $ ethos rl sethgho
+
+  $ ethos rl 0xNowater --limit 20
+
+  $ ethos rl vitalik.eth --json
+```
 
 ## `ethos score status IDENTIFIER`
 
@@ -860,6 +1132,134 @@ EXAMPLES
 
 _See code: [src/commands/slash/list.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/slash/list.ts)_
 
+## `ethos slash votes ID`
+
+Show votes on a slash
+
+```
+USAGE
+  $ ethos slash votes ID [-j] [-v] [-s] [--upvotes | --downvotes] [-l <value>] [-o <value>]
+
+ARGUMENTS
+  ID  Slash ID
+
+FLAGS
+  -j, --json            Output as JSON
+  -l, --limit=<value>   [default: 10] Max results per request
+  -o, --offset=<value>  Number of results to skip
+  -s, --stats           Show vote statistics only
+  -v, --verbose         Show detailed error information
+      --downvotes       Show only downvotes
+      --upvotes         Show only upvotes
+
+DESCRIPTION
+  Show votes on a slash
+
+EXAMPLES
+  $ ethos slash votes 195
+
+  $ ethos slash votes 195 --stats
+
+  $ ethos slash votes 195 --upvotes
+
+  $ ethos slash votes 195 --json
+```
+
+_See code: [src/commands/slash/votes.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/slash/votes.ts)_
+
+## `ethos u IDENTIFIER`
+
+Display user profile by username, address, or ENS name
+
+```
+USAGE
+  $ ethos u IDENTIFIER [-j] [-v]
+
+ARGUMENTS
+  IDENTIFIER  Twitter username, ETH address, or ENS name
+
+FLAGS
+  -j, --json     Output as JSON
+  -v, --verbose  Show detailed error information
+
+DESCRIPTION
+  Display user profile by username, address, or ENS name
+
+ALIASES
+  $ ethos u
+  $ ethos ui
+
+EXAMPLES
+  $ ethos u 0xNowater
+
+  $ ethos u 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
+
+  $ ethos u vitalik.eth
+
+  $ ethos u 0xNowater --json
+```
+
+## `ethos ui IDENTIFIER`
+
+Display user profile by username, address, or ENS name
+
+```
+USAGE
+  $ ethos ui IDENTIFIER [-j] [-v]
+
+ARGUMENTS
+  IDENTIFIER  Twitter username, ETH address, or ENS name
+
+FLAGS
+  -j, --json     Output as JSON
+  -v, --verbose  Show detailed error information
+
+DESCRIPTION
+  Display user profile by username, address, or ENS name
+
+ALIASES
+  $ ethos u
+  $ ethos ui
+
+EXAMPLES
+  $ ethos ui 0xNowater
+
+  $ ethos ui 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
+
+  $ ethos ui vitalik.eth
+
+  $ ethos ui 0xNowater --json
+```
+
+## `ethos us IDENTIFIER`
+
+Display comprehensive user summary with activity and vouches
+
+```
+USAGE
+  $ ethos us IDENTIFIER [-j] [-v]
+
+ARGUMENTS
+  IDENTIFIER  Twitter username, ETH address, or ENS name
+
+FLAGS
+  -j, --json     Output as JSON
+  -v, --verbose  Show detailed error information
+
+DESCRIPTION
+  Display comprehensive user summary with activity and vouches
+
+ALIASES
+  $ ethos us
+
+EXAMPLES
+  $ ethos us sethgho
+
+  $ ethos us 0xNowater
+
+  $ ethos us vitalik.eth --json
+```
+
 ## `ethos user activity IDENTIFIER`
 
 Show recent reviews and vouches for a user
@@ -911,6 +1311,10 @@ FLAGS
 DESCRIPTION
   Display user profile by username, address, or ENS name
 
+ALIASES
+  $ ethos u
+  $ ethos ui
+
 EXAMPLES
   $ ethos user info 0xNowater
 
@@ -922,6 +1326,38 @@ EXAMPLES
 ```
 
 _See code: [src/commands/user/info.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/user/info.ts)_
+
+## `ethos user invitations IDENTIFIER`
+
+List invitations sent by a user
+
+```
+USAGE
+  $ ethos user invitations IDENTIFIER [-j] [-v] [-s INVITED|ACCEPTED] [-l <value>] [-o <value>]
+
+ARGUMENTS
+  IDENTIFIER  Twitter username, ETH address, or ENS name
+
+FLAGS
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Max results per request
+  -o, --offset=<value>   Number of results to skip
+  -s, --status=<option>  Filter by status
+                         <options: INVITED|ACCEPTED>
+  -v, --verbose          Show detailed error information
+
+DESCRIPTION
+  List invitations sent by a user
+
+EXAMPLES
+  $ ethos user invitations sethgho
+
+  $ ethos user invitations 0xNowater --status ACCEPTED
+
+  $ ethos user invitations vitalik.eth --json
+```
+
+_See code: [src/commands/user/invitations.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/user/invitations.ts)_
 
 ## `ethos user search QUERY`
 
@@ -942,6 +1378,9 @@ FLAGS
 DESCRIPTION
   Search for users by name, username, or address
 
+ALIASES
+  $ ethos find
+
 EXAMPLES
   $ ethos user search vitalik
 
@@ -953,6 +1392,37 @@ EXAMPLES
 ```
 
 _See code: [src/commands/user/search.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/user/search.ts)_
+
+## `ethos user summary IDENTIFIER`
+
+Display comprehensive user summary with activity and vouches
+
+```
+USAGE
+  $ ethos user summary IDENTIFIER [-j] [-v]
+
+ARGUMENTS
+  IDENTIFIER  Twitter username, ETH address, or ENS name
+
+FLAGS
+  -j, --json     Output as JSON
+  -v, --verbose  Show detailed error information
+
+DESCRIPTION
+  Display comprehensive user summary with activity and vouches
+
+ALIASES
+  $ ethos us
+
+EXAMPLES
+  $ ethos user summary sethgho
+
+  $ ethos user summary 0xNowater
+
+  $ ethos user summary vitalik.eth --json
+```
+
+_See code: [src/commands/user/summary.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/user/summary.ts)_
 
 ## `ethos validator info TOKENID`
 
@@ -1035,69 +1505,69 @@ EXAMPLES
 
 _See code: [src/commands/validator/sales.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/validator/sales.ts)_
 
-## `ethos vote list ID`
+## `ethos vi ID`
 
-List votes on an activity
+Get details of a specific vouch
 
 ```
 USAGE
-  $ ethos vote list ID -t review|vouch|slash [-j] [-v] [--upvotes | --downvotes] [-l <value>] [-o <value>]
+  $ ethos vi ID [-j] [-v]
 
 ARGUMENTS
-  ID  Activity ID (review, vouch, or slash)
+  ID  Vouch ID
+
+FLAGS
+  -j, --json     Output as JSON
+  -v, --verbose  Show detailed error information
+
+DESCRIPTION
+  Get details of a specific vouch
+
+ALIASES
+  $ ethos vi
+
+EXAMPLES
+  $ ethos vi 123
+
+  $ ethos vi 123 --json
+```
+
+## `ethos vl [IDENTIFIER]`
+
+List vouches for a user or all vouches
+
+```
+USAGE
+  $ ethos vl [IDENTIFIER] [-j] [-v] [--author <value>] [--active] [-l <value>] [-o <value>]
+
+ARGUMENTS
+  [IDENTIFIER]  Twitter username, ETH address, or ENS name (optional, filter by subject)
 
 FLAGS
   -j, --json            Output as JSON
   -l, --limit=<value>   [default: 10] Max results per request
   -o, --offset=<value>  Number of results to skip
-  -t, --type=<option>   (required) Activity type
-                        <options: review|vouch|slash>
   -v, --verbose         Show detailed error information
-      --downvotes       Show only downvotes
-      --upvotes         Show only upvotes
+      --active          Show only active (non-archived) vouches
+      --author=<value>  Filter by author (Twitter username, ETH address, or ENS name)
 
 DESCRIPTION
-  List votes on an activity
+  List vouches for a user or all vouches
+
+ALIASES
+  $ ethos vl
 
 EXAMPLES
-  $ ethos vote list 123 --type review
+  $ ethos vl
 
-  $ ethos vote list 456 --type slash --upvotes
+  $ ethos vl 0xNowater
 
-  $ ethos vote list 789 --type vouch --downvotes --json
+  $ ethos vl --author 0xNowater
+
+  $ ethos vl --active
+
+  $ ethos vl --limit 20 --json
 ```
-
-_See code: [src/commands/vote/list.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/vote/list.ts)_
-
-## `ethos vote stats ID`
-
-Get vote stats for an activity
-
-```
-USAGE
-  $ ethos vote stats ID -t review|vouch|slash [-j] [-v]
-
-ARGUMENTS
-  ID  Activity ID (review, vouch, or slash)
-
-FLAGS
-  -j, --json           Output as JSON
-  -t, --type=<option>  (required) Activity type
-                       <options: review|vouch|slash>
-  -v, --verbose        Show detailed error information
-
-DESCRIPTION
-  Get vote stats for an activity
-
-EXAMPLES
-  $ ethos vote stats 123 --type review
-
-  $ ethos vote stats 456 --type slash
-
-  $ ethos vote stats 789 --type vouch --json
-```
-
-_See code: [src/commands/vote/stats.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/vote/stats.ts)_
 
 ## `ethos vouch info ID`
 
@@ -1116,6 +1586,9 @@ FLAGS
 
 DESCRIPTION
   Get details of a specific vouch
+
+ALIASES
+  $ ethos vi
 
 EXAMPLES
   $ ethos vouch info 123
@@ -1146,6 +1619,9 @@ FLAGS
 
 DESCRIPTION
   List vouches for a user or all vouches
+
+ALIASES
+  $ ethos vl
 
 EXAMPLES
   $ ethos vouch list
@@ -1191,6 +1667,41 @@ EXAMPLES
 
 _See code: [src/commands/vouch/mutual.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/vouch/mutual.ts)_
 
+## `ethos vouch votes ID`
+
+Show votes on a vouch
+
+```
+USAGE
+  $ ethos vouch votes ID [-j] [-v] [-s] [--upvotes | --downvotes] [-l <value>] [-o <value>]
+
+ARGUMENTS
+  ID  Vouch ID
+
+FLAGS
+  -j, --json            Output as JSON
+  -l, --limit=<value>   [default: 10] Max results per request
+  -o, --offset=<value>  Number of results to skip
+  -s, --stats           Show vote statistics only
+  -v, --verbose         Show detailed error information
+      --downvotes       Show only downvotes
+      --upvotes         Show only upvotes
+
+DESCRIPTION
+  Show votes on a vouch
+
+EXAMPLES
+  $ ethos vouch votes 182
+
+  $ ethos vouch votes 182 --stats
+
+  $ ethos vouch votes 182 --upvotes
+
+  $ ethos vouch votes 182 --json
+```
+
+_See code: [src/commands/vouch/votes.ts](https://github.com/ethos-network/ethos-cli/blob/v1.0.0/src/commands/vouch/votes.ts)_
+
 ## `ethos xp rank IDENTIFIER`
 
 Show leaderboard rank for a user
@@ -1209,6 +1720,9 @@ FLAGS
 
 DESCRIPTION
   Show leaderboard rank for a user
+
+ALIASES
+  $ ethos rank
 
 EXAMPLES
   $ ethos xp rank 0xNowater
