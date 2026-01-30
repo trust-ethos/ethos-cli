@@ -4,6 +4,8 @@ import { formatError } from '../../lib/formatting/error.js';
 import { formatSearchResults, output } from '../../lib/formatting/output.js';
 
 export default class UserSearch extends Command {
+  static aliases = ['find'];
+
   static args = {
     query: Args.string({
       description: 'Search query',

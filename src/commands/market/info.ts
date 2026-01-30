@@ -4,6 +4,8 @@ import { formatError } from '../../lib/formatting/error.js';
 import { formatMarket, output } from '../../lib/formatting/output.js';
 
 export default class MarketInfo extends Command {
+  static aliases = ['mi'];
+
   static description = 'Get trust market info for a user';
 
   static args = {

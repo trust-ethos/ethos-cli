@@ -4,6 +4,8 @@ import { formatError } from '../../lib/formatting/error.js';
 import { formatRank, output } from '../../lib/formatting/output.js';
 
 export default class XpRank extends Command {
+  static aliases = ['rank'];
+
   static args = {
     identifier: Args.string({
       description: 'Twitter username, ETH address, or ENS name',

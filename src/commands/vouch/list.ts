@@ -4,6 +4,8 @@ import { formatError } from '../../lib/formatting/error.js';
 import { formatVouches, output } from '../../lib/formatting/output.js';
 
 export default class VouchList extends Command {
+  static aliases = ['vl'];
+
   static args = {
     identifier: Args.string({
       description: 'Twitter username, ETH address, or ENS name (optional, filter by subject)',

@@ -23,6 +23,8 @@ const LEVEL_COLORS: Record<ScoreLevel, (s: string) => string> = {
 };
 
 export default class UserSummary extends Command {
+  static aliases = ['us'];
+
   static args = {
     identifier: Args.string({
       description: 'Twitter username, ETH address, or ENS name',

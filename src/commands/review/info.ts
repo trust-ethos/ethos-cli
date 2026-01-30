@@ -4,6 +4,8 @@ import { formatError } from '../../lib/formatting/error.js';
 import { formatReview, output } from '../../lib/formatting/output.js';
 
 export default class ReviewInfo extends Command {
+  static aliases = ['ri'];
+
   static args = {
     id: Args.integer({
       description: 'Review ID',

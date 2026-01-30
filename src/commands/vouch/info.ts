@@ -4,6 +4,8 @@ import { formatError } from '../../lib/formatting/error.js';
 import { formatVouch, output } from '../../lib/formatting/output.js';
 
 export default class VouchInfo extends Command {
+  static aliases = ['vi'];
+
   static args = {
     id: Args.integer({
       description: 'Vouch ID',

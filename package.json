@@ -48,6 +48,9 @@
     "dirname": "ethos",
     "commands": "./dist/commands",
     "helpClass": "./dist/lib/help",
+    "helpOptions": {
+      "hideAliasesFromRoot": true
+    },
     "plugins": [
       "@oclif/plugin-help",
       "@oclif/plugin-autocomplete"

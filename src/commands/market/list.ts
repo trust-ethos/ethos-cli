@@ -4,6 +4,8 @@ import { formatError } from '../../lib/formatting/error.js';
 import { formatMarkets, output } from '../../lib/formatting/output.js';
 
 export default class MarketList extends Command {
+  static aliases = ['ml'];
+
   static description = 'List trust markets';
 
   static examples = [

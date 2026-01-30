@@ -1,14 +1,15 @@
 import { Help } from '@oclif/core';
 import pc from 'picocolors';
 import { loadConfig } from './config/index.js';
+import { ethosGray } from './formatting/colors.js';
 
 const ETHOS_BANNER = `
-${pc.cyan('███████╗████████╗██╗  ██╗ ██████╗ ███████╗')}
-${pc.cyan('██╔════╝╚══██╔══╝██║  ██║██╔═══██╗██╔════╝')}
-${pc.cyan('█████╗     ██║   ███████║██║   ██║███████╗')}
-${pc.cyan('██╔══╝     ██║   ██╔══██║██║   ██║╚════██║')}
-${pc.cyan('███████╗   ██║   ██║  ██║╚██████╔╝███████║')}
-${pc.cyan('╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚══════╝')}
+${ethosGray('███████╗████████╗██╗  ██╗ ██████╗ ███████╗')}
+${ethosGray('██╔════╝╚══██╔══╝██║  ██║██╔═══██╗██╔════╝')}
+${ethosGray('█████╗     ██║   ███████║██║   ██║███████╗')}
+${ethosGray('██╔══╝     ██║   ██╔══██║██║   ██║╚════██║')}
+${ethosGray('███████╗   ██║   ██║  ██║╚██████╔╝███████║')}
+${ethosGray('╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚══════╝')}
 `;
 
 export default class EthosHelp extends Help {
