@@ -1,0 +1,127 @@
+name: release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.version-check.outputs.should_release }}
+      tag: ${{ steps.version-check.outputs.tag }}
+      version: ${{ steps.version-check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - name: Check if version already exists
+        id: version-check
+        run: |
+          package_version=$(node -p "require('./package.json').version")
+          echo "version=$package_version" >> $GITHUB_OUTPUT
+          
+          # Check if tag already exists
+          if git ls-remote --tags origin | grep -q "refs/tags/v$package_version"; then
+            echo "Version v$package_version already exists"
+            echo "::warning file=package.json::Version v$package_version already exists - no release will be created"
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          else
+            echo "Version v$package_version is new. Will create release."
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "tag=v$package_version" >> $GITHUB_OUTPUT
+          fi
+
+  release:
+    needs: check-version
+    if: needs.check-version.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: latest
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Generate oclif manifest and README
+        run: npm run prepack
+
+      - name: Check for README changes
+        id: readme-check
+        run: |
+          if [ -n "$(git status --porcelain README.md)" ]; then
+            echo "readme_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "readme_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit README changes
+        if: steps.readme-check.outputs.readme_changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "chore: update README.md"
+          git push
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.check-version.outputs.tag }}
+          name: ${{ needs.check-version.outputs.tag }}
+          generate_release_notes: true
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - run: npm run postpack
+
+  build-binaries:
+    needs: [check-version, release]
+    if: needs.check-version.outputs.should_release == 'true'
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            target: darwin-arm64
+          - os: macos-13
+            target: darwin-x64
+          - os: ubuntu-latest
+            target: linux-x64
+          - os: ubuntu-latest
+            target: linux-arm64
+          - os: windows-latest
+            target: win32-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.check-version.outputs.tag }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: latest
+      - run: npm install
+      - run: npm run build
+      - run: npm run prepack
+
+      - name: Build tarball
+        run: npx oclif pack tarballs --root=. --targets=${{ matrix.target }} --xz
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.check-version.outputs.tag }}
+          files: |
+            dist/*.tar.gz
+            dist/*.tar.xz
