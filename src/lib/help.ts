@@ -18,7 +18,9 @@ export default class EthosHelp extends Help {
 
     console.log(ETHOS_BANNER);
     console.log(pc.dim('  The reputation layer for the internet\n'));
-    console.log(`  ${pc.dim('API:')} ${config.apiUrl}`);
+    const isProd = config.apiUrl === 'https://api.ethos.network';
+    const apiColor = isProd ? pc.green : pc.yellow;
+    console.log(`  ${pc.dim('API:')} ${apiColor(config.apiUrl)}`);
     console.log('');
     
     await super.showRootHelp();
