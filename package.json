@@ -1,7 +1,7 @@
 {
   "name": "@trust-ethos/cli",
   "description": "Official Ethos CLI - Query user profiles, XP balances, and reputation data",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "author": "Ethos Network",
   "bin": {
     "ethos": "./bin/run.js"
