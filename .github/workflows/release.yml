@@ -11,6 +11,7 @@ jobs:
       should_release: ${{ steps.version-check.outputs.should_release }}
       tag: ${{ steps.version-check.outputs.tag }}
       version: ${{ steps.version-check.outputs.version }}
+      sha: ${{ steps.version-check.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,6 +20,7 @@ jobs:
         run: |
           package_version=$(node -p "require('./package.json').version")
           echo "version=$package_version" >> $GITHUB_OUTPUT
+          echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
           
           if git ls-remote --tags origin | grep -q "refs/tags/v$package_version"; then
             echo "Version v$package_version already exists"
@@ -96,7 +98,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.check-version.outputs.tag }}
+          ref: ${{ needs.check-version.outputs.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: latest
