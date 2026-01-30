@@ -239,12 +239,7 @@ export function applyPendingUpdate(): boolean {
   const pending = getPendingUpdate();
   if (!pending) return false;
   
-  const isDevMode = process.execPath.includes('bun') || process.execPath.includes('node');
-  if (isDevMode) {
-    try { unlinkSync(PENDING_FILE); } catch {}
-    return false;
-  }
-  
+  // Check managed install FIRST (bundled node path contains 'node')
   const isManagedInstall = process.execPath.startsWith(ETHOS_HOME);
   if (!isManagedInstall) {
     try { unlinkSync(PENDING_FILE); } catch {}
