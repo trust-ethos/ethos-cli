@@ -83,7 +83,12 @@ jobs:
           generate_release_notes: true
 
       - name: Publish to npm
-        run: npm publish --provenance --access public
+        run: |
+          if npm view @ethos-network/cli@${{ needs.check-version.outputs.version }} > /dev/null 2>&1; then
+            echo "Version ${{ needs.check-version.outputs.version }} already published, skipping"
+          else
+            npm publish --provenance --access public
+          fi
 
       - run: npm run postpack
 
