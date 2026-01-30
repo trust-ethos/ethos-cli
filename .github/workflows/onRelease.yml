@@ -5,7 +5,7 @@ on:
     types: [released]
 
 jobs:
-  publish:
+  publish-npm:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,3 +19,37 @@ jobs:
         with:
           token: ${{ secrets.NPM_TOKEN }}
       - run: npm run postpack
+
+  build-binaries:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            target: darwin-arm64
+          - os: macos-13
+            target: darwin-x64
+          - os: ubuntu-latest
+            target: linux-x64
+          - os: ubuntu-latest
+            target: linux-arm64
+          - os: windows-latest
+            target: win32-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: latest
+      - run: npm install
+      - run: npm run build
+      - run: npm run prepack
+      - name: Build tarball
+        run: npx oclif pack tarballs --root=. --targets=${{ matrix.target }} --xz
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.tar.gz
+            dist/*.tar.xz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}

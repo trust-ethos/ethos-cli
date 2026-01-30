@@ -51,6 +51,9 @@
     "helpOptions": {
       "hideAliasesFromRoot": true
     },
+    "hooks": {
+      "init": "./dist/hooks/init"
+    },
     "plugins": [
       "@oclif/plugin-help",
       "@oclif/plugin-autocomplete"
@@ -69,6 +72,7 @@
   "scripts": {
     "build": "bun run build:ts",
     "build:ts": "shx rm -rf dist && tsc -b",
+    "build:binaries": "./scripts/build-binaries.sh",
     "dev": "./bin/dev.js",
     "lint": "oxlint src || true",
     "postpack": "shx rm -f oclif.manifest.json",

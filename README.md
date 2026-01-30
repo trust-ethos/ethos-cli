@@ -7,7 +7,15 @@ Official Ethos CLI - Query user profiles, XP balances, and reputation data
 
 ## Installation
 
-### npm (Recommended for developers)
+### Quick Install (Recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/trust-ethos/ethos-cli/main/scripts/install.sh | sh
+```
+
+This installs the CLI to `~/.ethos/` and **automatically keeps it up to date**.
+
+### npm
 
 ```bash
 npm install -g @ethos/cli
@@ -15,23 +23,17 @@ npm install -g @ethos/cli
 bun install -g @ethos/cli
 ```
 
-### Homebrew (Coming soon)
+### Homebrew
 
 ```bash
-brew tap ethos-network/tap
+brew tap trust-ethos/tap
 brew install ethos
-```
-
-### Curl Install (Coming soon)
-
-```bash
-curl -fsSL https://ethos.network/install | bash
 ```
 
 ### From Source
 
 ```bash
-git clone https://github.com/ethos-network/ethos-cli.git
+git clone https://github.com/trust-ethos/ethos-cli.git
 cd ethos-cli
 bun install
 bun run build
@@ -39,6 +41,18 @@ npm link
 ```
 
 To unlink: `npm unlink -g @ethos/cli`
+
+## Updates
+
+The CLI handles updates differently depending on how you installed it:
+
+| Install Method | Update Behavior |
+|----------------|-----------------|
+| **curl** | Auto-updates silently in the background |
+| **npm** | Shows update notification, run `npm update -g @ethos/cli` |
+| **Homebrew** | Shows update notification, run `brew upgrade ethos` |
+
+For curl installs, updates are checked daily and applied automatically on the next CLI run.
 
 ## Usage
 

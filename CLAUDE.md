@@ -258,10 +258,52 @@ Environment override: `ETHOS_API_URL=http://localhost:4000 ethos user info ...`
 ## Build & Release
 
 ```bash
-bun run build       # TypeScript → JavaScript
-bun run prepack     # Generate manifest + README
-npm publish         # Publish to npm
+bun run build           # TypeScript → JavaScript
+bun run prepack         # Generate manifest + README
+bun run build:binaries  # Build platform tarballs (uses oclif pack)
+npm publish             # Publish to npm
 ```
+
+## Distribution
+
+The CLI is distributed via multiple channels:
+
+### npm (Primary)
+```bash
+npm install -g @ethos/cli
+```
+
+### curl installer
+```bash
+curl -fsSL https://raw.githubusercontent.com/trust-ethos/ethos-cli/main/scripts/install.sh | sh
+```
+Installs to `~/.ethos/` with auto-updates enabled.
+
+### Homebrew (requires tap setup)
+```bash
+brew tap trust-ethos/tap
+brew install ethos
+```
+
+### GitHub Releases
+Platform-specific tarballs (~24MB) are uploaded to each release:
+- `ethos-vX.Y.Z-darwin-arm64.tar.gz` (macOS Apple Silicon)
+- `ethos-vX.Y.Z-darwin-x64.tar.gz` (macOS Intel)
+- `ethos-vX.Y.Z-linux-x64.tar.gz` (Linux x64)
+- `ethos-vX.Y.Z-linux-arm64.tar.gz` (Linux ARM)
+- `ethos-vX.Y.Z-win32-x64.tar.gz` (Windows)
+
+### Auto-Updates
+
+For curl/tarball installs, the CLI auto-updates:
+1. Checks GitHub releases daily (cached 24h)
+2. Downloads new version in background
+3. Applies update on next CLI run
+
+Update data stored in `~/.ethos/`:
+- `versions/` - Installed versions
+- `updates/` - Download cache
+- `current` - Symlink to active version
 
 ## Dependencies
 
