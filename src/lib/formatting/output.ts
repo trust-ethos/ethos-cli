@@ -148,6 +148,22 @@ export function formatRank(data: { rank: number; totalXp?: number; userkey?: str
   return lines.join('\n');
 }
 
+export function formatXP(data: { totalXp: number; username?: string; userkey?: string }): string {
+  const lines = [
+    pc.bold(pc.cyan('XP Balance')),
+    '',
+    `${pc.dim('Total XP:')} ${pc.green(data.totalXp.toLocaleString())}`,
+  ];
+
+  if (data.username) {
+    lines.push(`${pc.dim('User:')} ${data.username}`);
+  } else if (data.userkey) {
+    lines.push(`${pc.dim('Userkey:')} ${data.userkey}`);
+  }
+
+  return lines.join('\n');
+}
+
 export function formatSearchResults(results: EthosUser[]): string {
   if (!results || results.length === 0) {
     return pc.yellow('No users found');

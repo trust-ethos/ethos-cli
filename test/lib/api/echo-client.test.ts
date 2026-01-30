@@ -161,7 +161,7 @@ describe('EchoClient', () => {
         Promise.resolve({
           ok: false,
           status: 500,
-          json: () => Promise.resolve({ message: 'Internal Server Error' }),
+          text: () => Promise.resolve(JSON.stringify({ message: 'Internal Server Error' })),
         } as Response)
       );
 
@@ -658,7 +658,7 @@ describe('EchoClient', () => {
         Promise.resolve({
           ok: false,
           status: 400,
-          json: () => Promise.resolve({ message: 'Bad request' }),
+          text: () => Promise.resolve(JSON.stringify({ message: 'Bad request' })),
         } as Response)
       );
 

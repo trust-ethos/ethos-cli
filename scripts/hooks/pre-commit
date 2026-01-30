@@ -1,0 +1,19 @@
+#!/bin/sh
+# Pre-commit hook: Run typecheck on staged files
+# Install with: cp scripts/hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+
+echo "Running typecheck..."
+
+# Run typecheck
+bun run typecheck
+TYPECHECK_EXIT_CODE=$?
+
+if [ $TYPECHECK_EXIT_CODE -ne 0 ]; then
+    echo ""
+    echo "Typecheck failed! Commit aborted."
+    echo "Fix the type errors and try again."
+    exit 1
+fi
+
+echo "Typecheck passed!"
+exit 0
