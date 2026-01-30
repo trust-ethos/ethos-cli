@@ -54,26 +54,8 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Generate oclif manifest and README
+      - name: Generate oclif manifest
         run: npm run prepack
-
-      - name: Check for README changes
-        id: readme-check
-        run: |
-          if [ -n "$(git status --porcelain README.md)" ]; then
-            echo "readme_changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "readme_changed=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Commit README changes
-        if: steps.readme-check.outputs.readme_changed == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add README.md
-          git commit -m "chore: update README.md"
-          git push
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
