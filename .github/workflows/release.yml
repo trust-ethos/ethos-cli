@@ -20,7 +20,6 @@ jobs:
           package_version=$(node -p "require('./package.json').version")
           echo "version=$package_version" >> $GITHUB_OUTPUT
           
-          # Check if tag already exists
           if git ls-remote --tags origin | grep -q "refs/tags/v$package_version"; then
             echo "Version v$package_version already exists"
             echo "::warning file=package.json::Version v$package_version already exists - no release will be created"
@@ -57,12 +56,13 @@ jobs:
       - name: Generate oclif manifest
         run: npm run prepack
 
-      - name: Create GitHub Release
+      - name: Create draft GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.check-version.outputs.tag }}
           name: ${{ needs.check-version.outputs.tag }}
           generate_release_notes: true
+          draft: true
 
       - name: Publish to npm
         run: |
@@ -116,8 +116,21 @@ jobs:
             dist/*.tar.gz
             dist/*.tar.xz
 
-  update-homebrew:
+  publish-release:
     needs: [check-version, build-binaries]
+    if: needs.check-version.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.check-version.outputs.tag }}
+        run: gh release edit "$TAG" --repo ${{ github.repository }} --draft=false
+
+  update-homebrew:
+    needs: [check-version, publish-release]
     if: needs.check-version.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -129,7 +142,6 @@ jobs:
         run: |
           set -e
           
-          # Get SHA256 for each platform
           get_sha256() {
             local platform=$1
             local asset_name=$(gh release view "$TAG" --repo trust-ethos/ethos-cli --json assets --jq ".assets[].name" | grep "${platform}.tar.gz$")
@@ -142,14 +154,12 @@ jobs:
           SHA_LINUX_ARM64=$(get_sha256 "linux-arm64")
           SHA_LINUX_X64=$(get_sha256 "linux-x64")
           
-          # Get asset filenames
           ASSETS=$(gh release view "$TAG" --repo trust-ethos/ethos-cli --json assets --jq '.assets[].name')
           ASSET_DARWIN_ARM64=$(echo "$ASSETS" | grep "darwin-arm64.tar.gz$")
           ASSET_DARWIN_X64=$(echo "$ASSETS" | grep "darwin-x64.tar.gz$")
           ASSET_LINUX_ARM64=$(echo "$ASSETS" | grep "linux-arm64.tar.gz$")
           ASSET_LINUX_X64=$(echo "$ASSETS" | grep "linux-x64.tar.gz$")
           
-          # Generate formula
           cat > /tmp/ethos.rb << EOF
           class Ethos < Formula
             desc "CLI for querying Ethos user profiles, XP balances, and reputation data"
@@ -190,10 +200,8 @@ jobs:
           end
           EOF
           
-          # Remove leading whitespace from heredoc
           sed -i 's/^          //' /tmp/ethos.rb
           
-          # Clone tap repo and update formula
           git clone "https://x-access-token:${GH_TOKEN}@github.com/trust-ethos/homebrew-tap.git" /tmp/homebrew-tap
           cp /tmp/ethos.rb /tmp/homebrew-tap/Formula/ethos.rb
           
