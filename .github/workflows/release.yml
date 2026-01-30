@@ -90,7 +90,7 @@ jobs:
             target: linux-x64
           - os: ubuntu-latest
             target: linux-arm64
-          - os: windows-latest
+          - os: ubuntu-latest
             target: win32-x64
     runs-on: ${{ matrix.os }}
     steps:
