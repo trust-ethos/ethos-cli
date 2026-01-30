@@ -1,7 +1,7 @@
 class Ethos < Formula
   desc "CLI for querying Ethos user profiles, XP balances, and reputation data"
   homepage "https://github.com/trust-ethos/ethos-cli"
-  version "1.0.0"
+  version "0.0.1"
   license "MIT"
 
   on_macos do
