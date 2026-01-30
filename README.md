@@ -244,7 +244,7 @@ $ npm install -g @ethos-network/cli
 $ ethos COMMAND
 running command...
 $ ethos (--version)
-@ethos-network/cli/0.0.1 linux-x64 node-v25.5.0
+@ethos-network/cli/0.0.1 linux-x64 node-v22.22.0
 $ ethos --help [COMMAND]
 USAGE
   $ ethos COMMAND
