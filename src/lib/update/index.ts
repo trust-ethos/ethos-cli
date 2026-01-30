@@ -298,19 +298,21 @@ export interface InstallInfo {
 export function detectInstallMethod(): InstallInfo {
   const execPath = process.execPath;
   
-  if (execPath.includes('bun') || execPath.includes('node')) {
-    return {
-      method: 'dev',
-      supportsAutoUpdate: false,
-      updateCommand: 'git pull && bun install && bun run build',
-    };
-  }
-  
+  // Check managed install FIRST (curl installer puts binaries in ~/.ethos/)
   if (execPath.startsWith(ETHOS_HOME)) {
     return {
       method: 'curl',
       supportsAutoUpdate: true,
       updateCommand: 'Updates automatically',
+    };
+  }
+  
+  // Dev mode: running via system node/bun (not bundled)
+  if (execPath.includes('bun') || execPath.includes('/node')) {
+    return {
+      method: 'dev',
+      supportsAutoUpdate: false,
+      updateCommand: 'git pull && bun install && bun run build',
     };
   }
   
