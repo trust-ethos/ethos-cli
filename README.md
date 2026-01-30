@@ -1,22 +1,22 @@
-# @ethos-network/cli
+# @trust-ethos/cli
+
+```text
+      .............         ..........     ..  ...                              
+       ............         ...     ..    ..    ..                              
+.........                   ...      .  ......  .. ....       .....      ...... 
+.........                   ...     .     .. .  ...  .....  ...   ...  ..    .. 
+         ..........         .........     ..    ..     ... ...     ... ...    . 
+         ..........         ...   ...     ..    ..     ... ...      ..  .....   
+..........                  ...           ..    ..     ... ...      ..     .... 
+.........                   ...       ..  ..    ..     ... ...     ... .     ...
+       ............         ...      ..   ..    ..     ...  ...    ..  ..    ...
+      .............         ...........  ....  ....    ...   .......   ........ 
+
 ```
-       ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒           ▒▒▒▒▒▒▒▒▒▒▒▒▒      ▒▒   ▒▒▒▒                                     
-        ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒            ▒▒▒     ▒▒▒▒     ▒▒▒    ▒▒▒                                     
-         ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒            ▒▒▒       ▒▒     ▒▒▒    ▒▒▒                                     
-▒▒▒▒▒▒▒▒▒▒▒▒                        ▒▒▒        ▒  ▒▒▒▒▒▒▒▒  ▒▒▒ ▒▒▒▒▒▒▒       ▒▒▒▒▒▒       ▒▒▒▒▒▒▒▒ 
-▒▒▒▒▒▒▒▒▒▒▒▒                        ▒▒▒     ▒▒      ▒▒▒▒▒   ▒▒▒▒▒  ▒▒▒▒▒    ▒▒▒    ▒▒▒▒   ▒▒▒   ▒▒▒ 
-▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒            ▒▒▒    ▒▒▒      ▒▒▒▒    ▒▒▒      ▒▒▒▒  ▒▒▒      ▒▒▒▒ ▒▒▒▒     ▒ 
-           ▒▒▒▒▒▒▒▒▒▒▒▒▒            ▒▒▒▒▒▒▒▒▒▒      ▒▒▒▒    ▒▒▒      ▒▒▒▒ ▒▒▒▒      ▒▒▒▒ ▒▒▒▒▒▒     
-           ▒▒▒▒▒▒▒▒▒▒▒▒▒            ▒▒▒     ▒▒      ▒▒▒▒    ▒▒▒      ▒▒▒▒ ▒▒▒▒      ▒▒▒▒   ▒▒▒▒▒▒▒  
-▒▒▒▒▒▒▒▒▒▒▒▒                        ▒▒▒             ▒▒▒▒    ▒▒▒      ▒▒▒▒ ▒▒▒▒      ▒▒▒▒▒    ▒▒▒▒▒▒▒
-▒▒▒▒▒▒▒▒▒▒▒▒                        ▒▒▒         ▒▒  ▒▒▒▒    ▒▒▒      ▒▒▒▒ ▒▒▒▒      ▒▒▒▒        ▒▒▒▒
-▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒            ▒▒▒        ▒▒▒  ▒▒▒▒    ▒▒▒      ▒▒▒▒ ▒▒▒▒      ▒▒▒▒ ▒▒       ▒▒
-         ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒            ▒▒▒       ▒▒▒▒  ▒▒▒▒    ▒▒▒      ▒▒▒▒  ▒▒▒▒    ▒▒▒▒  ▒▒▒▒     ▒▒
-       ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒           ▒▒▒▒▒▒▒▒▒▒▒▒▒▒  ▒▒▒▒▒▒  ▒▒▒▒▒    ▒▒▒▒▒    ▒▒▒▒▒▒▒▒▒   ▒▒▒▒▒▒▒▒▒▒ 
-```
+
 Official Ethos CLI - Query user profiles, XP balances, and reputation data
 
-[![npm version](https://img.shields.io/npm/v/@ethos-network/cli.svg)](https://www.npmjs.com/package/@ethos-network/cli)
+[![npm version](https://img.shields.io/npm/v/@trust-ethos/cli.svg)](https://www.npmjs.com/package/@trust-ethos/cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Installation
@@ -32,9 +32,9 @@ This installs the CLI to `~/.ethos/` and **automatically keeps it up to date**.
 ### npm
 
 ```bash
-npm install -g @ethos-network/cli
+npm install -g @trust-ethos/cli
 # or
-bun install -g @ethos-network/cli
+bun install -g @trust-ethos/cli
 ```
 
 ### Homebrew
@@ -54,7 +54,7 @@ bun run build
 npm link
 ```
 
-To unlink: `npm unlink -g @ethos-network/cli`
+To unlink: `npm unlink -g @trust-ethos/cli`
 
 ## Updates
 
@@ -63,7 +63,7 @@ The CLI handles updates differently depending on how you installed it:
 | Install Method | Update Behavior |
 |----------------|-----------------|
 | **curl** | Auto-updates silently in the background |
-| **npm** | Shows update notification, run `npm update -g @ethos-network/cli` |
+| **npm** | Shows update notification, run `npm update -g @trust-ethos/cli` |
 | **Homebrew** | Shows update notification, run `brew upgrade ethos` |
 
 For curl installs, updates are checked daily and applied automatically on the next CLI run.
@@ -73,6 +73,7 @@ For curl installs, updates are checked daily and applied automatically on the ne
 ### User Commands
 
 **Get user profile** (includes score, XP, stats)
+
 ```bash
 ethos user info 0xNowater              # Twitter username
 ethos user info vitalik.eth            # ENS name
@@ -81,6 +82,7 @@ ethos user info 0xNowater --json       # JSON output
 ```
 
 **Search for users**
+
 ```bash
 ethos user search vitalik
 ethos user search "crypto developer" --limit 5
@@ -90,12 +92,14 @@ ethos user search web3 --json
 ### XP Commands
 
 **List XP seasons**
+
 ```bash
 ethos xp seasons
 ethos xp seasons --json
 ```
 
 **Check leaderboard rank**
+
 ```bash
 ethos xp rank 0xNowater
 ethos xp rank vitalik.eth --json
@@ -225,11 +229,11 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 
 - [Ethos Network](https://ethos.network)
 - [GitHub Repository](https://github.com/trust-ethos/ethos-cli)
-- [npm Package](https://www.npmjs.com/package/@ethos-network/cli)
+- [npm Package](https://www.npmjs.com/package/@trust-ethos/cli)
 - [Documentation](https://docs.ethos.network)
 
 <!-- toc -->
-* [@ethos-network/cli](#ethos-networkcli)
+* [@trust-ethos/cli](#trust-ethoscli)
 * [or](#or)
 * [Bash](#bash)
 * [Zsh](#zsh)
@@ -240,11 +244,11 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 <!-- tocstop -->
 <!-- usage -->
 ```sh-session
-$ npm install -g @ethos-network/cli
+$ npm install -g @trust-ethos/cli
 $ ethos COMMAND
 running command...
 $ ethos (--version)
-@ethos-network/cli/0.0.5 darwin-arm64 node-v24.13.0
+@trust-ethos/cli/0.0.5 darwin-arm64 node-v24.13.0
 $ ethos --help [COMMAND]
 USAGE
   $ ethos COMMAND

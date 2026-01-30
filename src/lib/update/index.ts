@@ -326,7 +326,7 @@ export function detectInstallMethod(): InstallInfo {
     return {
       method: 'npm',
       supportsAutoUpdate: false,
-      updateCommand: 'npm update -g @ethos-network/cli',
+      updateCommand: 'npm update -g @trust-ethos/cli',
     };
   }
   

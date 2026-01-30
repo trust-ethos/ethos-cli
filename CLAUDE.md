@@ -8,7 +8,7 @@ CLI for querying Ethos user profiles, XP balances, reputation data, trust market
 - **Runtime**: Bun (TypeScript, fast startup)
 - **Framework**: oclif (plugin architecture, auto-docs)
 - **Testing**: bun test
-- **Distribution**: npm (`@ethos-network/cli`)
+- **Distribution**: npm (`@trust-ethos/cli`)
 
 ## Quick Start
 
@@ -270,7 +270,7 @@ The CLI is distributed via multiple channels:
 
 ### npm (Primary)
 ```bash
-npm install -g @ethos-network/cli
+npm install -g @trust-ethos/cli
 ```
 
 ### curl installer

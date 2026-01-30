@@ -1,5 +1,5 @@
 {
-  "name": "@ethos-network/cli",
+  "name": "@trust-ethos/cli",
   "description": "Official Ethos CLI - Query user profiles, XP balances, and reputation data",
   "version": "0.0.5",
   "author": "Ethos Network",

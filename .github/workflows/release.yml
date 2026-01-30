@@ -66,7 +66,7 @@ jobs:
 
       - name: Publish to npm
         run: |
-          if npm view @ethos-network/cli@${{ needs.check-version.outputs.version }} > /dev/null 2>&1; then
+          if npm view @trust-ethos/cli@${{ needs.check-version.outputs.version }} > /dev/null 2>&1; then
             echo "Version ${{ needs.check-version.outputs.version }} already published, skipping"
           else
             npm publish --provenance --access public
