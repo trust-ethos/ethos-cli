@@ -1,412 +1,152 @@
-# Ethos CLI - LLM Agent Integration Guide
+---
+name: ethos-cli
+description: |
+  Query Ethos Network reputation data via CLI. Use when users ask about:
+  - Looking up user profiles, scores, or reputation (ethos user info/summary)
+  - Checking vouches, reviews, or slashes between users
+  - Querying XP balances, leaderboard ranks, or seasons
+  - Exploring trust markets, listings, or broker posts
+  - Finding validator NFTs or auctions
+  Triggers: "ethos reputation", "check score", "who vouched for", "trust market", "ethos profile", "review on ethos"
+---
 
-Use this guide when working with the Ethos CLI programmatically or in LLM agent workflows.
+# Ethos CLI
 
-## Overview
-
-The Ethos CLI is designed for both human and LLM agent use:
-- All commands support `--json` flag for structured output
-- Semantic exit codes for programmatic error handling
-- Environment variables for configuration
-- Stable output schemas (versioned with package)
+Read-only CLI for querying Ethos Network reputation data.
 
 ## Installation
 
 ```bash
 npm install -g @ethos/cli
-# or
-bun install -g @ethos/cli
 ```
 
-## Command Reference
+## User Identification
 
-### User Commands
+All commands accept flexible identifiers:
 
-#### `ethos user info <identifier>`
+| Format | Example |
+|--------|---------|
+| Twitter username | `sethgho`, `0xNowater` |
+| ETH address | `0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045` |
+| ENS name | `vitalik.eth` |
 
-Get detailed user profile information.
+## Commands
 
-**Arguments:**
-- `identifier` - Username, Ethereum address, or userkey
-
-**Flags:**
-- `-j, --json` - Output as JSON
-
-**Exit Codes:**
-- `0` - User found
-- `1` - User not found or API error
-- `2` - Invalid arguments
-
-**JSON Output Schema:**
-```json
-{
-  "id": 123,
-  "username": "vitalik.eth",
-  "address": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
-  "score": 1850,
-  "createdAt": "2024-01-15T00:00:00.000Z"
-}
-```
-
-**Example Usage:**
+### User
 ```bash
-# Human-readable output
+ethos user info <user>           # Profile with score level
+ethos user summary <user>        # Profile + activity + vouches
+ethos user activity <user>       # Recent reviews/vouches
+ethos user search <query>        # Find users
+ethos user invitations <user>    # Invitations sent
+```
+
+### Vouches
+```bash
+ethos vouch list <user>          # Vouches received
+ethos vouch list --author <user> # Vouches given
+ethos vouch info <id>            # Vouch details
+ethos vouch mutual <u1> <u2>     # Mutual vouchers
+ethos vouch votes <id>           # Votes on vouch
+```
+
+### Reviews
+```bash
+ethos review list <user>         # Reviews for user
+ethos review info <id>           # Review details
+ethos review votes <id>          # Votes on review
+```
+
+### Slashes
+```bash
+ethos slash list                 # All slashes
+ethos slash info <id>            # Slash details
+ethos slash votes <id>           # Votes on slash
+```
+
+### XP
+```bash
+ethos xp rank <user>             # Leaderboard position
+ethos xp rank <user> --season 2  # Specific season
+ethos xp seasons                 # List seasons
+```
+
+### Trust Markets
+```bash
+ethos market list                # All markets
+ethos market info <user>         # User's market
+ethos market holders <user>      # Trust/distrust holders
+ethos market featured            # Top gainers/losers
+```
+
+### Projects/Listings
+```bash
+ethos listing list               # Active listings
+ethos listing info <id>          # Project details
+ethos listing voters <id>        # Bullish/bearish voters
+```
+
+### Broker Posts
+```bash
+ethos broker list                # All posts
+ethos broker list --type hire    # Filter: sell|buy|hire|for-hire|bounty
+ethos broker info <id>           # Post details
+```
+
+### Validators & Auctions
+```bash
+ethos validator list             # All validators
+ethos validator info <tokenId>   # Validator details
+ethos validator sales            # For sale on OpenSea
+ethos auction list               # All auctions
+ethos auction active             # Current auction
+ethos auction info <id>          # Auction details
+```
+
+### Configuration
+```bash
+ethos config get                 # Show config
+ethos config set apiUrl=<url>    # Set API
+ethos config path                # Config location
+```
+
+## Global Flags
+
+All commands support:
+- `--json` / `-j` — JSON output
+- `--verbose` / `-v` — Detailed errors
+- `--limit` / `-l` — Results limit (default: 10)
+- `--offset` / `-o` — Pagination offset
+
+## Score Levels
+
+| Range | Level |
+|-------|-------|
+| < 800 | UNTRUSTED |
+| 800-1199 | QUESTIONABLE |
+| 1200-1599 | NEUTRAL |
+| 1600-1999 | REPUTABLE |
+| 2000+ | EXEMPLARY |
+
+## Common Patterns
+
+```bash
+# Quick lookup
 ethos user info vitalik.eth
 
-# JSON output for parsing
-ethos user info vitalik.eth --json | jq .username
+# Full picture
+ethos user summary sethgho
 
-# By Ethereum address
-ethos user info address:0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045 --json
+# Mutual connections
+ethos vouch mutual sethgho 0xNowater
+
+# Script with jq
+ethos user info sethgho --json | jq '.score'
+ethos vouch list sethgho --json | jq '.values[].balance'
 ```
 
-#### `ethos user activity <identifier>`
-
-Show recent reviews and vouches for a user.
-
-**Arguments:**
-- `identifier` - Username, Ethereum address, or ENS name
-
-**Flags:**
-- `-j, --json` - Output as JSON
-- `-l, --limit <number>` - Maximum number of activities (default: 10)
-- `-t, --type <type>` - Filter by activity type: `vouch` or `review`
-- `-v, --verbose` - Show detailed error information
-
-**Exit Codes:**
-- `0` - Activities retrieved
-- `1` - User not found or API error
-- `2` - Invalid arguments
-
-**JSON Output Schema:**
-```json
-{
-  "user": "vitalik.eth",
-  "activities": [
-    {
-      "type": "vouch",
-      "timestamp": 1704067200,
-      "author": {
-        "username": "0xNowater",
-        "score": 1500
-      },
-      "subject": {
-        "username": "vitalik.eth",
-        "score": 2000
-      }
-    }
-  ]
-}
-```
-
-**Example Usage:**
-```bash
-# Show all activities (reviews and vouches)
-ethos user activity 0xNowater
-
-# Filter by vouch only
-ethos user activity 0xNowater --type vouch
-
-# Filter by review with custom limit
-ethos user activity 0xNowater --type review --limit 5
-
-# JSON output
-ethos user activity 0xNowater --json | jq '.activities[].type'
-```
-
-#### `ethos user search <query>`
-
-Search for users by name, username, or partial address.
-
-**Arguments:**
-- `query` - Search query string
-
-**Flags:**
-- `-j, --json` - Output as JSON
-- `-l, --limit <number>` - Maximum results (default: 10)
-
-**Exit Codes:**
-- `0` - Search completed (even if no results)
-- `1` - API error
-- `2` - Invalid arguments
-
-**JSON Output Schema:**
-```json
-[
-  {
-    "id": 123,
-    "username": "vitalik.eth",
-    "address": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
-    "score": 1850
-  }
-]
-```
-
-**Example Usage:**
-```bash
-# Search with default limit
-ethos user search "crypto developer" --json
-
-# Custom limit
-ethos user search vitalik --limit 5 --json | jq length
-
-# Get first result
-ethos user search "web3" --json | jq '.[0].username'
-```
-
-### XP Commands
-
-#### `ethos xp seasons`
-
-List all XP seasons.
-
-**Flags:**
-- `-j, --json` - Output as JSON
-
-**Exit Codes:**
-- `0` - Seasons retrieved
-- `1` - API error
-
-**JSON Output Schema:**
-```json
-[
-  {
-    "id": 2,
-    "season": 2,
-    "name": "Season 2",
-    "startDate": "2024-01-01T00:00:00.000Z",
-    "endDate": "2024-12-31T23:59:59.999Z"
-  }
-]
-```
-
-**Example Usage:**
-```bash
-# List all seasons
-ethos xp seasons --json
-
-# Get current season (last in array)
-ethos xp seasons --json | jq '.[-1]'
-
-# Count seasons
-ethos xp seasons --json | jq 'length'
-```
-
-#### `ethos xp rank <userkey>`
-
-Get user's leaderboard rank.
-
-**Arguments:**
-- `userkey` - Username, address, or userkey identifier
-
-**Flags:**
-- `-j, --json` - Output as JSON
-- `-s, --season <number>` - Show XP for specific season
-
-**Exit Codes:**
-- `0` - Rank retrieved
-- `1` - User not found or API error
-- `2` - Invalid arguments
-
-**JSON Output Schema:**
-```json
-{
-  "rank": 42,
-  "user": "vitalik.eth",
-  "userkey": "address:0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
-}
-```
-
-**With Season Flag:**
-```json
-{
-  "rank": 42,
-  "user": "vitalik.eth",
-  "userkey": "address:0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
-  "seasonXp": 5000,
-  "season": 2
-}
-```
-
-**Example Usage:**
-```bash
-# Get rank
-ethos xp rank vitalik.eth --json | jq .rank
-
-# Get rank for specific season
-ethos xp rank vitalik.eth --season 2 --json | jq .seasonXp
-
-# Get both rank and season XP
-ethos xp rank vitalik.eth --season 2 --json | jq '{rank, seasonXp}'
-```
-
-## User Key Formats
-
-The CLI automatically detects and formats user identifiers:
-
-| Format | Example | Auto-Detected |
-|--------|---------|--------------|
-| Username | `vitalik.eth` | ✅ |
-| Ethereum Address | `0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045` | ✅ (prefixed with `address:`) |
-| Address (explicit) | `address:0xd8dA...` | ✅ |
-| Discord | `service:discord:123456789` | ✅ |
-| Twitter ID | `service:x.com:123456789` | ✅ |
-| Twitter Username | `service:x.com:username:elonmusk` | ✅ |
-
-## Environment Configuration
-
-Control CLI behavior via environment variables:
-
-```bash
-# Use staging environment
-export ETHOS_ENV=staging
-ethos user info vitalik.eth
-
-# Custom API endpoint
-export ETHOS_API_URL=http://localhost:4000
-ethos user info vitalik.eth
-
-# Default to JSON output
-export ETHOS_OUTPUT=json
-ethos user info vitalik.eth
-```
-
-**Available Environments:**
-- `prod` (default) - Production API at `https://echo.ethos.network`
-- `staging` - Staging API at `https://echo-staging.ethos.network`
-- `dev` - Local development at `http://localhost:4000`
-
-## Error Handling
-
-The CLI uses semantic exit codes for programmatic handling:
-
-```bash
-# Check if user exists
-if ethos user info vitalik.eth --json > /dev/null 2>&1; then
-  echo "User exists"
-else
-  echo "User not found or error"
-fi
-
-# Get exit code
-ethos user info vitalik.eth --json
-echo $?  # 0 = success, 1 = error, 2 = invalid usage
-```
-
-## Output Stability Guarantees
-
-**Version Compatibility:**
-- Minor version bumps (1.x.0) may add new fields to JSON output
-- Major version bumps (x.0.0) may change or remove fields
-- Always specify version in package.json for production use
-
-**Safe to rely on:**
-- Field names and types within the same major version
-- Exit code semantics
-- Command names and argument structure
-
-**May change between versions:**
-- Human-readable text formatting
-- Color codes and styling
-- Error message wording
-
-## Common Agent Workflows
-
-### Workflow 1: User Lookup
-
-```bash
-# Get user ID from username
-USER_ID=$(ethos user info vitalik.eth --json | jq -r .id)
-
-# Check if user has high score
-SCORE=$(ethos user info vitalik.eth --json | jq -r .score)
-if [ "$SCORE" -gt 1000 ]; then
-  echo "High reputation user"
-fi
-```
-
-### Workflow 2: User Score Check
-
-```bash
-# Get user score
-SCORE=$(ethos user info vitalik.eth --json | jq -r .score)
-
-# Compare with threshold
-if [ "$SCORE" -gt 1000 ]; then
-  echo "User has high reputation"
-fi
-```
-
-### Workflow 3: Leaderboard Position
-
-```bash
-# Get rank
-RANK=$(ethos xp rank vitalik.eth --json | jq -r .rank)
-
-# Check if in top 100
-if [ "$RANK" -le 100 ]; then
-  echo "Top 100 user"
-fi
-```
-
-### Workflow 4: Search and Filter
-
-```bash
-# Search for users and filter by score
-ethos user search "crypto" --limit 20 --json | \
-  jq '[.[] | select(.score > 1000)] | .[0:5]'
-```
-
-## Version Information
-
-Check CLI version:
-```bash
-ethos --version
-# @ethos/cli/1.0.0 darwin-arm64 node-v24.13.0
-```
-
-## Performance Considerations
-
-**Cold Start Time:**
-- First execution: ~300ms with Bun, ~500ms with Node.js
-- Warm execution: ~100ms
-
-**Rate Limiting:**
-- No rate limits on public API (subject to change)
-- Use `ETHOS_API_URL` for custom endpoints with auth
-
-**Caching:**
-- CLI does not cache results
-- Implement your own caching if needed for frequent queries
-
-## Troubleshooting
-
-**Common Issues:**
-
-1. **Command not found**
-   ```bash
-   # Verify installation
-   which ethos
-   # Reinstall if needed
-   npm install -g @ethos/cli
-   ```
-
-2. **API errors**
-   ```bash
-   # Check environment
-   echo $ETHOS_ENV
-   # Test with staging
-   ETHOS_ENV=staging ethos user info test
-   ```
-
-3. **Invalid JSON output**
-   ```bash
-   # Ensure --json flag is used
-   ethos user info vitalik.eth --json | jq .
-   ```
-
-## Support
-
-- GitHub Issues: https://github.com/ethos-network/ethos-cli/issues
-- Documentation: https://docs.ethos.network
-- API Reference: https://docs.ethos.network/api
+## Exit Codes
+
+- `0` — Success
+- `1` — Runtime error
+- `2` — Invalid usage
