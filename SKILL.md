@@ -17,7 +17,7 @@ Read-only CLI for querying Ethos Network reputation data.
 ## Installation
 
 ```bash
-npm install -g @ethos/cli
+npm install -g @ethos-network/cli
 ```
 
 ## User Identification

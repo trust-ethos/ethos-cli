@@ -1,12 +1,12 @@
 {
-  "name": "@ethos/cli",
+  "name": "@ethos-network/cli",
   "description": "Official Ethos CLI - Query user profiles, XP balances, and reputation data",
   "version": "1.0.0",
   "author": "Ethos Network",
   "bin": {
     "ethos": "./bin/run.js"
   },
-  "bugs": "https://github.com/ethos-network/ethos-cli/issues",
+  "bugs": "https://github.com/trust-ethos/ethos-cli/issues",
   "dependencies": {
     "@oclif/core": "^4",
     "@oclif/plugin-autocomplete": "^3.2.40",
@@ -32,7 +32,7 @@
     "./dist",
     "./oclif.manifest.json"
   ],
-  "homepage": "https://github.com/ethos-network/ethos-cli",
+  "homepage": "https://github.com/trust-ethos/ethos-cli",
   "keywords": [
     "ethos",
     "reputation",
@@ -68,7 +68,7 @@
       }
     }
   },
-  "repository": "ethos-network/ethos-cli",
+  "repository": "trust-ethos/ethos-cli",
   "scripts": {
     "build": "bun run build:ts",
     "build:ts": "shx rm -rf dist && tsc -b",

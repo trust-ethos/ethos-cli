@@ -228,7 +228,7 @@ bun run readme          # Generate command docs
 1. **Homebrew Formula**
    - Create `homebrew-ethos` tap repository
    - Formula at `Formula/ethos.rb`
-   - Test: `brew install ethos-network/tap/ethos`
+   - Test: `brew install trust-ethos/tap/ethos`
 
 2. **Binary Builds**
    - Bun build script at `scripts/build-binary.sh`
