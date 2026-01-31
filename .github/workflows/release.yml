@@ -131,6 +131,20 @@ jobs:
           TAG: ${{ needs.check-version.outputs.tag }}
         run: gh release edit "$TAG" --repo ${{ github.repository }} --draft=false
 
+  verify-release:
+    needs: [check-version, publish-release]
+    if: needs.check-version.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run E2E update tests
+        run: |
+          docker build -t ethos-update-test -f test/e2e/Dockerfile.update-test test/e2e/
+          docker run --rm \
+            -v "$(pwd)/test/e2e/test-update.sh:/home/testuser/test-update.sh:ro" \
+            ethos-update-test \
+            bash /home/testuser/test-update.sh
+
   update-homebrew:
     needs: [check-version, publish-release]
     if: needs.check-version.outputs.should_release == 'true'
