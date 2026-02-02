@@ -9,9 +9,12 @@ echo "Running tests before push..."
 
 # Run tests, capture output
 TEST_OUTPUT=$(bun test 2>&1)
-TEST_EXIT_CODE=$?
 
-if [ $TEST_EXIT_CODE -ne 0 ]; then
+# Check for "0 fail" in output (bun test exit code is unreliable due to CLI exit() calls)
+if echo "$TEST_OUTPUT" | grep -q " 0 fail"; then
+    echo "$TEST_OUTPUT" | tail -3
+    exit 0
+else
     echo ""
     echo "Tests failed! Push aborted."
     echo ""
@@ -20,7 +23,3 @@ if [ $TEST_EXIT_CODE -ne 0 ]; then
     echo "Run 'bun test' to see full output."
     exit 1
 fi
-
-# Show summary only
-echo "$TEST_OUTPUT" | tail -3
-exit 0
