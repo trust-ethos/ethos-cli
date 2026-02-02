@@ -289,6 +289,7 @@ USAGE
 * [`ethos slash votes ID`](#ethos-slash-votes-id)
 * [`ethos u IDENTIFIER`](#ethos-u-identifier)
 * [`ethos ui IDENTIFIER`](#ethos-ui-identifier)
+* [`ethos update`](#ethos-update)
 * [`ethos us IDENTIFIER`](#ethos-us-identifier)
 * [`ethos user activity IDENTIFIER`](#ethos-user-activity-identifier)
 * [`ethos user info IDENTIFIER`](#ethos-user-info-identifier)
@@ -1262,6 +1263,28 @@ EXAMPLES
 
   $ ethos ui 0xNowater --json
 ```
+
+## `ethos update`
+
+Update the CLI to the latest version
+
+```
+USAGE
+  $ ethos update [-f]
+
+FLAGS
+  -f, --force  Force update even if already on latest
+
+DESCRIPTION
+  Update the CLI to the latest version
+
+EXAMPLES
+  $ ethos update
+
+  $ ethos update --force
+```
+
+_See code: [src/commands/update.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.10/src/commands/update.ts)_
 
 ## `ethos us IDENTIFIER`
 

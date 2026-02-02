@@ -33,3 +33,43 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm run test
+
+  test-update-system:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: oven-sh/setup-bun@v2
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Build
+        run: npm run build
+      
+      - name: Generate manifest
+        run: npm run prepack
+      
+      - name: Build tarball for linux-x64
+        run: npx oclif pack tarballs --root=. --targets=linux-x64
+      
+      - name: Find tarball
+        id: find-tarball
+        run: |
+          TARBALL=$(ls dist/*.tar.gz | head -1)
+          echo "tarball=$TARBALL" >> $GITHUB_OUTPUT
+          echo "Found tarball: $TARBALL"
+      
+      - name: Build test Docker image
+        run: docker build -t ethos-local-test -f test/e2e/Dockerfile.local-test test/e2e/
+      
+      - name: Run update system E2E tests
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/${{ steps.find-tarball.outputs.tarball }}:/tmp/ethos-local.tar.gz:ro" \
+            -v "${{ github.workspace }}/test/e2e/test-update-local.sh:/home/testuser/test-update-local.sh:ro" \
+            ethos-local-test \
+            bash /home/testuser/test-update-local.sh /tmp/ethos-local.tar.gz

@@ -8,4 +8,3 @@ WORKDIR /home/testuser
 
 ENV HOME=/home/testuser
 ENV PATH="/home/testuser/.ethos/current/bin:$PATH"
-
