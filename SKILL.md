@@ -8,6 +8,7 @@ description: |
   - Exploring trust markets, listings, or broker posts
   - Finding validator NFTs or auctions
   Triggers: "ethos reputation", "check score", "who vouched for", "trust market", "ethos profile", "review on ethos"
+allowed-tools: Bash(ethos:*)
 ---
 
 # Ethos CLI
