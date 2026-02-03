@@ -8,6 +8,7 @@
   },
   "bugs": "https://github.com/trust-ethos/ethos-cli/issues",
   "dependencies": {
+    "@inquirer/prompts": "^8.2.0",
     "@oclif/core": "^4",
     "@oclif/plugin-autocomplete": "^3.2.40",
     "@oclif/plugin-help": "^6",
@@ -86,6 +87,9 @@
       },
       "score": {
         "description": "Query score calculation status"
+      },
+      "skill": {
+        "description": "Install ethos-cli skill for AI coding agents"
       },
       "slash": {
         "description": "Query reputation slashes and votes"
