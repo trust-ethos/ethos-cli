@@ -14,11 +14,10 @@ jobs:
       sha: ${{ steps.version-check.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
       - name: Check if version already exists
         id: version-check
         run: |
-          package_version=$(node -p "require('./package.json').version")
+          package_version=$(grep '"version"' package.json | head -1 | sed 's/.*: "\(.*\)".*/\1/')
           echo "version=$package_version" >> $GITHUB_OUTPUT
           echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
           
@@ -46,17 +45,15 @@ jobs:
           node-version: 22
           registry-url: 'https://registry.npmjs.org'
       - uses: oven-sh/setup-bun@v2
-      - name: Install latest npm
-        run: npm install -g npm@latest
 
       - name: Install dependencies
-        run: npm install
+        run: bun install
 
       - name: Build
-        run: npm run build
+        run: bun run build
 
       - name: Generate oclif manifest
-        run: npm run prepack
+        run: bun run prepack
 
       - name: Create draft GitHub Release
         uses: softprops/action-gh-release@v2
@@ -67,6 +64,8 @@ jobs:
           draft: true
 
       - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           if npm view @trust-ethos/cli@${{ needs.check-version.outputs.version }} > /dev/null 2>&1; then
             echo "Version ${{ needs.check-version.outputs.version }} already published, skipping"
@@ -74,7 +73,7 @@ jobs:
             npm publish --provenance --access public
           fi
 
-      - run: npm run postpack
+      - run: bun run postpack
 
   build-binaries:
     needs: [check-version, release]
@@ -99,16 +98,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.check-version.outputs.sha }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: latest
       - uses: oven-sh/setup-bun@v2
-      - run: npm install
-      - run: npm run build
-      - run: npm run prepack
+      - run: bun install
+      - run: bun run build
+      - run: bun run prepack
 
       - name: Build tarball
-        run: npx oclif pack tarballs --root=. --targets=${{ matrix.target }} --xz
+        run: bunx oclif pack tarballs --root=. --targets=${{ matrix.target }} --xz
 
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
