@@ -284,6 +284,7 @@ USAGE
 * [`ethos ri ID`](#ethos-ri-id)
 * [`ethos rl IDENTIFIER`](#ethos-rl-identifier)
 * [`ethos score status IDENTIFIER`](#ethos-score-status-identifier)
+* [`ethos skill install`](#ethos-skill-install)
 * [`ethos slash info ID`](#ethos-slash-info-id)
 * [`ethos slash list`](#ethos-slash-list)
 * [`ethos slash votes ID`](#ethos-slash-votes-id)
@@ -1104,6 +1105,28 @@ EXAMPLES
 ```
 
 _See code: [src/commands/score/status.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.11/src/commands/score/status.ts)_
+
+## `ethos skill install`
+
+Install the ethos-cli skill for AI coding agents
+
+```
+USAGE
+  $ ethos skill install [-y]
+
+FLAGS
+  -y, --yes  Skip confirmation prompts
+
+DESCRIPTION
+  Install the ethos-cli skill for AI coding agents
+
+EXAMPLES
+  $ ethos skill install
+
+  $ ethos skill install --yes
+```
+
+_See code: [src/commands/skill/install.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.11/src/commands/skill/install.ts)_
 
 ## `ethos slash info ID`
 

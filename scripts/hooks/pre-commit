@@ -1,10 +1,9 @@
 #!/bin/sh
-# Pre-commit hook: Run typecheck on staged files
+# Pre-commit hook: Run typecheck and keep README in sync
 # Install with: cp scripts/hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 
 echo "Running typecheck..."
 
-# Run typecheck
 bun run typecheck
 TYPECHECK_EXIT_CODE=$?
 
@@ -16,4 +15,11 @@ if [ $TYPECHECK_EXIT_CODE -ne 0 ]; then
 fi
 
 echo "Typecheck passed!"
+
+if git diff --cached --name-only | grep -q "^src/commands/"; then
+    echo "Command files changed, updating README..."
+    bun run readme
+    git add README.md
+fi
+
 exit 0
