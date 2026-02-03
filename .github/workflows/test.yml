@@ -11,49 +11,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-          cache: npm
       - uses: oven-sh/setup-bun@v2
-      - run: npm install
-      - run: npm run typecheck
-      - run: npm run lint
+      - run: bun install
+      - run: bun run typecheck
+      - run: bun run lint
 
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-          cache: npm
       - uses: oven-sh/setup-bun@v2
-      - run: npm install
-      - run: npm run build
-      - run: npm run test
+      - run: bun install
+      - run: bun run build
+      - run: bun test
 
   test-update-system:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
       - uses: oven-sh/setup-bun@v2
       
       - name: Install dependencies
-        run: npm install
+        run: bun install
       
       - name: Build
-        run: npm run build
+        run: bun run build
       
       - name: Generate manifest
-        run: npm run prepack
+        run: bun run prepack
       
       - name: Build tarball for linux-x64
-        run: npx oclif pack tarballs --root=. --targets=linux-x64
+        run: bunx oclif pack tarballs --root=. --targets=linux-x64
       
       - name: Find tarball
         id: find-tarball
