@@ -1,9 +1,8 @@
-import { Args, Command, Flags } from '@oclif/core';
-import { EchoClient } from '../../lib/api/echo-client.js';
-import { formatError } from '../../lib/formatting/error.js';
+import { Args, Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatReviews, output } from '../../lib/formatting/output.js';
 
-export default class ReviewList extends Command {
+export default class ReviewList extends BaseCommand {
   static aliases = ['rl'];
 
   static args = {
@@ -22,16 +21,7 @@ export default class ReviewList extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({
-      char: 'j',
-      description: 'Output as JSON',
-      default: false,
-    }),
-    verbose: Flags.boolean({
-      char: 'v',
-      description: 'Show detailed error information',
-      default: false,
-    }),
+    ...BaseCommand.baseFlags,
     limit: Flags.integer({
       char: 'l',
       description: 'Max results per request',
@@ -46,20 +36,21 @@ export default class ReviewList extends Command {
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(ReviewList);
-    const client = new EchoClient();
 
     try {
-      const user = await client.resolveUser(args.identifier);
-      const userkey = client.getPrimaryUserkey(user);
+      const user = await this.withSpinner('Resolving user', () => this.client.resolveUser(args.identifier));
+      const userkey = this.client.getPrimaryUserkey(user);
 
       if (!userkey) {
         this.error('Could not determine userkey for user', { exit: 1 });
       }
 
-      const reviews = await client.getReviewsForUser(userkey, {
-        limit: flags.limit,
-        offset: flags.offset,
-      });
+      const reviews = await this.withSpinner('Fetching reviews', () =>
+        this.client.getReviewsForUser(userkey!, {
+          limit: flags.limit,
+          offset: flags.offset,
+        })
+      );
 
       if (flags.json) {
         this.log(output(reviews));
@@ -67,10 +58,7 @@ export default class ReviewList extends Command {
         this.log(formatReviews(reviews, reviews.length));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

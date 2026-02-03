@@ -1,9 +1,8 @@
-import { Args, Command, Flags } from '@oclif/core';
-import { EchoClient } from '../../lib/api/echo-client.js';
-import { formatError } from '../../lib/formatting/error.js';
+import { Args, Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatInvitations, output } from '../../lib/formatting/output.js';
 
-export default class UserInvitations extends Command {
+export default class UserInvitations extends BaseCommand {
   static args = {
     identifier: Args.string({
       description: 'Twitter username, ETH address, or ENS name',
@@ -20,16 +19,7 @@ export default class UserInvitations extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({
-      char: 'j',
-      description: 'Output as JSON',
-      default: false,
-    }),
-    verbose: Flags.boolean({
-      char: 'v',
-      description: 'Show detailed error information',
-      default: false,
-    }),
+    ...BaseCommand.baseFlags,
     status: Flags.string({
       char: 's',
       description: 'Filter by status',
@@ -49,21 +39,24 @@ export default class UserInvitations extends Command {
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(UserInvitations);
-    const client = new EchoClient();
 
     try {
-      const user = await client.resolveUser(args.identifier);
+      const user = await this.withSpinner('Fetching user', () =>
+        this.client.resolveUser(args.identifier)
+      );
 
       if (!user.profileId) {
         this.error('User does not have a profile ID', { exit: 1 });
       }
 
-      const response = await client.getInvitations({
-        senderProfileId: user.profileId,
-        status: flags.status as 'INVITED' | 'ACCEPTED' | undefined,
-        limit: flags.limit,
-        offset: flags.offset,
-      });
+      const response = await this.withSpinner('Fetching invitations', () =>
+        this.client.getInvitations({
+          senderProfileId: user.profileId!,
+          status: flags.status as 'INVITED' | 'ACCEPTED' | undefined,
+          limit: flags.limit,
+          offset: flags.offset,
+        })
+      );
 
       if (flags.json) {
         this.log(output(response));
@@ -71,10 +64,7 @@ export default class UserInvitations extends Command {
         this.log(formatInvitations(response.values, response.total));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

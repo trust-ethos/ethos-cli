@@ -1,9 +1,8 @@
-import { Args, Command, Flags } from '@oclif/core';
-import { EchoClient } from '../../lib/api/echo-client.js';
-import { formatError } from '../../lib/formatting/error.js';
+import { Args, Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatVouches, output } from '../../lib/formatting/output.js';
 
-export default class VouchList extends Command {
+export default class VouchList extends BaseCommand {
   static aliases = ['vl'];
 
   static args = {
@@ -24,16 +23,7 @@ export default class VouchList extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({
-      char: 'j',
-      description: 'Output as JSON',
-      default: false,
-    }),
-    verbose: Flags.boolean({
-      char: 'v',
-      description: 'Show detailed error information',
-      default: false,
-    }),
+    ...BaseCommand.baseFlags,
     author: Flags.string({
       description: 'Filter by author (Twitter username, ETH address, or ENS name)',
     }),
@@ -55,7 +45,6 @@ export default class VouchList extends Command {
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(VouchList);
-    const client = new EchoClient();
 
     try {
       const params: { subjectUserkeys?: string[]; authorProfileIds?: number[]; archived?: boolean; limit?: number; offset?: number } = {
@@ -68,21 +57,21 @@ export default class VouchList extends Command {
       }
 
       if (args.identifier) {
-        const user = await client.resolveUser(args.identifier);
-        const userkey = client.getPrimaryUserkey(user);
+        const user = await this.withSpinner('Resolving user', () => this.client.resolveUser(args.identifier!));
+        const userkey = this.client.getPrimaryUserkey(user);
         if (userkey) {
           params.subjectUserkeys = [userkey];
         }
       }
 
       if (flags.author) {
-        const authorUser = await client.resolveUser(flags.author);
+        const authorUser = await this.withSpinner('Resolving author', () => this.client.resolveUser(flags.author!));
         if (authorUser.profileId) {
           params.authorProfileIds = [authorUser.profileId];
         }
       }
 
-      const response = await client.getVouches(params);
+      const response = await this.withSpinner('Fetching vouches', () => this.client.getVouches(params));
 
       if (flags.json) {
         this.log(output(response));
@@ -90,10 +79,7 @@ export default class VouchList extends Command {
         this.log(formatVouches(response.values, response.total));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

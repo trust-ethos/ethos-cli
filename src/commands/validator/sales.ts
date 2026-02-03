@@ -1,9 +1,8 @@
-import { Command, Flags } from '@oclif/core';
-import { EchoClient } from '../../lib/api/echo-client.js';
-import { formatError } from '../../lib/formatting/error.js';
+import { Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatValidatorListings, output } from '../../lib/formatting/output.js';
 
-export default class ValidatorSales extends Command {
+export default class ValidatorSales extends BaseCommand {
   static description = 'List validator NFTs for sale on OpenSea';
 
   static examples = [
@@ -12,16 +11,7 @@ export default class ValidatorSales extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({
-      char: 'j',
-      description: 'Output as JSON',
-      default: false,
-    }),
-    verbose: Flags.boolean({
-      char: 'v',
-      description: 'Show detailed error information',
-      default: false,
-    }),
+    ...BaseCommand.baseFlags,
     limit: Flags.integer({
       char: 'l',
       description: 'Max results per request',
@@ -36,10 +26,11 @@ export default class ValidatorSales extends Command {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(ValidatorSales);
-    const client = new EchoClient();
 
     try {
-      const response = await client.getValidatorListings({ limit: flags.limit, offset: flags.offset });
+      const response = await this.withSpinner('Fetching validator sales', () =>
+        this.client.getValidatorListings({ limit: flags.limit, offset: flags.offset })
+      );
 
       if (flags.json) {
         this.log(output(response));
@@ -47,10 +38,7 @@ export default class ValidatorSales extends Command {
         this.log(formatValidatorListings(response.values, response.total));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

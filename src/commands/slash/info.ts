@@ -1,9 +1,8 @@
-import { Args, Command, Flags } from '@oclif/core';
-import { EchoClient } from '../../lib/api/echo-client.js';
+import { Args, Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatSlash, output } from '../../lib/formatting/output.js';
-import { formatError } from '../../lib/formatting/error.js';
 
-export default class SlashInfo extends Command {
+export default class SlashInfo extends BaseCommand {
   static description = 'Get details of a specific slash';
 
   static args = {
@@ -16,17 +15,17 @@ export default class SlashInfo extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({ char: 'j', description: 'Output as JSON' }),
-    verbose: Flags.boolean({ char: 'v', description: 'Show detailed error information' }),
+    ...BaseCommand.baseFlags,
   };
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(SlashInfo);
-    const client = new EchoClient();
 
     try {
       // Get slashes filtered by ID (API doesn't have direct ID lookup, so filter)
-      const response = await client.getSlashes({ limit: 100 });
+      const response = await this.withSpinner('Fetching slash', () =>
+        this.client.getSlashes({ limit: 100 })
+      );
       const slash = response.data.values.find((s: any) => s.id === args.id);
 
       if (!slash) {
@@ -39,10 +38,7 @@ export default class SlashInfo extends Command {
         this.log(formatSlash(slash));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

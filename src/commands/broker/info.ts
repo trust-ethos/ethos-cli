@@ -1,9 +1,8 @@
-import { Args, Command, Flags } from '@oclif/core';
-import { EchoClient } from '../../lib/api/echo-client.js';
+import { Args, Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatBrokerPost, output } from '../../lib/formatting/output.js';
-import { formatError } from '../../lib/formatting/error.js';
 
-export default class BrokerInfo extends Command {
+export default class BrokerInfo extends BaseCommand {
   static description = 'Get details of a specific broker post';
 
   static args = {
@@ -16,16 +15,16 @@ export default class BrokerInfo extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({ char: 'j', description: 'Output as JSON' }),
-    verbose: Flags.boolean({ char: 'v', description: 'Show detailed error information' }),
+    ...BaseCommand.baseFlags,
   };
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(BrokerInfo);
-    const client = new EchoClient();
 
     try {
-      const post = await client.getBrokerPost(args.id);
+      const post = await this.withSpinner('Fetching broker post', () =>
+        this.client.getBrokerPost(args.id)
+      );
 
       if (flags.json) {
         this.log(output(post));
@@ -33,10 +32,7 @@ export default class BrokerInfo extends Command {
         this.log(formatBrokerPost(post));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

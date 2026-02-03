@@ -1,9 +1,8 @@
-import { Command, Flags } from '@oclif/core';
-import { EchoClient } from '../../lib/api/echo-client.js';
+import { Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatListings, output } from '../../lib/formatting/output.js';
-import { formatError } from '../../lib/formatting/error.js';
 
-export default class ListingList extends Command {
+export default class ListingList extends BaseCommand {
   static description = 'List projects on Ethos Listings';
 
   static examples = [
@@ -13,8 +12,7 @@ export default class ListingList extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({ char: 'j', description: 'Output as JSON' }),
-    verbose: Flags.boolean({ char: 'v', description: 'Show detailed error information' }),
+    ...BaseCommand.baseFlags,
     status: Flags.string({
       description: 'Filter by status',
       options: ['active', 'pending', 'archived'],
@@ -26,14 +24,15 @@ export default class ListingList extends Command {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(ListingList);
-    const client = new EchoClient();
 
     try {
-      const response = await client.getProjects({
-        status: [flags.status.toUpperCase()],
-        limit: flags.limit,
-        offset: flags.offset,
-      });
+      const response = await this.withSpinner('Fetching listings', () =>
+        this.client.getProjects({
+          status: [flags.status.toUpperCase()],
+          limit: flags.limit,
+          offset: flags.offset,
+        })
+      );
 
       if (flags.json) {
         this.log(output(response));
@@ -41,10 +40,7 @@ export default class ListingList extends Command {
         this.log(formatListings(response.projects, response.total));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

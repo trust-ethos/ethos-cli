@@ -1,9 +1,9 @@
-import { Command, Flags } from '@oclif/core';
-import { EchoClient, type Auction } from '../../lib/api/echo-client.js';
+import { Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
+import { type Auction } from '../../lib/api/echo-client.js';
 import { formatAuctions, output } from '../../lib/formatting/output.js';
-import { formatError } from '../../lib/formatting/error.js';
 
-export default class AuctionList extends Command {
+export default class AuctionList extends BaseCommand {
   static description = 'List validator NFT auctions';
 
   static examples = [
@@ -13,8 +13,7 @@ export default class AuctionList extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({ char: 'j', description: 'Output as JSON' }),
-    verbose: Flags.boolean({ char: 'v', description: 'Show detailed error information' }),
+    ...BaseCommand.baseFlags,
     status: Flags.string({
       description: 'Filter by status',
       options: ['pending', 'active', 'ended', 'settled'],
@@ -25,12 +24,13 @@ export default class AuctionList extends Command {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(AuctionList);
-    const client = new EchoClient();
 
     try {
-      const response = await client.getAuctions({ limit: flags.limit, offset: flags.offset, status: flags.status });
+      const response = await this.withSpinner('Fetching auctions', () =>
+        this.client.getAuctions({ limit: flags.limit, offset: flags.offset, status: flags.status })
+      );
 
-      const enrichedAuctions = await this.enrichWithBuyerInfo(client, response.values);
+      const enrichedAuctions = await this.enrichWithBuyerInfo(response.values);
 
       if (flags.json) {
         this.log(output({ ...response, values: enrichedAuctions }));
@@ -38,14 +38,11 @@ export default class AuctionList extends Command {
         this.log(formatAuctions(enrichedAuctions, response.total));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 
-  private async enrichWithBuyerInfo(client: EchoClient, auctions: Auction[]): Promise<Auction[]> {
+  private async enrichWithBuyerInfo(auctions: Auction[]): Promise<Auction[]> {
     const buyerAddresses = [...new Set(auctions.filter(a => a.buyerAddress).map(a => a.buyerAddress!))];
     
     if (buyerAddresses.length === 0) return auctions;
@@ -55,7 +52,7 @@ export default class AuctionList extends Command {
     await Promise.all(
       buyerAddresses.map(async (address) => {
         try {
-          const user = await client.getUserByAddress(address);
+          const user = await this.client.getUserByAddress(address);
           buyerMap.set(address, { displayName: user.displayName, username: user.username });
         } catch {
           buyerMap.set(address, {});

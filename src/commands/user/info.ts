@@ -1,9 +1,8 @@
-import { Args, Command, Flags } from '@oclif/core';
-import { EchoClient } from '../../lib/api/echo-client.js';
-import { formatError } from '../../lib/formatting/error.js';
+import { Args, Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatUser, output } from '../../lib/formatting/output.js';
 
-export default class UserInfo extends Command {
+export default class UserInfo extends BaseCommand {
   static aliases = ['u', 'ui'];
 
   static args = {
@@ -23,24 +22,16 @@ export default class UserInfo extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({
-      char: 'j',
-      description: 'Output as JSON',
-      default: false,
-    }),
-    verbose: Flags.boolean({
-      char: 'v',
-      description: 'Show detailed error information',
-      default: false,
-    }),
+    ...BaseCommand.baseFlags,
   };
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(UserInfo);
-    const client = new EchoClient();
 
     try {
-      const user = await client.resolveUser(args.identifier);
+      const user = await this.withSpinner('Fetching user', () =>
+        this.client.resolveUser(args.identifier)
+      );
 
       if (flags.json) {
         this.log(output(user));
@@ -48,10 +39,7 @@ export default class UserInfo extends Command {
         this.log(formatUser(user));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

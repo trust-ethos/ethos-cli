@@ -1,9 +1,8 @@
-import { Args, Command, Flags } from '@oclif/core';
-import { EchoClient } from '../../lib/api/echo-client.js';
-import { formatError } from '../../lib/formatting/error.js';
+import { Args, Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatMarket, output } from '../../lib/formatting/output.js';
 
-export default class MarketInfo extends Command {
+export default class MarketInfo extends BaseCommand {
   static aliases = ['mi'];
 
   static description = 'Get trust market info for a user';
@@ -19,13 +18,11 @@ export default class MarketInfo extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({ char: 'j', description: 'Output as JSON' }),
-    verbose: Flags.boolean({ char: 'v', description: 'Show detailed error information' }),
+    ...BaseCommand.baseFlags,
   };
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(MarketInfo);
-    const client = new EchoClient();
 
     try {
       // Try as profileId first, then as Twitter username
@@ -33,10 +30,16 @@ export default class MarketInfo extends Command {
       let market;
 
       if (isNumeric) {
-        market = await client.getMarketInfo(parseInt(args.identifier));
+        market = await this.withSpinner('Fetching market info', () =>
+          this.client.getMarketInfo(parseInt(args.identifier))
+        );
       } else {
-        const marketUser = await client.getMarketByTwitter(args.identifier);
-        market = await client.getMarketInfo(marketUser.profileId);
+        const marketUser = await this.withSpinner('Fetching market info', () =>
+          this.client.getMarketByTwitter(args.identifier)
+        );
+        market = await this.withSpinner('Fetching market info', () =>
+          this.client.getMarketInfo(marketUser.profileId)
+        );
       }
 
       if (flags.json) {
@@ -45,10 +48,7 @@ export default class MarketInfo extends Command {
         this.log(formatMarket(market));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

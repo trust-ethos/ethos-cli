@@ -1,9 +1,8 @@
-import { Args, Command, Flags } from '@oclif/core';
-import { EchoClient } from '../../lib/api/echo-client.js';
-import { formatError } from '../../lib/formatting/error.js';
+import { Args, Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatVotes, formatVoteStats, output } from '../../lib/formatting/output.js';
 
-export default class VouchVotes extends Command {
+export default class VouchVotes extends BaseCommand {
   static args = {
     id: Args.integer({
       description: 'Vouch ID',
@@ -21,16 +20,7 @@ export default class VouchVotes extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({
-      char: 'j',
-      description: 'Output as JSON',
-      default: false,
-    }),
-    verbose: Flags.boolean({
-      char: 'v',
-      description: 'Show detailed error information',
-      default: false,
-    }),
+    ...BaseCommand.baseFlags,
     stats: Flags.boolean({
       char: 's',
       description: 'Show vote statistics only',
@@ -58,11 +48,10 @@ export default class VouchVotes extends Command {
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(VouchVotes);
-    const client = new EchoClient();
 
     try {
       if (flags.stats) {
-        const stats = await client.getVoteStats(args.id, 'vouch');
+        const stats = await this.withSpinner('Fetching vote stats', () => this.client.getVoteStats(args.id, 'vouch'));
         if (flags.json) {
           this.log(output(stats));
         } else {
@@ -79,7 +68,7 @@ export default class VouchVotes extends Command {
       if (flags.upvotes) params.isUpvote = true;
       if (flags.downvotes) params.isUpvote = false;
 
-      const response = await client.getVotes(args.id, 'vouch', params);
+      const response = await this.withSpinner('Fetching votes', () => this.client.getVotes(args.id, 'vouch', params));
 
       if (flags.json) {
         this.log(output(response));
@@ -87,10 +76,7 @@ export default class VouchVotes extends Command {
         this.log(formatVotes(response.values, response.total, 'vouch'));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

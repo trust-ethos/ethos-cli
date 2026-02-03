@@ -1,10 +1,9 @@
-import { Command, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
 import pc from 'picocolors';
-import { EchoClient } from '../../lib/api/echo-client.js';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatAuction, output } from '../../lib/formatting/output.js';
-import { formatError } from '../../lib/formatting/error.js';
 
-export default class AuctionActive extends Command {
+export default class AuctionActive extends BaseCommand {
   static description = 'Show the currently active auction';
 
   static examples = [
@@ -13,16 +12,16 @@ export default class AuctionActive extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({ char: 'j', description: 'Output as JSON' }),
-    verbose: Flags.boolean({ char: 'v', description: 'Show detailed error information' }),
+    ...BaseCommand.baseFlags,
   };
 
   async run(): Promise<void> {
     const { flags } = await this.parse(AuctionActive);
-    const client = new EchoClient();
 
     try {
-      const auction = await client.getActiveAuction();
+      const auction = await this.withSpinner('Fetching active auction', () =>
+        this.client.getActiveAuction()
+      );
 
       if (!auction) {
         this.log(pc.yellow('No active auction at the moment.'));
@@ -35,10 +34,7 @@ export default class AuctionActive extends Command {
         this.log(formatAuction(auction));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

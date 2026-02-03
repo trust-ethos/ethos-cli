@@ -1,9 +1,8 @@
-import { Args, Command, Flags } from '@oclif/core';
-import { EchoClient } from '../../lib/api/echo-client.js';
-import { formatError } from '../../lib/formatting/error.js';
+import { Args, Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatValidator, output } from '../../lib/formatting/output.js';
 
-export default class ValidatorInfo extends Command {
+export default class ValidatorInfo extends BaseCommand {
   static description = 'Get details of a specific validator NFT';
 
   static args = {
@@ -19,24 +18,16 @@ export default class ValidatorInfo extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({
-      char: 'j',
-      description: 'Output as JSON',
-      default: false,
-    }),
-    verbose: Flags.boolean({
-      char: 'v',
-      description: 'Show detailed error information',
-      default: false,
-    }),
+    ...BaseCommand.baseFlags,
   };
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(ValidatorInfo);
-    const client = new EchoClient();
 
     try {
-      const validator = await client.getValidatorByTokenId(args.tokenId);
+      const validator = await this.withSpinner('Fetching validator', () =>
+        this.client.getValidatorByTokenId(args.tokenId)
+      );
 
       if (!validator) {
         this.log(`Validator with token ID ${args.tokenId} not found.`);
@@ -50,10 +41,7 @@ export default class ValidatorInfo extends Command {
         this.log(formatValidator(validator));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

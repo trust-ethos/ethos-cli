@@ -1,7 +1,7 @@
-import { Command, Flags } from '@oclif/core';
-import { EchoClient, type BrokerPostType, type BrokerSortBy } from '../../lib/api/echo-client.js';
+import { Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
+import { type BrokerPostType, type BrokerSortBy } from '../../lib/api/echo-client.js';
 import { formatBrokerPosts, output } from '../../lib/formatting/output.js';
-import { formatError } from '../../lib/formatting/error.js';
 
 const TYPE_MAP: Record<string, BrokerPostType> = {
   'sell': 'SELL',
@@ -11,7 +11,7 @@ const TYPE_MAP: Record<string, BrokerPostType> = {
   'bounty': 'BOUNTY',
 };
 
-export default class BrokerList extends Command {
+export default class BrokerList extends BaseCommand {
   static description = 'List broker posts (jobs, services, bounties)';
 
   static examples = [
@@ -22,8 +22,7 @@ export default class BrokerList extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({ char: 'j', description: 'Output as JSON' }),
-    verbose: Flags.boolean({ char: 'v', description: 'Show detailed error information' }),
+    ...BaseCommand.baseFlags,
     type: Flags.string({
       char: 't',
       description: 'Filter by post type',
@@ -41,16 +40,17 @@ export default class BrokerList extends Command {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(BrokerList);
-    const client = new EchoClient();
 
     try {
-      const response = await client.getBrokerPosts({
-        type: flags.type ? TYPE_MAP[flags.type] : undefined,
-        search: flags.search,
-        sortBy: flags.sort as BrokerSortBy,
-        limit: flags.limit,
-        offset: flags.offset,
-      });
+      const response = await this.withSpinner('Fetching broker posts', () =>
+        this.client.getBrokerPosts({
+          type: flags.type ? TYPE_MAP[flags.type] : undefined,
+          search: flags.search,
+          sortBy: flags.sort as BrokerSortBy,
+          limit: flags.limit,
+          offset: flags.offset,
+        })
+      );
 
       if (flags.json) {
         this.log(output(response));
@@ -58,10 +58,7 @@ export default class BrokerList extends Command {
         this.log(formatBrokerPosts(response.values, response.total));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

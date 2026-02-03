@@ -1,9 +1,8 @@
-import { Command, Flags } from '@oclif/core';
-import { EchoClient } from '../../lib/api/echo-client.js';
+import { Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatSlashes, output } from '../../lib/formatting/output.js';
-import { formatError } from '../../lib/formatting/error.js';
 
-export default class SlashList extends Command {
+export default class SlashList extends BaseCommand {
   static description = 'List reputation slashes';
 
   static examples = [
@@ -14,8 +13,7 @@ export default class SlashList extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({ char: 'j', description: 'Output as JSON' }),
-    verbose: Flags.boolean({ char: 'v', description: 'Show detailed error information' }),
+    ...BaseCommand.baseFlags,
     status: Flags.string({
       description: 'Filter by status',
       options: ['open', 'closed'],
@@ -28,16 +26,17 @@ export default class SlashList extends Command {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(SlashList);
-    const client = new EchoClient();
 
     try {
-      const response = await client.getSlashes({
-        author: flags.author,
-        subject: flags.subject,
-        status: flags.status as any,
-        limit: flags.limit,
-        offset: flags.offset,
-      });
+      const response = await this.withSpinner('Fetching slashes', () =>
+        this.client.getSlashes({
+          author: flags.author,
+          subject: flags.subject,
+          status: flags.status as any,
+          limit: flags.limit,
+          offset: flags.offset,
+        })
+      );
 
       if (flags.json) {
         this.log(output(response.data));
@@ -45,10 +44,7 @@ export default class SlashList extends Command {
         this.log(formatSlashes(response.data.values, response.data.total));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

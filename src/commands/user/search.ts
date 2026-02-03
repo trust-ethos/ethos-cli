@@ -1,9 +1,8 @@
-import { Args, Command, Flags } from '@oclif/core';
-import { EchoClient } from '../../lib/api/echo-client.js';
-import { formatError } from '../../lib/formatting/error.js';
+import { Args, Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatSearchResults, output } from '../../lib/formatting/output.js';
 
-export default class UserSearch extends Command {
+export default class UserSearch extends BaseCommand {
   static aliases = ['find'];
 
   static args = {
@@ -23,20 +22,11 @@ export default class UserSearch extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({
-      char: 'j',
-      description: 'Output as JSON',
-      default: false,
-    }),
+    ...BaseCommand.baseFlags,
     limit: Flags.integer({
       char: 'l',
       description: 'Maximum number of results',
       default: 10,
-    }),
-    verbose: Flags.boolean({
-      char: 'v',
-      description: 'Show detailed error information',
-      default: false,
     }),
   };
 
@@ -47,10 +37,10 @@ export default class UserSearch extends Command {
       this.error('limit must be between 1 and 100', { exit: 2 });
     }
 
-    const client = new EchoClient();
-
     try {
-      const response = await client.searchUsers(args.query, flags.limit);
+      const response = await this.withSpinner('Searching users', () =>
+        this.client.searchUsers(args.query, flags.limit)
+      );
 
       if (flags.json) {
         this.log(output(response));
@@ -58,10 +48,7 @@ export default class UserSearch extends Command {
         this.log(formatSearchResults(response.values));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

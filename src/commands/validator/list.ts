@@ -1,9 +1,8 @@
-import { Command, Flags } from '@oclif/core';
-import { EchoClient } from '../../lib/api/echo-client.js';
-import { formatError } from '../../lib/formatting/error.js';
+import { Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatValidators, output } from '../../lib/formatting/output.js';
 
-export default class ValidatorList extends Command {
+export default class ValidatorList extends BaseCommand {
   static description = 'List all Ethos validator NFT owners';
 
   static examples = [
@@ -14,16 +13,7 @@ export default class ValidatorList extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({
-      char: 'j',
-      description: 'Output as JSON',
-      default: false,
-    }),
-    verbose: Flags.boolean({
-      char: 'v',
-      description: 'Show detailed error information',
-      default: false,
-    }),
+    ...BaseCommand.baseFlags,
     limit: Flags.integer({
       char: 'l',
       description: 'Max results to display',
@@ -43,10 +33,11 @@ export default class ValidatorList extends Command {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(ValidatorList);
-    const client = new EchoClient();
 
     try {
-      let validators = await client.getValidators();
+      let validators = await this.withSpinner('Fetching validators', () =>
+        this.client.getValidators()
+      );
 
       if (flags.available) {
         validators = validators.filter(v => !v.isFull);
@@ -61,10 +52,7 @@ export default class ValidatorList extends Command {
         this.log(formatValidators(validators, total));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

@@ -1,9 +1,9 @@
-import { Args, Command, Flags } from '@oclif/core';
-import { EchoClient, type Auction } from '../../lib/api/echo-client.js';
+import { Args, Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
+import { type Auction } from '../../lib/api/echo-client.js';
 import { formatAuction, output } from '../../lib/formatting/output.js';
-import { formatError } from '../../lib/formatting/error.js';
 
-export default class AuctionInfo extends Command {
+export default class AuctionInfo extends BaseCommand {
   static description = 'Get details of a specific auction';
 
   static args = {
@@ -16,20 +16,20 @@ export default class AuctionInfo extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({ char: 'j', description: 'Output as JSON' }),
-    verbose: Flags.boolean({ char: 'v', description: 'Show detailed error information' }),
+    ...BaseCommand.baseFlags,
   };
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(AuctionInfo);
-    const client = new EchoClient();
 
     try {
-      let auction: Auction = await client.getAuction(args.id);
+      let auction: Auction = await this.withSpinner('Fetching auction', () =>
+        this.client.getAuction(args.id)
+      );
 
       if (auction.buyerAddress) {
         try {
-          const buyer = await client.getUserByAddress(auction.buyerAddress);
+          const buyer = await this.client.getUserByAddress(auction.buyerAddress);
           auction = { ...auction, buyerUser: { displayName: buyer.displayName, username: buyer.username } };
         } catch {
           auction = { ...auction, buyerUser: null };
@@ -42,10 +42,7 @@ export default class AuctionInfo extends Command {
         this.log(formatAuction(auction));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

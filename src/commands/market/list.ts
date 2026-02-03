@@ -1,9 +1,9 @@
-import { Command, Flags } from '@oclif/core';
-import { EchoClient, type MarketOrderBy } from '../../lib/api/echo-client.js';
-import { formatError } from '../../lib/formatting/error.js';
+import { Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
+import { type MarketOrderBy } from '../../lib/api/echo-client.js';
 import { formatMarkets, output } from '../../lib/formatting/output.js';
 
-export default class MarketList extends Command {
+export default class MarketList extends BaseCommand {
   static aliases = ['ml'];
 
   static description = 'List trust markets';
@@ -15,8 +15,7 @@ export default class MarketList extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({ char: 'j', description: 'Output as JSON' }),
-    verbose: Flags.boolean({ char: 'v', description: 'Show detailed error information' }),
+    ...BaseCommand.baseFlags,
     sort: Flags.string({
       description: 'Sort by field',
       options: ['marketCapWei', 'volume24hWei', 'priceChange24hPercent', 'score', 'createdAt'],
@@ -34,16 +33,17 @@ export default class MarketList extends Command {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(MarketList);
-    const client = new EchoClient();
 
     try {
-      const response = await client.getMarkets({
-        orderBy: flags.sort as MarketOrderBy,
-        orderDirection: flags.order as 'asc' | 'desc',
-        filterQuery: flags.search,
-        limit: flags.limit,
-        offset: flags.offset,
-      });
+      const response = await this.withSpinner('Fetching markets', () =>
+        this.client.getMarkets({
+          orderBy: flags.sort as MarketOrderBy,
+          orderDirection: flags.order as 'asc' | 'desc',
+          filterQuery: flags.search,
+          limit: flags.limit,
+          offset: flags.offset,
+        })
+      );
 
       if (flags.json) {
         this.log(output(response));
@@ -51,10 +51,7 @@ export default class MarketList extends Command {
         this.log(formatMarkets(response.values, response.total));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

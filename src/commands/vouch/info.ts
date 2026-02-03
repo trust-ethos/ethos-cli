@@ -1,9 +1,8 @@
-import { Args, Command, Flags } from '@oclif/core';
-import { EchoClient } from '../../lib/api/echo-client.js';
-import { formatError } from '../../lib/formatting/error.js';
+import { Args, Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatVouch, output } from '../../lib/formatting/output.js';
 
-export default class VouchInfo extends Command {
+export default class VouchInfo extends BaseCommand {
   static aliases = ['vi'];
 
   static args = {
@@ -21,24 +20,14 @@ export default class VouchInfo extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({
-      char: 'j',
-      description: 'Output as JSON',
-      default: false,
-    }),
-    verbose: Flags.boolean({
-      char: 'v',
-      description: 'Show detailed error information',
-      default: false,
-    }),
+    ...BaseCommand.baseFlags,
   };
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(VouchInfo);
-    const client = new EchoClient();
 
     try {
-      const response = await client.getVouches({ ids: [args.id], limit: 1 });
+      const response = await this.withSpinner('Fetching vouch', () => this.client.getVouches({ ids: [args.id], limit: 1 }));
 
       if (!response.values.length) {
         this.error(`Vouch #${args.id} not found`, { exit: 1 });
@@ -52,10 +41,7 @@ export default class VouchInfo extends Command {
         this.log(formatVouch(vouch));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

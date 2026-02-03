@@ -1,7 +1,6 @@
-import { Args, Command, Flags } from '@oclif/core';
+import { Args, Flags } from '@oclif/core';
 import pc from 'picocolors';
-import { EchoClient } from '../../lib/api/echo-client.js';
-import { formatError } from '../../lib/formatting/error.js';
+import { BaseCommand } from '../../lib/base-command.js';
 import { output } from '../../lib/formatting/output.js';
 
 type ScoreLevel = 'untrusted' | 'questionable' | 'neutral' | 'reputable' | 'exemplary';
@@ -22,7 +21,7 @@ const LEVEL_COLORS: Record<ScoreLevel, (s: string) => string> = {
   exemplary: pc.cyan,
 };
 
-export default class UserSummary extends Command {
+export default class UserSummary extends BaseCommand {
   static aliases = ['us'];
 
   static args = {
@@ -41,30 +40,24 @@ export default class UserSummary extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({
-      char: 'j',
-      description: 'Output as JSON',
-      default: false,
-    }),
-    verbose: Flags.boolean({
-      char: 'v',
-      description: 'Show detailed error information',
-      default: false,
-    }),
+    ...BaseCommand.baseFlags,
   };
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(UserSummary);
-    const client = new EchoClient();
 
     try {
-      const user = await client.resolveUser(args.identifier);
-      const userkey = client.getPrimaryUserkey(user);
+      const user = await this.withSpinner('Fetching user', () =>
+        this.client.resolveUser(args.identifier)
+      );
+      const userkey = this.client.getPrimaryUserkey(user);
 
-      const [activities, vouches] = await Promise.all([
-        userkey ? client.getActivities(userkey, ['review', 'vouch'], 5) : [],
-        user.profileId ? client.getVouches({ subjectProfileIds: [user.profileId], archived: false, limit: 5 }) : { values: [], total: 0 },
-      ]);
+      const [activities, vouches] = await this.withSpinner('Fetching activities and vouches', () =>
+        Promise.all([
+          userkey ? this.client.getActivities(userkey, ['review', 'vouch'], 5) : [],
+          user.profileId ? this.client.getVouches({ subjectProfileIds: [user.profileId], archived: false, limit: 5 }) : { values: [], total: 0 },
+        ])
+      );
 
       if (flags.json) {
         this.log(output({
@@ -130,15 +123,12 @@ export default class UserSummary extends Command {
         lines.push(`${pc.dim('Profile:')} ${user.links.profile}`);
       }
 
-      this.log(lines.join('\n'));
-    } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
-    }
-  }
-}
+       this.log(lines.join('\n'));
+     } catch (error) {
+       this.handleError(error, flags.verbose);
+     }
+   }
+ }
 
 function formatVouchAmount(wei: string): string {
   const cleanWei = wei.replace(/n$/, '');

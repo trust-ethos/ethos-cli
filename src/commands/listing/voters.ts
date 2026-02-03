@@ -1,9 +1,8 @@
-import { Args, Command, Flags } from '@oclif/core';
-import { EchoClient } from '../../lib/api/echo-client.js';
+import { Args, Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatListingVoters, output } from '../../lib/formatting/output.js';
-import { formatError } from '../../lib/formatting/error.js';
 
-export default class ListingVoters extends Command {
+export default class ListingVoters extends BaseCommand {
   static description = 'Show voters for a listing/project';
 
   static args = {
@@ -17,8 +16,7 @@ export default class ListingVoters extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({ char: 'j', description: 'Output as JSON' }),
-    verbose: Flags.boolean({ char: 'v', description: 'Show detailed error information' }),
+    ...BaseCommand.baseFlags,
     sentiment: Flags.string({
       description: 'Filter by sentiment',
       options: ['bullish', 'bearish'],
@@ -29,14 +27,15 @@ export default class ListingVoters extends Command {
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(ListingVoters);
-    const client = new EchoClient();
 
     try {
-      const response = await client.getProjectVoters(args.projectId, {
-        limit: flags.limit,
-        offset: flags.offset,
-        sentiment: flags.sentiment as 'bullish' | 'bearish' | undefined,
-      });
+      const response = await this.withSpinner('Fetching voters', () =>
+        this.client.getProjectVoters(args.projectId, {
+          limit: flags.limit,
+          offset: flags.offset,
+          sentiment: flags.sentiment as 'bullish' | 'bearish' | undefined,
+        })
+      );
 
       if (flags.json) {
         this.log(output(response));
@@ -44,10 +43,7 @@ export default class ListingVoters extends Command {
         this.log(formatListingVoters(response.values, response.totals));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }

@@ -1,9 +1,8 @@
-import { Args, Command, Flags } from '@oclif/core';
-import { EchoClient } from '../../lib/api/echo-client.js';
+import { Args, Flags } from '@oclif/core';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatListing, output } from '../../lib/formatting/output.js';
-import { formatError } from '../../lib/formatting/error.js';
 
-export default class ListingInfo extends Command {
+export default class ListingInfo extends BaseCommand {
   static description = 'Get details of a specific listing/project';
 
   static args = {
@@ -17,19 +16,21 @@ export default class ListingInfo extends Command {
   ];
 
   static flags = {
-    json: Flags.boolean({ char: 'j', description: 'Output as JSON' }),
-    verbose: Flags.boolean({ char: 'v', description: 'Show detailed error information' }),
+    ...BaseCommand.baseFlags,
   };
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(ListingInfo);
-    const client = new EchoClient();
 
     try {
       const isNumeric = /^\d+$/.test(args.identifier);
       const project = isNumeric 
-        ? await client.getProjectDetails(parseInt(args.identifier))
-        : await client.getProjectByUsername(args.identifier);
+        ? await this.withSpinner('Fetching listing', () =>
+            this.client.getProjectDetails(parseInt(args.identifier))
+          )
+        : await this.withSpinner('Fetching listing', () =>
+            this.client.getProjectByUsername(args.identifier)
+          );
 
       if (flags.json) {
         this.log(output(project));
@@ -37,10 +38,7 @@ export default class ListingInfo extends Command {
         this.log(formatListing(project));
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.log(formatError(error, flags.verbose));
-        this.exit(1);
-      }
+      this.handleError(error, flags.verbose);
     }
   }
 }
