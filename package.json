@@ -60,8 +60,41 @@
     ],
     "topicSeparator": " ",
     "topics": {
+      "auction": {
+        "description": "Query validator NFT auctions"
+      },
+      "broker": {
+        "description": "Query broker posts (jobs, services, bounties)"
+      },
+      "config": {
+        "description": "Manage CLI configuration"
+      },
+      "listing": {
+        "description": "Query Ethos Listings projects and votes"
+      },
+      "market": {
+        "description": "Query trust markets and holdings"
+      },
+      "nft": {
+        "description": "Query NFTs owned by users"
+      },
+      "review": {
+        "description": "Query reviews and votes"
+      },
+      "score": {
+        "description": "Query score calculation status"
+      },
+      "slash": {
+        "description": "Query reputation slashes and votes"
+      },
       "user": {
         "description": "Query user profiles and information"
+      },
+      "validator": {
+        "description": "Query Ethos validator NFTs and sales"
+      },
+      "vouch": {
+        "description": "Query vouches and mutual connections"
       },
       "xp": {
         "description": "Query XP balances, seasons, and leaderboards"
@@ -79,6 +112,7 @@
     "prepack": "oclif manifest && oclif readme",
     "readme": "oclif readme",
     "test": "bun test",
+    "test:coverage": "bun test --coverage",
     "test:watch": "bun test --watch",
     "typecheck": "tsc --noEmit",
     "version": "oclif readme && git add README.md"
