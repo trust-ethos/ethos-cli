@@ -1,5 +1,5 @@
 #!/bin/sh
-# Pre-commit hook: Run typecheck and keep README in sync
+# Pre-commit hook: Run typecheck, lint, and keep README in sync
 # Install with: cp scripts/hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 
 echo "Running typecheck..."
@@ -15,6 +15,20 @@ if [ $TYPECHECK_EXIT_CODE -ne 0 ]; then
 fi
 
 echo "Typecheck passed!"
+
+echo "Running lint..."
+
+bun run lint
+LINT_EXIT_CODE=$?
+
+if [ $LINT_EXIT_CODE -ne 0 ]; then
+    echo ""
+    echo "Lint failed! Commit aborted."
+    echo "Run 'bun run lint --fix' to auto-fix issues."
+    exit 1
+fi
+
+echo "Lint passed!"
 
 if git diff --cached --name-only | grep -q "^src/commands/"; then
     echo "Command files changed, updating README..."

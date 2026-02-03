@@ -1,30 +1,30 @@
-import { Command, Flags } from '@oclif/core';
 import { checkbox, confirm, select } from '@inquirer/prompts';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { Command, Flags } from '@oclif/core';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
+import { dirname, join } from 'node:path';
 import pc from 'picocolors';
 
 const AGENTS = [
-  { name: 'Claude Code', projectDir: '.claude/skills', globalDir: '.claude/skills', projectDetect: '.claude', globalDetect: '.claude' },
-  { name: 'OpenCode', projectDir: '.opencode/skills', globalDir: '.config/opencode/skills', projectDetect: '.opencode', globalDetect: '.config/opencode' },
-  { name: 'OpenClaw', projectDir: 'skills', globalDir: '.agents/skills', projectDetect: '.agents', globalDetect: '.agents' },
-  { name: 'Antigravity', projectDir: '.agent/skills', globalDir: '.agent/skills', projectDetect: '.agent', globalDetect: '.agent' },
-  { name: 'Augment', projectDir: '.augment/rules', globalDir: '.augment/rules', projectDetect: '.augment', globalDetect: '.augment' },
-  { name: 'Cline', projectDir: '.cline/skills', globalDir: '.cline/skills', projectDetect: '.cline', globalDetect: '.cline' },
-  { name: 'CodeBuddy', projectDir: '.codebuddy/skills', globalDir: '.codebuddy/skills', projectDetect: '.codebuddy', globalDetect: '.codebuddy' },
-  { name: 'Codex', projectDir: '.codex/skills', globalDir: '.codex/skills', projectDetect: '.codex', globalDetect: '.codex' },
-  { name: 'Amp', projectDir: '.agents/skills', globalDir: '.agents/skills', projectDetect: '.agents', globalDetect: '.agents' },
+  { globalDetect: '.claude', globalDir: '.claude/skills', name: 'Claude Code', projectDetect: '.claude', projectDir: '.claude/skills' },
+  { globalDetect: '.config/opencode', globalDir: '.config/opencode/skills', name: 'OpenCode', projectDetect: '.opencode', projectDir: '.opencode/skills' },
+  { globalDetect: '.agents', globalDir: '.agents/skills', name: 'OpenClaw', projectDetect: '.agents', projectDir: 'skills' },
+  { globalDetect: '.agent', globalDir: '.agent/skills', name: 'Antigravity', projectDetect: '.agent', projectDir: '.agent/skills' },
+  { globalDetect: '.augment', globalDir: '.augment/rules', name: 'Augment', projectDetect: '.augment', projectDir: '.augment/rules' },
+  { globalDetect: '.cline', globalDir: '.cline/skills', name: 'Cline', projectDetect: '.cline', projectDir: '.cline/skills' },
+  { globalDetect: '.codebuddy', globalDir: '.codebuddy/skills', name: 'CodeBuddy', projectDetect: '.codebuddy', projectDir: '.codebuddy/skills' },
+  { globalDetect: '.codex', globalDir: '.codex/skills', name: 'Codex', projectDetect: '.codex', projectDir: '.codex/skills' },
+  { globalDetect: '.agents', globalDir: '.agents/skills', name: 'Amp', projectDetect: '.agents', projectDir: '.agents/skills' },
 ] as const;
 
 type Agent = (typeof AGENTS)[number];
-type Scope = 'project' | 'global';
+type Scope = 'global' | 'project';
 
 interface InstallTarget {
   agent: Agent;
-  scope: Scope;
-  path: string;
   exists: boolean;
+  path: string;
+  scope: Scope;
 }
 
 const SKILL_CONTENT = `---
@@ -184,40 +184,13 @@ ethos vouch list sethgho --json | jq '.values[].balance'
 
 export default class SkillInstall extends Command {
   static description = 'Install the ethos-cli skill for AI coding agents';
-
-  static examples = [
+static examples = [
     '<%= config.bin %> <%= command.id %>',
     '<%= config.bin %> <%= command.id %> --yes',
   ];
-
-  static flags = {
+static flags = {
     yes: Flags.boolean({ char: 'y', description: 'Skip confirmation prompts' }),
   };
-
-  private detectAvailableAgents(): { agent: Agent; hasGlobal: boolean; hasProject: boolean }[] {
-    const home = homedir();
-    const cwd = process.cwd();
-    
-    return AGENTS.map(agent => ({
-      agent,
-      hasGlobal: existsSync(join(home, agent.globalDetect)),
-      hasProject: existsSync(join(cwd, agent.projectDetect)),
-    })).filter(({ hasGlobal, hasProject }) => hasGlobal || hasProject);
-  }
-
-  private getInstallPath(agent: Agent, scope: Scope): string {
-    const base = scope === 'global' ? homedir() : process.cwd();
-    const dir = scope === 'global' ? agent.globalDir : agent.projectDir;
-    return join(base, dir, 'ethos-cli.md');
-  }
-
-  private formatPath(path: string): string {
-    const home = homedir();
-    if (path.startsWith(home)) {
-      return path.replace(home, '~');
-    }
-    return path.replace(process.cwd(), '.');
-  }
 
   async run(): Promise<void> {
     const { flags } = await this.parse(SkillInstall);
@@ -234,6 +207,7 @@ export default class SkillInstall extends Command {
       for (const agent of AGENTS) {
         this.log(`  - ${agent.name} (${agent.projectDetect}/)`);
       }
+
       this.log('');
       this.log('Install an agent first, then run this command again.');
       return;
@@ -243,12 +217,12 @@ export default class SkillInstall extends Command {
     this.log('');
 
     const selectedAgentNames = await checkbox({
-      message: 'Which agents do you want to install to?',
       choices: availableAgents.map(({ agent }) => ({
+        checked: agent.name === 'Claude Code',
         name: `${agent.name} (${agent.projectDir})`,
         value: agent.name,
-        checked: agent.name === 'Claude Code',
       })),
+      message: 'Which agents do you want to install to?',
     });
 
     if (selectedAgentNames.length === 0) {
@@ -263,7 +237,6 @@ export default class SkillInstall extends Command {
     this.log('');
 
     const scope = await select<Scope>({
-      message: 'Installation scope',
       choices: [
         { 
           name: 'Project (Install in current directory, committed with your project)', 
@@ -274,6 +247,7 @@ export default class SkillInstall extends Command {
           value: 'global' as Scope,
         },
       ],
+      message: 'Installation scope',
     });
 
     this.log('');
@@ -282,9 +256,9 @@ export default class SkillInstall extends Command {
       const path = this.getInstallPath(agent, scope);
       return {
         agent,
-        scope,
-        path,
         exists: existsSync(path),
+        path,
+        scope,
       };
     });
 
@@ -292,7 +266,6 @@ export default class SkillInstall extends Command {
     this.log('');
     
     const overwrites = targets.filter(t => t.exists);
-    const newInstalls = targets.filter(t => !t.exists);
 
     for (const target of targets) {
       const status = target.exists ? pc.yellow('(overwrite)') : pc.green('(new)');
@@ -309,8 +282,8 @@ export default class SkillInstall extends Command {
 
     if (!flags.yes) {
       const proceed = await confirm({
-        message: 'Proceed with installation?',
         default: true,
+        message: 'Proceed with installation?',
       });
 
       if (!proceed) {
@@ -327,7 +300,8 @@ export default class SkillInstall extends Command {
         if (!existsSync(dir)) {
           mkdirSync(dir, { recursive: true });
         }
-        writeFileSync(target.path, SKILL_CONTENT, 'utf-8');
+
+        writeFileSync(target.path, SKILL_CONTENT, 'utf8');
         this.log(`${pc.green('Installed')} ${this.formatPath(target.path)}`);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -337,5 +311,31 @@ export default class SkillInstall extends Command {
 
     this.log('');
     this.log(pc.green('Done!') + ' The ethos-cli skill is now available to your AI agents.');
+  }
+
+  private detectAvailableAgents(): { agent: Agent; hasGlobal: boolean; hasProject: boolean }[] {
+    const home = homedir();
+    const cwd = process.cwd();
+    
+    return AGENTS.map(agent => ({
+      agent,
+      hasGlobal: existsSync(join(home, agent.globalDetect)),
+      hasProject: existsSync(join(cwd, agent.projectDetect)),
+    })).filter(({ hasGlobal, hasProject }) => hasGlobal || hasProject);
+  }
+
+  private formatPath(path: string): string {
+    const home = homedir();
+    if (path.startsWith(home)) {
+      return path.replace(home, '~');
+    }
+
+    return path.replace(process.cwd(), '.');
+  }
+
+  private getInstallPath(agent: Agent, scope: Scope): string {
+    const base = scope === 'global' ? homedir() : process.cwd();
+    const dir = scope === 'global' ? agent.globalDir : agent.projectDir;
+    return join(base, dir, 'ethos-cli.md');
   }
 }

@@ -11,8 +11,7 @@ oclif.manifest.json
 .env
 .env.local
 
-# Package managers (using bun.lock)
-package-lock.json
+# Package managers
 yarn.lock
 pnpm-lock.yaml
 
