@@ -45,10 +45,11 @@ jobs:
           node-version: 22
           registry-url: 'https://registry.npmjs.org'
       - uses: oven-sh/setup-bun@v2
-      - name: Configure npm for OIDC
+
+      - name: Upgrade npm for OIDC Trusted Publishing
         run: |
-          sed -i '/_authToken/d' $NPM_CONFIG_USERCONFIG
-          cat $NPM_CONFIG_USERCONFIG
+          npm install -g npm@^11.5.1
+          npm --version
 
       - name: Install dependencies
         run: bun install
@@ -68,11 +69,17 @@ jobs:
           draft: true
 
       - name: Publish to npm
+        env:
+          NPM_CONFIG_PROVENANCE: true
+          NODE_AUTH_TOKEN: ""
         run: |
+          unset NODE_AUTH_TOKEN
+          rm -f ~/.npmrc || true
+          rm -f "$NPM_CONFIG_USERCONFIG" || true
           if npm view @trust-ethos/cli@${{ needs.check-version.outputs.version }} > /dev/null 2>&1; then
             echo "Version ${{ needs.check-version.outputs.version }} already published, skipping"
           else
-            npm publish --provenance --access public
+            npm publish --access public
           fi
 
       - run: bun run postpack
