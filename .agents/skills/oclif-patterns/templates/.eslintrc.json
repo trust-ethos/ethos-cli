@@ -1,0 +1,18 @@
+{
+  "extends": [
+    "oclif",
+    "oclif-typescript"
+  ],
+  "rules": {
+    "object-curly-spacing": ["error", "always"],
+    "unicorn/no-abusive-eslint-disable": "off",
+    "unicorn/prefer-module": "off",
+    "unicorn/prefer-top-level-await": "off",
+    "valid-jsdoc": "off",
+    "no-console": "warn",
+    "no-warning-comments": "warn",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "perfectionist/sort-objects": "off"
+  }
+}
