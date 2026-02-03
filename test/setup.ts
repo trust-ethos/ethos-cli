@@ -1,7 +1,6 @@
-import { afterEach, beforeEach } from 'bun:test';
+import { afterAll, afterEach, beforeEach } from 'bun:test';
 
 const originalExit = process.exit;
-const originalExitCode = process.exitCode;
 
 beforeEach(() => {
   process.exitCode = undefined;
@@ -12,5 +11,9 @@ beforeEach(() => {
 
 afterEach(() => {
   (process as any).exit = originalExit;
-  process.exitCode = originalExitCode;
+  process.exitCode = undefined;
+});
+
+afterAll(() => {
+  process.exitCode = 0;
 });

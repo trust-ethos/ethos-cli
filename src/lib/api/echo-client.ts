@@ -1,5 +1,6 @@
 import { loadConfig } from '../config/index.js';
 import { APIError, NetworkError, NotFoundError } from '../errors/cli-error.js';
+import { httpFetch } from '../http/fetch.js';
 import { type ParsedIdentifier, parseIdentifier } from '../validation/userkey.js';
 
 export interface EthosUser {
@@ -890,7 +891,7 @@ export class EchoClient {
      this.log(`Fetching ${url}`);
 
       try {
-        const response = await fetch(url, {
+        const response = await httpFetch(url, {
           headers: { 
             'Accept': 'application/json',
             'X-Ethos-Client': 'ethos-cli',
