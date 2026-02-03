@@ -64,8 +64,6 @@ jobs:
           draft: true
 
       - name: Publish to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           if npm view @trust-ethos/cli@${{ needs.check-version.outputs.version }} > /dev/null 2>&1; then
             echo "Version ${{ needs.check-version.outputs.version }} already published, skipping"
