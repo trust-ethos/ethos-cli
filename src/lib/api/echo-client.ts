@@ -890,7 +890,7 @@ export class EchoClient {
      this.log(`Fetching ${url}`);
 
       try {
-        const response = await fetch(url, {
+        const response = await globalThis.fetch(url, {
           headers: { 
             'Accept': 'application/json',
             'X-Ethos-Client': 'ethos-cli',

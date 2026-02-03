@@ -20,6 +20,7 @@
     "@oclif/test": "^4",
     "@types/bun": "latest",
     "@types/node": "^18",
+    "eslint": "^9.39.2",
     "oclif": "^4",
     "shx": "^0.3.3",
     "typescript": "^5"
