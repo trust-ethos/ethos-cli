@@ -43,8 +43,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          # No registry-url - let npm use OIDC Trusted Publishing
+          registry-url: 'https://registry.npmjs.org'
       - uses: oven-sh/setup-bun@v2
+      - name: Configure npm for OIDC
+        run: |
+          sed -i '/_authToken/d' $NPM_CONFIG_USERCONFIG
+          cat $NPM_CONFIG_USERCONFIG
 
       - name: Install dependencies
         run: bun install
