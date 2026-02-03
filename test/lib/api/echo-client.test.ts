@@ -1,12 +1,6 @@
-import { describe, expect, test, mock, beforeEach, afterEach } from 'bun:test';
+import { describe, expect, test, beforeEach, afterEach, spyOn, type Mock } from 'bun:test';
 import { EchoClient, type EthosUser, type SearchResult, type SeasonsResponse, type Activity } from '../../../src/lib/api/echo-client.js';
 import { NotFoundError, NetworkError, APIError } from '../../../src/lib/errors/cli-error.js';
-
-const originalFetch = globalThis.fetch;
-
-function mockFetch<T>(fn: (...args: any[]) => Promise<T>): typeof fetch {
-  return mock(fn) as unknown as typeof fetch;
-}
 
 const mockUser: EthosUser = {
   id: 123,
@@ -92,9 +86,25 @@ const mockActivities: Activity[] = [
   },
 ];
 
+function createMockResponse(data: unknown, options: { ok?: boolean; status?: number } = {}): Response {
+  const { ok = true, status = 200 } = options;
+  return {
+    ok,
+    status,
+    json: () => Promise.resolve(data),
+    text: () => Promise.resolve(JSON.stringify(data)),
+  } as Response;
+}
+
 describe('EchoClient', () => {
+  let fetchSpy: Mock<typeof fetch>;
+
+  beforeEach(() => {
+    fetchSpy = spyOn(globalThis, 'fetch');
+  });
+
   afterEach(() => {
-    globalThis.fetch = originalFetch;
+    fetchSpy.mockRestore();
   });
 
   describe('constructor', () => {
@@ -106,12 +116,7 @@ describe('EchoClient', () => {
 
   describe('getUserByTwitter', () => {
     test('resolves Twitter username successfully', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockUser),
-        } as Response)
-      ) as unknown as typeof fetch;
+      fetchSpy.mockResolvedValue(createMockResponse(mockUser));
 
       const client = new EchoClient();
       const user = await client.getUserByTwitter('testuser');
@@ -122,29 +127,18 @@ describe('EchoClient', () => {
     });
 
     test('encodes username in URL', async () => {
-      let capturedUrl = '';
-      globalThis.fetch = mockFetch((url: string) => {
-        capturedUrl = url;
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockUser),
-        } as Response);
-      }) as unknown as typeof fetch;
+      fetchSpy.mockResolvedValue(createMockResponse(mockUser));
 
       const client = new EchoClient();
       await client.getUserByTwitter('test user');
 
-      expect(capturedUrl).toContain('test%20user');
+      expect(fetchSpy).toHaveBeenCalled();
+      const calledUrl = fetchSpy.mock.calls[0][0] as string;
+      expect(calledUrl).toContain('test%20user');
     });
 
     test('throws NotFoundError on 404', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: false,
-          status: 404,
-          json: () => Promise.resolve({}),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse({}, { ok: false, status: 404 }));
 
       const client = new EchoClient();
       try {
@@ -157,13 +151,11 @@ describe('EchoClient', () => {
     });
 
     test('throws APIError on 500', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: false,
-          status: 500,
-          text: () => Promise.resolve(JSON.stringify({ message: 'Internal Server Error' })),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue({
+        ok: false,
+        status: 500,
+        text: () => Promise.resolve(JSON.stringify({ message: 'Internal Server Error' })),
+      } as Response);
 
       const client = new EchoClient();
       try {
@@ -176,9 +168,7 @@ describe('EchoClient', () => {
     });
 
     test('throws NetworkError on fetch failure', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.reject(new Error('fetch failed'))
-      );
+      fetchSpy.mockRejectedValue(new Error('fetch failed'));
 
       const client = new EchoClient();
       try {
@@ -192,12 +182,7 @@ describe('EchoClient', () => {
 
   describe('getUserByAddress', () => {
     test('resolves ETH address successfully', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockUser),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse(mockUser));
 
       const client = new EchoClient();
       const user = await client.getUserByAddress('0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045');
@@ -207,29 +192,18 @@ describe('EchoClient', () => {
     });
 
     test('encodes address in URL', async () => {
-      let capturedUrl = '';
-      globalThis.fetch = mockFetch((url: string) => {
-        capturedUrl = url;
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockUser),
-        } as Response);
-      });
+      fetchSpy.mockResolvedValue(createMockResponse(mockUser));
 
       const client = new EchoClient();
       await client.getUserByAddress('0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045');
 
-      expect(capturedUrl).toContain('/by/address/');
+      expect(fetchSpy).toHaveBeenCalled();
+      const calledUrl = fetchSpy.mock.calls[0][0] as string;
+      expect(calledUrl).toContain('/by/address/');
     });
 
     test('throws NotFoundError on 404', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: false,
-          status: 404,
-          json: () => Promise.resolve({}),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse({}, { ok: false, status: 404 }));
 
       const client = new EchoClient();
       try {
@@ -243,12 +217,7 @@ describe('EchoClient', () => {
 
   describe('getUserByProfileId', () => {
     test('resolves profile ID successfully', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockUser),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse(mockUser));
 
       const client = new EchoClient();
       const user = await client.getUserByProfileId('456');
@@ -258,13 +227,7 @@ describe('EchoClient', () => {
     });
 
     test('throws NotFoundError on 404', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: false,
-          status: 404,
-          json: () => Promise.resolve({}),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse({}, { ok: false, status: 404 }));
 
       const client = new EchoClient();
       try {
@@ -278,12 +241,7 @@ describe('EchoClient', () => {
 
   describe('searchUsers', () => {
     test('returns search results successfully', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockSearchResult),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse(mockSearchResult));
 
       const client = new EchoClient();
       const result = await client.searchUsers('vitalik');
@@ -301,12 +259,7 @@ describe('EchoClient', () => {
         offset: 0,
       };
 
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(emptyResult),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse(emptyResult));
 
       const client = new EchoClient();
       const result = await client.searchUsers('nonexistent');
@@ -316,25 +269,18 @@ describe('EchoClient', () => {
     });
 
     test('respects limit parameter', async () => {
-      let capturedUrl = '';
-      globalThis.fetch = mockFetch((url: string) => {
-        capturedUrl = url;
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockSearchResult),
-        } as Response);
-      });
+      fetchSpy.mockResolvedValue(createMockResponse(mockSearchResult));
 
       const client = new EchoClient();
       await client.searchUsers('test', 5);
 
-      expect(capturedUrl).toContain('limit=5');
+      expect(fetchSpy).toHaveBeenCalled();
+      const calledUrl = fetchSpy.mock.calls[0][0] as string;
+      expect(calledUrl).toContain('limit=5');
     });
 
     test('throws NetworkError on fetch failure', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.reject(new Error('ECONNREFUSED'))
-      );
+      fetchSpy.mockRejectedValue(new Error('ECONNREFUSED'));
 
       const client = new EchoClient();
       try {
@@ -348,12 +294,7 @@ describe('EchoClient', () => {
 
   describe('resolveUser', () => {
     test('resolves Twitter username', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockUser),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse(mockUser));
 
       const client = new EchoClient();
       const user = await client.resolveUser('testuser');
@@ -362,12 +303,7 @@ describe('EchoClient', () => {
     });
 
     test('resolves ETH address', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockUser),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse(mockUser));
 
       const client = new EchoClient();
       const user = await client.resolveUser('0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045');
@@ -376,12 +312,7 @@ describe('EchoClient', () => {
     });
 
     test('resolves ENS name via search', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockSearchResult),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse(mockSearchResult));
 
       const client = new EchoClient();
       const user = await client.resolveUser('vitalik.eth');
@@ -390,12 +321,7 @@ describe('EchoClient', () => {
     });
 
     test('resolves explicit address prefix', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockUser),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse(mockUser));
 
       const client = new EchoClient();
       const user = await client.resolveUser('address:0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045');
@@ -404,12 +330,7 @@ describe('EchoClient', () => {
     });
 
     test('resolves explicit profileId prefix', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockUser),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse(mockUser));
 
       const client = new EchoClient();
       const user = await client.resolveUser('profileId:456');
@@ -420,12 +341,7 @@ describe('EchoClient', () => {
 
   describe('getXpTotal', () => {
     test('returns XP total successfully', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(2500),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse(2500));
 
       const client = new EchoClient();
       const xp = await client.getXpTotal('profileId:456');
@@ -434,13 +350,7 @@ describe('EchoClient', () => {
     });
 
     test('throws NotFoundError on 404', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: false,
-          status: 404,
-          json: () => Promise.resolve({}),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse({}, { ok: false, status: 404 }));
 
       const client = new EchoClient();
       try {
@@ -454,12 +364,7 @@ describe('EchoClient', () => {
 
   describe('getSeasons', () => {
     test('returns seasons successfully', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockSeasonsResponse),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse(mockSeasonsResponse));
 
       const client = new EchoClient();
       const seasons = await client.getSeasons();
@@ -470,9 +375,7 @@ describe('EchoClient', () => {
     });
 
     test('throws NetworkError on fetch failure', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.reject(new Error('ENOTFOUND'))
-      );
+      fetchSpy.mockRejectedValue(new Error('ENOTFOUND'));
 
       const client = new EchoClient();
       try {
@@ -486,12 +389,7 @@ describe('EchoClient', () => {
 
   describe('getLeaderboardRank', () => {
     test('returns leaderboard rank successfully', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(42),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse(42));
 
       const client = new EchoClient();
       const rank = await client.getLeaderboardRank('profileId:456');
@@ -500,13 +398,7 @@ describe('EchoClient', () => {
     });
 
     test('throws NotFoundError on 404', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: false,
-          status: 404,
-          json: () => Promise.resolve({}),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse({}, { ok: false, status: 404 }));
 
       const client = new EchoClient();
       try {
@@ -520,12 +412,7 @@ describe('EchoClient', () => {
 
   describe('getActivities', () => {
     test('returns activities successfully', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockActivities),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse(mockActivities));
 
       const client = new EchoClient();
       const activities = await client.getActivities('profileId:456');
@@ -536,45 +423,29 @@ describe('EchoClient', () => {
     });
 
     test('filters by activity type', async () => {
-      let capturedUrl = '';
-      globalThis.fetch = mockFetch((url: string) => {
-        capturedUrl = url;
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockActivities),
-        } as Response);
-      });
+      fetchSpy.mockResolvedValue(createMockResponse(mockActivities));
 
       const client = new EchoClient();
       await client.getActivities('profileId:456', ['review']);
 
-      expect(capturedUrl).toContain('activityType=review');
+      expect(fetchSpy).toHaveBeenCalled();
+      const calledUrl = fetchSpy.mock.calls[0][0] as string;
+      expect(calledUrl).toContain('activityType=review');
     });
 
     test('respects limit parameter', async () => {
-      let capturedUrl = '';
-      globalThis.fetch = mockFetch((url: string) => {
-        capturedUrl = url;
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockActivities),
-        } as Response);
-      });
+      fetchSpy.mockResolvedValue(createMockResponse(mockActivities));
 
       const client = new EchoClient();
       await client.getActivities('profileId:456', ['review', 'vouch'], 5);
 
-      expect(capturedUrl).toContain('limit=5');
+      expect(fetchSpy).toHaveBeenCalled();
+      const calledUrl = fetchSpy.mock.calls[0][0] as string;
+      expect(calledUrl).toContain('limit=5');
     });
 
     test('throws NotFoundError on 404', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: false,
-          status: 404,
-          json: () => Promise.resolve({}),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse({}, { ok: false, status: 404 }));
 
       const client = new EchoClient();
       try {
@@ -635,11 +506,9 @@ describe('EchoClient', () => {
 
   describe('timeout handling', () => {
     test('throws NetworkError on timeout', async () => {
-      globalThis.fetch = mockFetch(() => {
-        const error = new Error('Aborted');
-        (error as any).name = 'AbortError';
-        return Promise.reject(error);
-      });
+      const abortError = new Error('Aborted');
+      abortError.name = 'AbortError';
+      fetchSpy.mockRejectedValue(abortError);
 
       const client = new EchoClient();
       try {
@@ -654,13 +523,11 @@ describe('EchoClient', () => {
 
   describe('error handling', () => {
     test('handles API error with JSON response', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: false,
-          status: 400,
-          text: () => Promise.resolve(JSON.stringify({ message: 'Bad request' })),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue({
+        ok: false,
+        status: 400,
+        text: () => Promise.resolve(JSON.stringify({ message: 'Bad request' })),
+      } as Response);
 
       const client = new EchoClient();
       try {
@@ -673,14 +540,12 @@ describe('EchoClient', () => {
     });
 
     test('handles API error with text response', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: false,
-          status: 400,
-          json: () => Promise.reject(new Error('Not JSON')),
-          text: () => Promise.resolve('Plain text error'),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue({
+        ok: false,
+        status: 400,
+        json: () => Promise.reject(new Error('Not JSON')),
+        text: () => Promise.resolve('Plain text error'),
+      } as Response);
 
       const client = new EchoClient();
       try {
@@ -692,9 +557,7 @@ describe('EchoClient', () => {
     });
 
     test('handles ECONNREFUSED network error', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.reject(new Error('ECONNREFUSED'))
-      );
+      fetchSpy.mockRejectedValue(new Error('ECONNREFUSED'));
 
       const client = new EchoClient();
       try {
@@ -707,9 +570,7 @@ describe('EchoClient', () => {
     });
 
     test('handles ENOTFOUND network error', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.reject(new Error('ENOTFOUND'))
-      );
+      fetchSpy.mockRejectedValue(new Error('ENOTFOUND'));
 
       const client = new EchoClient();
       try {
@@ -724,12 +585,7 @@ describe('EchoClient', () => {
 
   describe('deprecated methods', () => {
     test('getUserByUsername delegates to getUserByTwitter', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockUser),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse(mockUser));
 
       const client = new EchoClient();
       const user = await client.getUserByUsername('testuser');
@@ -738,12 +594,7 @@ describe('EchoClient', () => {
     });
 
     test('getTotalXp delegates to getXpTotal', async () => {
-      globalThis.fetch = mockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(2500),
-        } as Response)
-      );
+      fetchSpy.mockResolvedValue(createMockResponse(2500));
 
       const client = new EchoClient();
       const xp = await client.getTotalXp('profileId:456');
@@ -754,21 +605,15 @@ describe('EchoClient', () => {
 
   describe('request headers', () => {
     test('sends Accept header', async () => {
-      let capturedHeaders: HeadersInit | undefined;
-      globalThis.fetch = mockFetch((_url: string, options?: RequestInit) => {
-        capturedHeaders = options?.headers;
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockUser),
-        } as Response);
-      });
+      fetchSpy.mockResolvedValue(createMockResponse(mockUser));
 
       const client = new EchoClient();
       await client.getUserByTwitter('testuser');
 
-      expect(capturedHeaders).toBeDefined();
-      const headersObj = capturedHeaders as Record<string, string>;
-      expect(headersObj['Accept']).toBe('application/json');
+      expect(fetchSpy).toHaveBeenCalled();
+      const calledOptions = fetchSpy.mock.calls[0][1] as RequestInit;
+      const headers = calledOptions?.headers as Record<string, string>;
+      expect(headers['Accept']).toBe('application/json');
     });
   });
 });
