@@ -1,44 +1,50 @@
-import { describe, test, expect } from 'bun:test';
+import { describe, test, expect, beforeEach } from 'bun:test';
 import { runCommand } from '@oclif/test';
+import { mockEchoClientSuccess, mockEchoClientNotFound } from '../../helpers/mock-api.js';
 
 describe('user info', () => {
-  test('command runs successfully with valid identifier', async () => {
-    const { error } = await runCommand(['user', 'info', 'vitalik.eth']);
+  beforeEach(() => {
+    mockEchoClientSuccess();
+  });
+
+  test('displays user info with valid identifier', async () => {
+    const { error } = await runCommand(['user', 'info', 'testuser']);
     expect(error).toBeUndefined();
   });
 
-  test('command accepts --json flag', async () => {
-    const { error } = await runCommand(['user', 'info', 'vitalik.eth', '--json']);
+  test('outputs JSON with --json flag', async () => {
+    const { error } = await runCommand(['user', 'info', 'testuser', '--json']);
     expect(error).toBeUndefined();
   });
 
-  test('command accepts --verbose flag', async () => {
-    const { error } = await runCommand(['user', 'info', 'vitalik.eth', '--verbose']);
+  test('accepts --verbose flag', async () => {
+    const { error } = await runCommand(['user', 'info', 'testuser', '--verbose']);
     expect(error).toBeUndefined();
   });
 
-  test('command accepts address identifier', async () => {
+  test('accepts -j short flag for JSON', async () => {
+    const { error } = await runCommand(['user', 'info', 'testuser', '-j']);
+    expect(error).toBeUndefined();
+  });
+
+  test('accepts address identifier', async () => {
     const { error } = await runCommand(['user', 'info', '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045']);
     expect(error).toBeUndefined();
   });
 
-  test('command accepts ENS name identifier', async () => {
+  test('accepts ENS name identifier', async () => {
     const { error } = await runCommand(['user', 'info', 'vitalik.eth']);
     expect(error).toBeUndefined();
   });
 
-  test('command accepts Twitter username identifier', async () => {
-    const { error } = await runCommand(['user', 'info', 'VitalikButerin']);
-    expect(error).toBeUndefined();
-  });
-
-  test('command fails with invalid identifier', async () => {
-    const { error } = await runCommand(['user', 'info', 'nonexistent-user-xyz-12345-invalid']);
+  test('requires identifier argument', async () => {
+    const { error } = await runCommand(['user', 'info']);
     expect(error).toBeDefined();
   });
 
-  test('command requires identifier argument', async () => {
-    const { error } = await runCommand(['user', 'info']);
+  test('handles not found error', async () => {
+    mockEchoClientNotFound();
+    const { error } = await runCommand(['user', 'info', 'nonexistent']);
     expect(error).toBeDefined();
   });
 });

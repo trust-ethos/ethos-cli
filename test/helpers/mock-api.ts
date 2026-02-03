@@ -1,7 +1,6 @@
 import { mock } from 'bun:test';
 import type { EthosUser, SearchResult, SeasonsResponse, Activity } from '../../src/lib/api/echo-client.js';
 
-// Mock user data
 export const mockUser: EthosUser = {
   id: 123,
   profileId: 456,
@@ -86,175 +85,196 @@ export const mockActivities: Activity[] = [
   },
 ];
 
-// Mock API responses - success case
+export const mockRankIndex = 41;
+
+class MockEchoClient {
+  async resolveUser() {
+    return mockUser;
+  }
+
+  async getUserByTwitter() {
+    return mockUser;
+  }
+
+  async getUserByAddress() {
+    return mockUser;
+  }
+
+  async getUserByProfileId() {
+    return mockUser;
+  }
+
+  async searchUsers() {
+    return mockSearchResult;
+  }
+
+  async getActivities() {
+    return mockActivities;
+  }
+
+  async getLeaderboardRank() {
+    return mockRankIndex;
+  }
+
+  async getXpBySeason() {
+    return 1000;
+  }
+
+  async getSeasons() {
+    return mockSeasonsResponse;
+  }
+
+  async getXpTotal() {
+    return 2500;
+  }
+
+  getPrimaryUserkey() {
+    return 'profileId:456';
+  }
+}
+
+class MockEchoClientNotFound {
+  async resolveUser() {
+    const error = new Error('User not found');
+    (error as any).code = 'NOT_FOUND';
+    throw error;
+  }
+
+  async getUserByTwitter() {
+    const error = new Error('User not found');
+    (error as any).code = 'NOT_FOUND';
+    throw error;
+  }
+
+  async getUserByAddress() {
+    const error = new Error('User not found');
+    (error as any).code = 'NOT_FOUND';
+    throw error;
+  }
+
+  async getUserByProfileId() {
+    const error = new Error('User not found');
+    (error as any).code = 'NOT_FOUND';
+    throw error;
+  }
+
+  async searchUsers() {
+    return { values: [], total: 0, limit: 10, offset: 0 };
+  }
+
+  async getActivities() {
+    const error = new Error('User not found');
+    (error as any).code = 'NOT_FOUND';
+    throw error;
+  }
+
+  async getLeaderboardRank() {
+    const error = new Error('User not found');
+    (error as any).code = 'NOT_FOUND';
+    throw error;
+  }
+
+  async getSeasons() {
+    return mockSeasonsResponse;
+  }
+
+  async getXpTotal() {
+    const error = new Error('User not found');
+    (error as any).code = 'NOT_FOUND';
+    throw error;
+  }
+
+  async getXpBySeason() {
+    const error = new Error('User not found');
+    (error as any).code = 'NOT_FOUND';
+    throw error;
+  }
+
+  getPrimaryUserkey() {
+    return null;
+  }
+}
+
+class MockEchoClientNetworkError {
+  async resolveUser() {
+    const error = new Error('Cannot connect to API');
+    (error as any).code = 'NETWORK_ERROR';
+    throw error;
+  }
+
+  async getUserByTwitter() {
+    const error = new Error('Cannot connect to API');
+    (error as any).code = 'NETWORK_ERROR';
+    throw error;
+  }
+
+  async getUserByAddress() {
+    const error = new Error('Cannot connect to API');
+    (error as any).code = 'NETWORK_ERROR';
+    throw error;
+  }
+
+  async getUserByProfileId() {
+    const error = new Error('Cannot connect to API');
+    (error as any).code = 'NETWORK_ERROR';
+    throw error;
+  }
+
+  async searchUsers() {
+    const error = new Error('Cannot connect to API');
+    (error as any).code = 'NETWORK_ERROR';
+    throw error;
+  }
+
+  async getActivities() {
+    const error = new Error('Cannot connect to API');
+    (error as any).code = 'NETWORK_ERROR';
+    throw error;
+  }
+
+  async getLeaderboardRank() {
+    const error = new Error('Cannot connect to API');
+    (error as any).code = 'NETWORK_ERROR';
+    throw error;
+  }
+
+  async getSeasons() {
+    const error = new Error('Cannot connect to API');
+    (error as any).code = 'NETWORK_ERROR';
+    throw error;
+  }
+
+  async getXpTotal() {
+    const error = new Error('Cannot connect to API');
+    (error as any).code = 'NETWORK_ERROR';
+    throw error;
+  }
+
+  async getXpBySeason() {
+    const error = new Error('Cannot connect to API');
+    (error as any).code = 'NETWORK_ERROR';
+    throw error;
+  }
+
+  getPrimaryUserkey() {
+    return null;
+  }
+}
+
 export function mockEchoClientSuccess() {
-  return mock.module('../../src/lib/api/echo-client.js', () => ({
-    EchoClient: class MockEchoClient {
-      async resolveUser() {
-        return mockUser;
-      }
-
-      async getUserByTwitter() {
-        return mockUser;
-      }
-
-      async getUserByAddress() {
-        return mockUser;
-      }
-
-      async getUserByProfileId() {
-        return mockUser;
-      }
-
-      async searchUsers() {
-        return mockSearchResult;
-      }
-
-      async getActivities() {
-        return mockActivities;
-      }
-
-      async getLeaderboardRank() {
-        return 42;
-      }
-
-      async getSeasons() {
-        return mockSeasonsResponse;
-      }
-
-      async getXpTotal() {
-        return 2500;
-      }
-
-      getPrimaryUserkey() {
-        return 'profileId:456';
-      }
-    },
+  mock.module('../../src/lib/api/echo-client.js', () => ({
+    EchoClient: MockEchoClient,
   }));
 }
 
-// Mock API responses - not found case
 export function mockEchoClientNotFound() {
-  return mock.module('../../src/lib/api/echo-client.js', () => ({
-    EchoClient: class MockEchoClient {
-      async resolveUser() {
-        const error = new Error('User not found');
-        (error as any).name = 'NotFoundError';
-        throw error;
-      }
-
-      async getUserByTwitter() {
-        const error = new Error('User not found');
-        (error as any).name = 'NotFoundError';
-        throw error;
-      }
-
-      async getUserByAddress() {
-        const error = new Error('User not found');
-        (error as any).name = 'NotFoundError';
-        throw error;
-      }
-
-      async getUserByProfileId() {
-        const error = new Error('User not found');
-        (error as any).name = 'NotFoundError';
-        throw error;
-      }
-
-      async searchUsers() {
-        return { values: [], total: 0, limit: 10, offset: 0 };
-      }
-
-      async getActivities() {
-        const error = new Error('User not found');
-        (error as any).name = 'NotFoundError';
-        throw error;
-      }
-
-      async getLeaderboardRank() {
-        const error = new Error('User not found');
-        (error as any).name = 'NotFoundError';
-        throw error;
-      }
-
-      async getSeasons() {
-        return mockSeasonsResponse;
-      }
-
-      async getXpTotal() {
-        const error = new Error('User not found');
-        (error as any).name = 'NotFoundError';
-        throw error;
-      }
-
-      getPrimaryUserkey() {
-        return null;
-      }
-    },
+  mock.module('../../src/lib/api/echo-client.js', () => ({
+    EchoClient: MockEchoClientNotFound,
   }));
 }
 
-// Mock API responses - network error case
 export function mockEchoClientNetworkError() {
-  return mock.module('../../src/lib/api/echo-client.js', () => ({
-    EchoClient: class MockEchoClient {
-      async resolveUser() {
-        const error = new Error('Cannot connect to API');
-        (error as any).name = 'NetworkError';
-        throw error;
-      }
-
-      async getUserByTwitter() {
-        const error = new Error('Cannot connect to API');
-        (error as any).name = 'NetworkError';
-        throw error;
-      }
-
-      async getUserByAddress() {
-        const error = new Error('Cannot connect to API');
-        (error as any).name = 'NetworkError';
-        throw error;
-      }
-
-      async getUserByProfileId() {
-        const error = new Error('Cannot connect to API');
-        (error as any).name = 'NetworkError';
-        throw error;
-      }
-
-      async searchUsers() {
-        const error = new Error('Cannot connect to API');
-        (error as any).name = 'NetworkError';
-        throw error;
-      }
-
-      async getActivities() {
-        const error = new Error('Cannot connect to API');
-        (error as any).name = 'NetworkError';
-        throw error;
-      }
-
-      async getLeaderboardRank() {
-        const error = new Error('Cannot connect to API');
-        (error as any).name = 'NetworkError';
-        throw error;
-      }
-
-      async getSeasons() {
-        const error = new Error('Cannot connect to API');
-        (error as any).name = 'NetworkError';
-        throw error;
-      }
-
-      async getXpTotal() {
-        const error = new Error('Cannot connect to API');
-        (error as any).name = 'NetworkError';
-        throw error;
-      }
-
-      getPrimaryUserkey() {
-        return null;
-      }
-    },
+  mock.module('../../src/lib/api/echo-client.js', () => ({
+    EchoClient: MockEchoClientNetworkError,
   }));
 }

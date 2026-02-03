@@ -1,7 +1,12 @@
-import { describe, test, expect } from 'bun:test';
+import { describe, test, expect, beforeEach } from 'bun:test';
 import { runCommand } from '@oclif/test';
+import { mockEchoClientSuccess } from '../../helpers/mock-api.js';
 
 describe('xp seasons', () => {
+  beforeEach(() => {
+    mockEchoClientSuccess();
+  });
+
   test('lists seasons successfully', async () => {
     const { error } = await runCommand(['xp', 'seasons']);
     expect(error).toBeUndefined();

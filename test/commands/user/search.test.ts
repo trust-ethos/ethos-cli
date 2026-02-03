@@ -1,29 +1,34 @@
-import { describe, test, expect } from 'bun:test';
+import { describe, test, expect, beforeEach } from 'bun:test';
 import { runCommand } from '@oclif/test';
+import { mockEchoClientSuccess } from '../../helpers/mock-api.js';
 
 describe('user search', () => {
+  beforeEach(() => {
+    mockEchoClientSuccess();
+  });
+
   test('executes search query successfully', async () => {
-    const { error } = await runCommand(['user', 'search', 'vitalik']);
+    const { error } = await runCommand(['user', 'search', 'test']);
     expect(error).toBeUndefined();
   });
 
   test('accepts --json flag', async () => {
-    const { error } = await runCommand(['user', 'search', 'vitalik', '--json']);
+    const { error } = await runCommand(['user', 'search', 'test', '--json']);
     expect(error).toBeUndefined();
   });
 
   test('accepts --limit flag', async () => {
-    const { error } = await runCommand(['user', 'search', 'crypto', '--limit', '3']);
+    const { error } = await runCommand(['user', 'search', 'test', '--limit', '3']);
     expect(error).toBeUndefined();
   });
 
   test('accepts short -l flag for limit', async () => {
-    const { error } = await runCommand(['user', 'search', 'eth', '-l', '5']);
+    const { error } = await runCommand(['user', 'search', 'test', '-l', '5']);
     expect(error).toBeUndefined();
   });
 
   test('accepts short -j flag for json', async () => {
-    const { error } = await runCommand(['user', 'search', 'vitalik', '-j']);
+    const { error } = await runCommand(['user', 'search', 'test', '-j']);
     expect(error).toBeUndefined();
   });
 

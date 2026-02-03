@@ -1,14 +1,19 @@
-import { describe, test, expect } from 'bun:test';
+import { describe, test, expect, beforeEach } from 'bun:test';
 import { runCommand } from '@oclif/test';
+import { mockEchoClientSuccess, mockEchoClientNotFound } from '../../helpers/mock-api.js';
 
 describe('xp rank', () => {
+  beforeEach(() => {
+    mockEchoClientSuccess();
+  });
+
   test('shows rank for valid user', async () => {
-    const { error } = await runCommand(['xp', 'rank', 'vitalik.eth']);
+    const { error } = await runCommand(['xp', 'rank', 'testuser']);
     expect(error).toBeUndefined();
   });
 
   test('accepts --json flag', async () => {
-    const { error } = await runCommand(['xp', 'rank', 'vitalik.eth', '--json']);
+    const { error } = await runCommand(['xp', 'rank', 'testuser', '--json']);
     expect(error).toBeUndefined();
   });
 
@@ -18,12 +23,12 @@ describe('xp rank', () => {
   });
 
   test('accepts --verbose flag', async () => {
-    const { error } = await runCommand(['xp', 'rank', 'vitalik.eth', '--verbose']);
+    const { error } = await runCommand(['xp', 'rank', 'testuser', '--verbose']);
     expect(error).toBeUndefined();
   });
 
   test('accepts short -j flag for json', async () => {
-    const { error } = await runCommand(['xp', 'rank', 'vitalik.eth', '-j']);
+    const { error } = await runCommand(['xp', 'rank', 'testuser', '-j']);
     expect(error).toBeUndefined();
   });
 
@@ -33,7 +38,8 @@ describe('xp rank', () => {
   });
 
   test('handles user not found gracefully', async () => {
-    const { error } = await runCommand(['xp', 'rank', 'nonexistent-user-xyz-12345-invalid']);
+    mockEchoClientNotFound();
+    const { error } = await runCommand(['xp', 'rank', 'nonexistent']);
     expect(error).toBeDefined();
   });
 });
