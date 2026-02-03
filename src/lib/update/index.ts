@@ -1,7 +1,8 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync, symlinkSync, readdirSync, rmSync } from 'fs';
-import { homedir, platform, arch } from 'os';
-import { join, dirname } from 'path';
-import { execSync } from 'child_process';
+import { spawn } from 'node:child_process';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
+import { arch, homedir, platform } from 'node:os';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const GITHUB_REPO = 'trust-ethos/ethos-cli';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -13,35 +14,37 @@ const CACHE_FILE = join(UPDATE_DIR, 'version-cache.json');
 const PENDING_FILE = join(UPDATE_DIR, 'pending.json');
 
 export interface VersionCache {
-  latestVersion: string;
   checkedAt: number;
   downloadUrl?: string;
+  latestVersion: string;
 }
 
 export interface UpdateInfo {
   currentVersion: string;
+  downloadUrl?: string;
   latestVersion: string;
   updateAvailable: boolean;
-  downloadUrl?: string;
 }
 
 export interface ReleaseAsset {
-  name: string;
   browser_download_url: string;
+  name: string;
 }
 
 export interface GitHubRelease {
-  tag_name: string;
   assets: ReleaseAsset[];
+  tag_name: string;
 }
 
 export function getCurrentVersion(): string {
   try {
-    const pkgPath = join(dirname(dirname(dirname(__dirname))), 'package.json');
+    const currentDir = dirname(fileURLToPath(import.meta.url));
+    const pkgPath = join(dirname(dirname(dirname(currentDir))), 'package.json');
     if (existsSync(pkgPath)) {
-      return JSON.parse(readFileSync(pkgPath, 'utf-8')).version;
+      return JSON.parse(readFileSync(pkgPath, 'utf8')).version;
     }
   } catch {}
+
   return '0.0.0';
 }
 
@@ -52,8 +55,8 @@ function getPlatformTarget(): string {
   const targetMap: Record<string, string> = {
     'darwin-arm64': 'darwin-arm64',
     'darwin-x64': 'darwin-x64',
-    'linux-x64': 'linux-x64',
     'linux-arm64': 'linux-arm64',
+    'linux-x64': 'linux-x64',
     'win32-x64': 'win32-x64',
   };
 
@@ -66,12 +69,13 @@ function ensureDir(dir: string): void {
   }
 }
 
-function loadCache(): VersionCache | null {
+function loadCache(): null | VersionCache {
   try {
     if (existsSync(CACHE_FILE)) {
-      return JSON.parse(readFileSync(CACHE_FILE, 'utf-8')) as VersionCache;
+      return JSON.parse(readFileSync(CACHE_FILE, 'utf8')) as VersionCache;
     }
   } catch {}
+
   return null;
 }
 
@@ -80,7 +84,7 @@ function saveCache(cache: VersionCache): void {
   writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
 }
 
-function isCacheValid(cache: VersionCache | null): boolean {
+function isCacheValid(cache: null | VersionCache): boolean {
   if (!cache) return false;
   return Date.now() - cache.checkedAt < CACHE_TTL_MS;
 }
@@ -95,6 +99,7 @@ export function compareVersions(a: string, b: string): number {
     if (numA > numB) return 1;
     if (numA < numB) return -1;
   }
+
   return 0;
 }
 
@@ -129,9 +134,9 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
   if (isCacheValid(cache) && cache) {
     return {
       currentVersion,
+      downloadUrl: cache.downloadUrl,
       latestVersion: cache.latestVersion,
       updateAvailable: compareVersions(cache.latestVersion, currentVersion) > 0,
-      downloadUrl: cache.downloadUrl,
     };
   }
   
@@ -148,17 +153,17 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
   const asset = findAssetForPlatform(release.assets);
   
   const newCache: VersionCache = {
-    latestVersion,
     checkedAt: Date.now(),
     downloadUrl: asset?.browser_download_url,
+    latestVersion,
   };
   saveCache(newCache);
   
   return {
     currentVersion,
+    downloadUrl: asset?.browser_download_url,
     latestVersion,
     updateAvailable: compareVersions(latestVersion, currentVersion) > 0,
-    downloadUrl: asset?.browser_download_url,
   };
 }
 
@@ -215,7 +220,6 @@ export function downloadUpdateInBackground(downloadUrl: string, version: string)
     download(url, tarball);
   `;
   
-  const { spawn } = require('child_process');
   const child = spawn(process.execPath, ['-e', script], {
     detached: true,
     stdio: 'ignore',
@@ -223,15 +227,16 @@ export function downloadUpdateInBackground(downloadUrl: string, version: string)
   child.unref();
 }
 
-export function getPendingUpdate(): { version: string; path: string } | null {
+export function getPendingUpdate(): null | { path: string; version: string; } {
   try {
     if (!existsSync(PENDING_FILE)) return null;
     
-    const data = JSON.parse(readFileSync(PENDING_FILE, 'utf-8'));
+    const data = JSON.parse(readFileSync(PENDING_FILE, 'utf8'));
     if (existsSync(data.path)) return data;
     
     unlinkSync(PENDING_FILE);
   } catch {}
+
   return null;
 }
 
@@ -265,7 +270,7 @@ function cleanupOldVersions(keepVersion: string): void {
     for (const ver of versions) {
       if (ver !== `v${keepVersion}` && ver !== keepVersion) {
         const verPath = join(VERSIONS_DIR, ver);
-        rmSync(verPath, { recursive: true, force: true });
+        rmSync(verPath, { force: true, recursive: true });
       }
     }
   } catch {}
@@ -282,7 +287,7 @@ export function getInstallPath(): string {
   return ETHOS_HOME;
 }
 
-export type InstallMethod = 'curl' | 'npm' | 'homebrew' | 'dev' | 'unknown';
+export type InstallMethod = 'curl' | 'dev' | 'homebrew' | 'npm' | 'unknown';
 
 export interface InstallInfo {
   method: InstallMethod;
@@ -291,7 +296,7 @@ export interface InstallInfo {
 }
 
 export function detectInstallMethod(): InstallInfo {
-  const execPath = process.execPath;
+  const {execPath} = process;
   
   // Check managed install FIRST (curl installer puts binaries in ~/.ethos/)
   if (execPath.startsWith(ETHOS_HOME)) {

@@ -1,20 +1,20 @@
-import { Args, Flags } from '@oclif/core';
+import { Args } from '@oclif/core';
+
+import type { Slash } from '../../lib/api/echo-client.js';
+
 import { BaseCommand } from '../../lib/base-command.js';
 import { formatSlash, output } from '../../lib/formatting/output.js';
 
 export default class SlashInfo extends BaseCommand {
-  static description = 'Get details of a specific slash';
-
   static args = {
     id: Args.integer({ description: 'Slash ID', required: true }),
   };
-
-  static examples = [
+static description = 'Get details of a specific slash';
+static examples = [
     '<%= config.bin %> <%= command.id %> 123',
     '<%= config.bin %> <%= command.id %> 123 --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
   };
 
@@ -26,7 +26,7 @@ export default class SlashInfo extends BaseCommand {
       const response = await this.withSpinner('Fetching slash', () =>
         this.client.getSlashes({ limit: 100 })
       );
-      const slash = response.data.values.find((s: any) => s.id === args.id);
+      const slash = response.data.values.find((s: Slash) => s.id === args.id);
 
       if (!slash) {
         throw new Error(`Slash #${args.id} not found`);

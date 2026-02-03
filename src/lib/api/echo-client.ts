@@ -1,25 +1,20 @@
-import { APIError, NetworkError, NotFoundError } from '../errors/cli-error.js';
-import { parseIdentifier, type ParsedIdentifier } from '../validation/userkey.js';
 import { loadConfig } from '../config/index.js';
+import { APIError, NetworkError, NotFoundError } from '../errors/cli-error.js';
+import { type ParsedIdentifier, parseIdentifier } from '../validation/userkey.js';
 
 export interface EthosUser {
-  id: number;
-  profileId: number | null;
+  avatarUrl: null | string;
+  description: null | string;
   displayName: string;
-  username: string | null;
-  avatarUrl: string | null;
-  description: string | null;
-  score: number;
-  status: string;
-  userkeys: string[];
-  xpTotal: number;
-  xpStreakDays: number;
+  id: number;
   influenceFactor: number;
   influenceFactorPercentile: number;
   links?: {
     profile: string;
     scoreBreakdown: string;
   };
+  profileId: null | number;
+  score: number;
   stats?: {
     review: {
       received: { negative: number; neutral: number; positive: number };
@@ -29,184 +24,189 @@ export interface EthosUser {
       received: { amountWeiTotal: string; count: number };
     };
   };
+  status: string;
+  userkeys: string[];
+  username: null | string;
+  xpStreakDays: number;
+  xpTotal: number;
 }
 
 export interface SearchResult {
-  values: EthosUser[];
-  total: number;
   limit: number;
   offset: number;
+  total: number;
+  values: EthosUser[];
 }
 
 export interface Season {
+  endDate?: string;
   id: number;
   name: string;
   startDate: string;
-  endDate?: string;
   week?: number;
 }
 
 export interface SeasonsResponse {
-  seasons: Season[];
   currentSeason: Season;
+  seasons: Season[];
 }
 
 export interface ActivityAuthor {
-  userkey: string;
-  profileId: number | null;
+  avatar: null | string;
   name: string;
-  username: string | null;
-  avatar: string | null;
+  profileId: null | number;
   score: number;
+  userkey: string;
+  username: null | string;
 }
 
 export interface Activity {
-  type: 'review' | 'vouch' | 'unvouch';
-  timestamp: number;
-  data: {
-    id: number;
-    comment?: string;
-    score?: 'positive' | 'neutral' | 'negative';
-    metadata?: string;
-  };
   author: ActivityAuthor;
-  subject: ActivityAuthor;
+  data: {
+    comment?: string;
+    id: number;
+    metadata?: string;
+    score?: 'negative' | 'neutral' | 'positive';
+  };
   link: string;
+  subject: ActivityAuthor;
+  timestamp: number;
+  type: 'review' | 'unvouch' | 'vouch';
 }
 
 export type ActivityType = 'review' | 'vouch';
 
 export interface Review {
-  type: 'review';
-  data: {
-    id: number;
-    authorProfileId: number;
-    author: string;
-    subject: string;
-    score: 'positive' | 'neutral' | 'negative';
-    comment: string;
-    metadata: string;
-    createdAt: number;
-    archived: boolean;
-  };
-  votes: { upvotes: number; downvotes: number };
-  replySummary: { count: number; participated: boolean };
-  timestamp: number;
   author: ActivityAuthor;
-  subject: ActivityAuthor;
   authorUser?: EthosUser;
-  subjectUser?: EthosUser;
+  data: {
+    archived: boolean;
+    author: string;
+    authorProfileId: number;
+    comment: string;
+    createdAt: number;
+    id: number;
+    metadata: string;
+    score: 'negative' | 'neutral' | 'positive';
+    subject: string;
+  };
   link: string;
+  replySummary: { count: number; participated: boolean };
+  subject: ActivityAuthor;
+  subjectUser?: EthosUser;
+  timestamp: number;
+  type: 'review';
+  votes: { downvotes: number; upvotes: number; };
 }
 
 export interface Slash {
-  id: number;
+  amount: number;
+  attestationDetails?: {
+    account: string;
+    service: string;
+  };
   authorProfileId: number;
-  subject: null | number;
+  cancelledAt: number;
+  closedAt: number;
+  comment: string;
   createdAt: number;
   duration: number;
-  closedAt: number;
-  cancelledAt: number;
-  amount: number;
-  slashType: string;
-  comment: string;
+  id: number;
   metadata?: string;
-  attestationDetails?: {
-    service: string;
-    account: string;
-  };
+  slashType: string;
+  subject: null | number;
 }
 
 export interface SlashesResponse {
-  ok: boolean;
   data: {
-    values: Slash[];
-    total: number;
     limit: number;
     offset: number;
+    total: number;
+    values: Slash[];
   };
+  ok: boolean;
 }
 
-export type BrokerPostType = 'SELL' | 'BUY' | 'HIRE' | 'FOR_HIRE' | 'BOUNTY';
+export type BrokerPostType = 'BOUNTY' | 'BUY' | 'FOR_HIRE' | 'HIRE' | 'SELL';
 export type BrokerPostLevel = 'BASIC' | 'PREMIUM';
-export type BrokerPostStatus = 'OPEN' | 'COMPLETED' | 'CLOSED' | 'EXPIRED';
-export type BrokerSortBy = 'newest' | 'score' | 'top' | 'expiresAt' | 'hot';
+export type BrokerPostStatus = 'CLOSED' | 'COMPLETED' | 'EXPIRED' | 'OPEN';
+export type BrokerSortBy = 'expiresAt' | 'hot' | 'newest' | 'score' | 'top';
 
 export interface BrokerPostAuthor {
-  profileId: number;
-  username?: string;
-  displayName?: string;
   avatarUrl?: string;
+  displayName?: string;
+  profileId: number;
   score: number;
+  username?: string;
 }
 
 export interface BrokerPost {
-  id: number;
-  type: BrokerPostType;
-  level: BrokerPostLevel;
-  status: BrokerPostStatus;
-  title: string;
-  description: string;
-  tags: string[];
-  expiresAt: string | null;
-  createdAt: string;
   author: BrokerPostAuthor;
-  votes: { upvotes: number; downvotes: number };
+  createdAt: string;
+  description: string;
+  expiresAt: null | string;
+  id: number;
+  level: BrokerPostLevel;
   replyCount: number;
+  status: BrokerPostStatus;
+  tags: string[];
+  title: string;
+  type: BrokerPostType;
+  votes: { downvotes: number; upvotes: number; };
 }
 
 export interface BrokerListParams {
-  type?: BrokerPostType;
+  limit?: number;
+  minScore?: number;
+  offset?: number;
   search?: string;
   sortBy?: BrokerSortBy;
-  minScore?: number;
-  limit?: number;
-  offset?: number;
+  type?: BrokerPostType;
 }
 
 export interface BrokerListResponse {
-  values: BrokerPost[];
-  total: number;
   limit: number;
   offset: number;
+  total: number;
+  values: BrokerPost[];
 }
 
 export interface ProjectChain {
   id: number;
-  name: string;
   logoUrl?: string;
+  name: string;
 }
 
 export interface ProjectVotes {
-  bullish: { total: number; percentage: number };
-  bearish: { total: number; percentage: number };
   all: { totalVoters: number; totalVotes: number };
+  bearish: { percentage: number; total: number; };
+  bullish: { percentage: number; total: number; };
 }
 
 export interface Project {
-  id: number;
-  userkey: string;
-  status: 'ACTIVE' | 'PENDING' | 'ARCHIVED';
-  description: string;
   bannerImageUrl?: string;
-  isPromoted?: boolean;
-  createdAt: string;
-  updatedAt: string;
-  user: EthosUser;
   categories?: string[];
   chains?: ProjectChain[];
+  createdAt: string;
+  description: string;
+  id: number;
+  isPromoted?: boolean;
+  status: 'ACTIVE' | 'ARCHIVED' | 'PENDING';
+  updatedAt: string;
+  user: EthosUser;
+  userkey: string;
   votes?: ProjectVotes;
 }
 
 export interface ProjectVoter {
-  user: EthosUser;
-  bullishCount: number;
   bearishCount: number;
-  totalVotes: number;
+  bearishReasons: string[];
+  bullishCount: number;
+  bullishReasons: string[];
   firstVoteAt: string;
   lastVoteAt: string;
-  bullishReasons: string[];
-  bearishReasons: string[];
+  totalVotes: number;
+  user: EthosUser;
 }
 
 export interface ProjectListResponse {
@@ -215,169 +215,169 @@ export interface ProjectListResponse {
 }
 
 export interface ProjectVotersTotals {
-  totalVoters: number;
-  totalBullishVoters: number;
   totalBearishVoters: number;
-  totalBullishVotes: number;
   totalBearishVotes: number;
+  totalBullishVoters: number;
+  totalBullishVotes: number;
+  totalVoters: number;
 }
 
 export interface ProjectVotersResponse {
-  values: ProjectVoter[];
-  total: number;
   limit: number;
   offset: number;
+  total: number;
   totals: ProjectVotersTotals;
+  values: ProjectVoter[];
 }
 
 export interface MarketUser {
-  profileId: number;
+  avatarUrl: null | string;
   displayName: string;
-  username: string | null;
-  avatarUrl: string | null;
+  profileId: number;
   score: number;
+  username: null | string;
 }
 
 export interface MarketStats {
-  marketCapWei: string;
-  marketCapChange24hWei?: string;
   marketCapChange24hPercent?: number;
-  volumeTotalWei: string;
-  volume24hWei?: string;
+  marketCapChange24hWei?: string;
+  marketCapWei: string;
   priceChange24hPercent?: number;
+  volume24hWei?: string;
+  volumeTotalWei: string;
 }
 
 export interface Market {
-  id: number;
-  creatorAddress: string;
-  positivePrice: string;
-  negativePrice: string;
-  trustVotes: number;
-  distrustVotes: number;
-  createdAt: string;
-  updatedAt: string;
   basePrice: string;
-  user: MarketUser;
+  createdAt: string;
+  creatorAddress: string;
+  distrustVotes: number;
+  id: number;
+  negativePrice: string;
+  positivePrice: string;
   stats: MarketStats;
+  trustVotes: number;
+  updatedAt: string;
+  user: MarketUser;
 }
 
 export interface MarketHolder {
   actorAddress: string;
   marketId: number;
-  voteType: 'trust' | 'distrust';
   total: string;
   user: MarketUser;
+  voteType: 'distrust' | 'trust';
 }
 
-export type MarketOrderBy = 'marketCapWei' | 'volumeTotalWei' | 'volume24hWei' | 'trustRatio' | 'distrustRatio' | 'score' | 'createdAt' | 'priceChange24hPercent' | 'marketCapChange24hPercent' | 'scoreDifferential';
+export type MarketOrderBy = 'createdAt' | 'distrustRatio' | 'marketCapChange24hPercent' | 'marketCapWei' | 'priceChange24hPercent' | 'score' | 'scoreDifferential' | 'trustRatio' | 'volume24hWei' | 'volumeTotalWei';
 
 export interface MarketListParams {
+  filterQuery?: string;
   limit?: number;
   offset?: number;
   orderBy?: MarketOrderBy;
   orderDirection?: 'asc' | 'desc';
-  filterQuery?: string;
 }
 
 export interface MarketListResponse {
-  values: Market[];
-  total: number;
   limit: number;
   offset: number;
+  total: number;
+  values: Market[];
 }
 
 export interface FeaturedMarket {
-  type: 'top-volume' | 'undervalued' | 'rugging' | string;
   market: Market;
+  type: 'rugging' | 'top-volume' | 'undervalued' | string;
 }
 
 export type FeaturedMarketsResponse = FeaturedMarket[];
 
 export interface MarketHoldersResponse {
-  values: MarketHolder[];
   total: number;
+  values: MarketHolder[];
 }
 
 export interface MarketUserByTwitter {
+  avatarUrl: string;
   profileId: number;
-  twitterUsername: string;
   twitterName: string;
   twitterUserId: string;
+  twitterUsername: string;
   walletAddress: string;
-  avatarUrl: string;
 }
 
 export interface NFT {
-  tokenId: string;
-  name: string | null;
-  description?: string;
-  imageUrl: string | null;
   contractAddress: string;
   contractName?: string;
+  description?: string;
+  imageUrl: null | string;
+  name: null | string;
+  tokenId: string;
 }
 
 export interface NftsResponse {
-  values: NFT[];
-  total: number;
   limit?: number;
   offset?: number;
+  total: number;
+  values: NFT[];
 }
 
 export interface ValidatorListing {
-  orderHash: string;
-  tokenId: string;
-  name: string | null;
-  imageUrl: string | null;
-  priceWei: string;
-  priceEth: string;
   currency: string;
-  seller: string;
+  imageUrl: null | string;
+  name: null | string;
   openseaUrl: string;
+  orderHash: string;
+  priceEth: string;
+  priceWei: string;
+  seller: string;
+  tokenId: string;
 }
 
 export interface ValidatorListingsResponse {
-  values: ValidatorListing[];
-  total: number;
   limit?: number;
   offset?: number;
+  total: number;
+  values: ValidatorListing[];
 }
 
 export interface AuctionBuyer {
   displayName?: string;
-  username?: string | null;
+  username?: null | string;
 }
 
 export interface Auction {
-  id: number;
-  nftTokenId: number;
-  nftContract: string;
-  creatorAddress: string;
-  startPrice: string;  // wei
-  reservePrice: string;  // wei
-  duration: number;
-  startTime: string;
-  status: 'PENDING' | 'ENABLED' | 'ENDED' | 'SOLD';
-  buyerAddress: string | null;
-  pricePaid: string | null;  // wei
-  soldTime: string | null;
-  createdAt: string;
+  buyerAddress: null | string;
   buyerUser?: AuctionBuyer | null;
+  createdAt: string;
+  creatorAddress: string;
+  duration: number;
+  id: number;
+  nftContract: string;
+  nftTokenId: number;
+  pricePaid: null | string;  // wei
+  reservePrice: string;  // wei
+  soldTime: null | string;
+  startPrice: string;  // wei
+  startTime: string;
+  status: 'ENABLED' | 'ENDED' | 'PENDING' | 'SOLD';
 }
 
 export interface AuctionsResponse {
-  values: Auction[];
   total: number;
+  values: Auction[];
 }
 
 export interface Invitation {
-  id: number;
-  senderProfileId: number;
-  recipientAddress: string;
-  status: 'INVITED' | 'ACCEPTED';
-  recipientScoreImpact: { value: number; impact: string };
-  senderScoreImpact: { value: number; impact: string };
+  dateAccepted: null | string;
   dateInvited: string;
-  dateAccepted: string | null;
+  id: number;
+  recipientAddress: string;
+  recipientScoreImpact: { impact: string; value: number; };
+  senderProfileId: number;
+  senderScoreImpact: { impact: string; value: number; };
+  status: 'ACCEPTED' | 'INVITED';
 }
 
 export interface InvitationWithUser {
@@ -386,159 +386,159 @@ export interface InvitationWithUser {
 }
 
 export interface InvitationsResponse {
-  values: InvitationWithUser[];
-  total: number;
   limit: number;
   offset: number;
+  total: number;
+  values: InvitationWithUser[];
 }
 
 export interface Validator {
-  tokenId: string;
-  name: string;
-  imageUrl: string;
-  ownerAddress: string;
-  ownerProfileId: number;
-  ownerDisplayName: string;
-  ownerUsername: string | null;
-  ownerAvatarUrl: string | null;
   currentXp: number;
-  remainingCapacity: number;
-  xpCap: number;
+  imageUrl: string;
   isFull: boolean;
+  name: string;
+  ownerAddress: string;
+  ownerAvatarUrl: null | string;
+  ownerDisplayName: string;
+  ownerProfileId: number;
+  ownerUsername: null | string;
+  remainingCapacity: number;
+  tokenId: string;
+  xpCap: number;
 }
 
-export type ScoreLevel = 'untrusted' | 'questionable' | 'neutral' | 'reputable' | 'exemplary';
+export type ScoreLevel = 'exemplary' | 'neutral' | 'questionable' | 'reputable' | 'untrusted';
 
 export interface ScoreResponse {
-  score: number;
   level: ScoreLevel;
+  score: number;
 }
 
 export interface ScoreBreakdownElement {
   element: {
     name: string;
+    range?: { max: number; min: number; };
     type: string;
-    range?: { min: number; max: number };
   };
+  error: boolean;
   raw: number;
   weighted: number;
-  error: boolean;
 }
 
 export interface ScoreBreakdownResponse {
-  ok: boolean;
   data: {
-    score: number;
     elements: Record<string, ScoreBreakdownElement>;
-    metadata: Record<string, unknown>;
     errors: string[];
+    metadata: Record<string, unknown>;
+    score: number;
   };
+  ok: boolean;
 }
 
 export interface ScoreStatus {
-  status: 'idle' | 'queued' | 'calculating';
-  isQueued: boolean;
   isCalculating: boolean;
   isPending: boolean;
+  isQueued: boolean;
+  status: 'calculating' | 'idle' | 'queued';
 }
 
 // Vouch types
 export interface VouchUser {
-  id?: number;
-  profileId?: number | null;
+  avatarUrl?: null | string;
   displayName?: string;
-  username?: string | null;
-  avatarUrl?: string | null;
+  id?: number;
+  profileId?: null | number;
   score?: number;
   userkeys?: string[];
+  username?: null | string;
 }
 
 export interface Vouch {
-  id: number;
+  activityCheckpoints: {
+    unhealthyAt: number;
+    unvouchedAt: number;
+    vouchedAt: number;
+  };
+  archived: boolean;
+  attestationDetails?: null | {
+    account: string;
+    service: string;
+  };
+  authorAddress: string;
   authorProfileId: number;
-  subjectProfileId: number;
-  subjectAddress: string | null;
+  authorUser?: null | VouchUser;
   balance: string;  // bigint as string
   comment: string;
-  metadata: string;
-  archived: boolean;
-  mutualId: number | null;
   deposited: string;
+  id: number;
+  metadata: string;
+  mutualId: null | number;
   staked: string;
-  withdrawn: string;
+  subjectAddress: null | string;
+  subjectProfileId: number;
+  subjectUser?: null | VouchUser;
   unhealthy: boolean;
-  authorAddress: string;
-  activityCheckpoints: {
-    vouchedAt: number;
-    unvouchedAt: number;
-    unhealthyAt: number;
-  };
-  attestationDetails?: {
-    service: string;
-    account: string;
-  } | null;
-  authorUser?: VouchUser | null;
-  subjectUser?: VouchUser | null;
+  withdrawn: string;
 }
 
 export interface VouchesResponse {
-  values: Vouch[];
-  total: number;
   limit: number;
   offset: number;
+  total: number;
+  values: Vouch[];
 }
 
 export interface VouchQueryParams {
-  ids?: number[];
-  subjectUserkeys?: string[];
-  authorProfileIds?: number[];
-  subjectProfileIds?: number[];
   archived?: boolean;
+  authorProfileIds?: number[];
+  ids?: number[];
   limit?: number;
   offset?: number;
+  subjectProfileIds?: number[];
+  subjectUserkeys?: string[];
 }
 
 // Vote types
-export type VoteType = 'review' | 'vouch' | 'slash';
+export type VoteType = 'review' | 'slash' | 'vouch';
 
 export interface VoteUser {
+  avatarUrl: null | string;
+  displayName: string;
   id: number;
   profileId: number;
-  displayName: string;
-  username: string | null;
-  avatarUrl: string | null;
   score: number;
+  username: null | string;
 }
 
 export interface Vote {
-  isUpvote: boolean;
+  createdAt: number;
   isArchived: boolean;
-  voter: number;
+  isUpvote: boolean;
   targetContract: string;
   targetId: string;
-  createdAt: number;
-  weight: number;
   user: VoteUser;
+  voter: number;
+  weight: number;
 }
 
 export interface VotesResponse {
-  values: Vote[];
-  total: number;
   limit: number;
   offset: number;
+  total: number;
+  values: Vote[];
 }
 
 export interface VoteStats {
-  userVote: { isUpvote: boolean } | null;
   counts: {
-    upvotes: number;
     downvotes: number;
+    upvotes: number;
   };
+  userVote: null | { isUpvote: boolean };
   weights: {
-    weightedUpvotes: number;
-    weightedDownvotes: number;
-    upvotePercentage: number;
     downvotePercentage: number;
+    upvotePercentage: number;
+    weightedDownvotes: number;
+    weightedUpvotes: number;
   };
 }
 
@@ -552,16 +552,340 @@ export class EchoClient {
     this.debug = process.env.DEBUG === 'ethos:*';
   }
 
+  async checkValidatorOwnership(userkey: string): Promise<NFT[]> {
+     return this.request<NFT[]>(`/api/v2/nfts/user/${encodeURIComponent(userkey)}/owns-validator`, 'Validator Check');
+   }
+
+   convertScoreToLevel(score: number): ScoreLevel {
+    if (score < 800) return 'untrusted';
+    if (score < 1200) return 'questionable';
+    if (score < 1600) return 'neutral';
+    if (score < 2000) return 'reputable';
+    return 'exemplary';
+  }
+
+  async getActiveAuction(): Promise<Auction | null> {
+      return this.request<Auction | null>('/api/v2/auctions/active', 'Active Auction');
+    }
+
+  async getActivities(userkey: string, types: ActivityType[] = ['review', 'vouch'], limit = 10): Promise<Activity[]> {
+    const params = new URLSearchParams({ limit: String(limit), userkey });
+    for (const type of types) {
+      params.append('activityType', type);
+    }
+
+    return this.request<Activity[]>(`/api/v2/activities/userkey?${params}`, 'Activities');
+  }
+
+  async getAuction(auctionId: number): Promise<Auction> {
+      return this.request<Auction>(`/api/v2/auctions/${auctionId}`, 'Auction');
+    }
+
+  async getAuctions(params: { limit?: number; offset?: number; status?: string } = {}): Promise<AuctionsResponse> {
+      const query = new URLSearchParams();
+      if (params.limit) query.set('limit', String(params.limit));
+      if (params.offset) query.set('offset', String(params.offset));
+      if (params.status) query.set('status', params.status);
+      const path = `/api/v2/auctions${query.toString() ? '?' + query.toString() : ''}`;
+      return this.request<AuctionsResponse>(path, 'Auctions');
+    }
+
+  async getBrokerPost(id: number): Promise<BrokerPost> {
+    return this.request<BrokerPost>(`/api/v2/broker/posts/${id}`, 'Broker Post');
+  }
+
+  async getBrokerPosts(params: BrokerListParams = {}): Promise<BrokerListResponse> {
+    const query = new URLSearchParams();
+    if (params.type) query.set('type', params.type);
+    if (params.search) query.set('search', params.search);
+    if (params.sortBy) query.set('sortBy', params.sortBy);
+    if (params.minScore) query.set('minScore', String(params.minScore));
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    const path = `/api/v2/broker/posts${query.toString() ? '?' + query.toString() : ''}`;
+    return this.request<BrokerListResponse>(path, 'Broker Posts');
+  }
+
+  async getBrokerPostsByAuthor(profileId: number, params: { limit?: number; type?: BrokerPostType; } = {}): Promise<BrokerListResponse> {
+    const query = new URLSearchParams();
+    if (params.type) query.set('type', params.type);
+    if (params.limit) query.set('limit', String(params.limit));
+    const path = `/api/v2/broker/author/${profileId}/posts${query.toString() ? '?' + query.toString() : ''}`;
+    return this.request<BrokerListResponse>(path, 'Author Posts');
+  }
+
+  async getFeaturedMarkets(): Promise<FeaturedMarketsResponse> {
+    return this.request<FeaturedMarketsResponse>('/api/v2/markets/featured', 'Featured Markets');
+  }
+
+  async getInvitations(params: { limit?: number; offset?: number; senderProfileId?: number; status?: 'ACCEPTED' | 'INVITED'; } = {}): Promise<InvitationsResponse> {
+    const query = new URLSearchParams();
+    if (params.senderProfileId) query.set('senderProfileId', String(params.senderProfileId));
+    if (params.status) query.set('status', params.status);
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    return this.request<InvitationsResponse>(`/api/v2/invitations${query.toString() ? '?' + query.toString() : ''}`, 'Invitations');
+  }
+
+  async getLeaderboardRank(userkey: string): Promise<number> {
+    return this.request<number>(`/api/v2/xp/user/${encodeURIComponent(userkey)}/leaderboard-rank`, 'Leaderboard Rank');
+  }
+
+  async getMarketByTwitter(username: string): Promise<MarketUserByTwitter> {
+    return this.request<MarketUserByTwitter>(`/api/v2/markets/users/by/x/${encodeURIComponent(username)}`, 'Market User');
+  }
+
+  async getMarketHolders(profileId: number, params: { limit?: number } = {}): Promise<MarketHoldersResponse> {
+    const query = new URLSearchParams();
+    if (params.limit) query.set('limit', String(params.limit));
+    return this.request<MarketHoldersResponse>(`/api/v2/markets/${profileId}/holders${query.toString() ? '?' + query.toString() : ''}`, 'Market Holders');
+  }
+
+  async getMarketInfo(profileId: number): Promise<Market> {
+    return this.request<Market>(`/api/v2/markets/${profileId}/info`, 'Market Info', {
+      body: JSON.stringify({ includeMarketChange: true, includeTopHolders: true, profileId }),
+      method: 'POST',
+    });
+  }
+
+  async getMarkets(params: MarketListParams = {}): Promise<MarketListResponse> {
+    const query = new URLSearchParams();
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    if (params.orderBy) query.set('orderBy', params.orderBy);
+    if (params.orderDirection) query.set('orderDirection', params.orderDirection);
+    if (params.filterQuery) query.set('filterQuery', params.filterQuery);
+    return this.request<MarketListResponse>(`/api/v2/markets${query.toString() ? '?' + query.toString() : ''}`, 'Markets');
+  }
+
+   async getMutualVouchers(viewerProfileId: number, targetProfileId: number, params: { limit?: number } = {}): Promise<{ total: number; values: VouchUser[]; }> {
+    const query = new URLSearchParams();
+    query.set('viewerProfileId', String(viewerProfileId));
+    query.set('targetProfileId', String(targetProfileId));
+    if (params.limit) query.set('limit', String(params.limit));
+    return this.request<{ total: number; values: VouchUser[]; }>(`/api/v2/vouches/mutual-vouchers?${query}`, 'Mutual Vouchers');
+  }
+
+   async getNftsForUser(userkey: string, params: { limit?: number; offset?: number } = {}): Promise<NftsResponse> {
+     const query = new URLSearchParams();
+     if (params.limit) query.set('limit', String(params.limit));
+     if (params.offset) query.set('offset', String(params.offset));
+     const path = `/api/v2/nfts/user/${encodeURIComponent(userkey)}${query.toString() ? '?' + query.toString() : ''}`;
+     return this.request<NftsResponse>(path, 'User NFTs');
+   }
+
+   getPrimaryUserkey(user: EthosUser): null | string {
+    if (user.profileId) {
+      return `profileId:${user.profileId}`;
+    }
+    
+    const addressKey = user.userkeys?.find(uk => uk.startsWith('address:'));
+    if (addressKey) return addressKey;
+    
+    return user.userkeys?.[0] || null;
+  }
+
+  async getProjectByUsername(username: string): Promise<Project> {
+    return this.request<Project>(`/api/v2/projects/username/${encodeURIComponent(username)}`, 'Project');
+  }
+
+  async getProjectDetails(projectId: number): Promise<Project> {
+    return this.request<Project>(`/api/v2/projects/${projectId}/details`, 'Project');
+  }
+
+  async getProjects(params: { limit?: number; offset?: number; status?: string[]; } = {}): Promise<ProjectListResponse> {
+    const query = new URLSearchParams();
+    if (params.status) for (const s of params.status) query.append('status[]', s);
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    return this.request<ProjectListResponse>(`/api/v2/projects${query.toString() ? '?' + query.toString() : ''}`, 'Projects');
+  }
+
+  async getProjectTeam(projectId: number): Promise<EthosUser[]> {
+     return this.request<EthosUser[]>(`/api/v2/projects/${projectId}/team`, 'Team');
+   }
+
+  async getProjectVoters(projectId: number, params: { limit?: number; offset?: number; sentiment?: 'bearish' | 'bullish' } = {}): Promise<ProjectVotersResponse> {
+    const query = new URLSearchParams();
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    if (params.sentiment) query.set('sentiment', params.sentiment);
+    return this.request<ProjectVotersResponse>(`/api/v2/projects/${projectId}/voters${query.toString() ? '?' + query.toString() : ''}`, 'Voters');
+  }
+
+  async getReview(reviewId: number): Promise<Review> {
+    return this.request<Review>(`/api/v2/activities/review/${reviewId}`, 'Review');
+  }
+
+  async getReviewsForUser(userkey: string, params: { limit?: number; offset?: number } = {}): Promise<Activity[]> {
+    const query = new URLSearchParams({ userkey });
+    query.append('activityType', 'review');
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    return this.request<Activity[]>(`/api/v2/activities/userkey?${query}`, 'Reviews');
+  }
+
+   async getScoreBreakdownByAddress(address: string): Promise<ScoreBreakdownResponse> {
+    const params = new URLSearchParams({ address });
+    return this.request<ScoreBreakdownResponse>(`/api/v1/score/address?${params}`, 'Score');
+  }
+
+   async getScoreBreakdownByUserkey(userkey: string): Promise<ScoreBreakdownResponse> {
+    const params = new URLSearchParams({ userkey });
+    return this.request<ScoreBreakdownResponse>(`/api/v1/score/userkey?${params}`, 'Score');
+  }
+
+   async getScoreStatus(userkey: string): Promise<ScoreStatus> {
+    const params = new URLSearchParams({ userkey });
+    return this.request<ScoreStatus>(`/api/v2/score/status?${params}`, 'Score Status');
+  }
+
+    async getSeasons(): Promise<SeasonsResponse> {
+    return this.request<SeasonsResponse>('/api/v2/xp/seasons', 'XP Seasons');
+  }
+
+    async getSlashes(params: { author?: string; limit?: number; offset?: number; status?: 'closed' | 'open'; subject?: string; } = {}): Promise<SlashesResponse> {
+     const query = new URLSearchParams();
+     if (params.author) query.set('author', params.author);
+     if (params.subject) query.set('subject', params.subject);
+     if (params.status) query.set('status', params.status);
+     if (params.limit) query.set('limit', String(params.limit));
+     if (params.offset) query.set('offset', String(params.offset));
+     const path = `/api/v1/slashes${query.toString() ? '?' + query.toString() : ''}`;
+     return this.request<SlashesResponse>(path, 'Slashes');
+   }
+
+    async getSlashRoles(slashId: number, profileIds: number[]): Promise<Record<number, string>> {
+     const query = new URLSearchParams();
+     for (const id of profileIds) query.append('profileId', String(id));
+     return this.request<Record<number, string>>(`/api/v1/slashes/${slashId}/roles?${query.toString()}`, 'Slash Roles');
+   }
+
+    /** @deprecated Use getXpTotal instead */
+   async getTotalXp(userkey: string): Promise<number> {
+     return this.getXpTotal(userkey);
+   }
+
+  async getUserByAddress(address: string): Promise<EthosUser> {
+    return this.request<EthosUser>(`/api/v2/user/by/address/${encodeURIComponent(address)}`, 'User');
+  }
+
+  async getUserByProfileId(profileId: string): Promise<EthosUser> {
+    return this.request<EthosUser>(`/api/v2/user/by/profile-id/${encodeURIComponent(profileId)}`, 'User');
+  }
+
+  async getUserByTwitter(username: string): Promise<EthosUser> {
+    return this.request<EthosUser>(`/api/v2/user/by/x/${encodeURIComponent(username)}`, 'User');
+  }
+
+  /** @deprecated Use resolveUser instead */
+  async getUserByUsername(username: string): Promise<EthosUser> {
+    return this.getUserByTwitter(username);
+  }
+
+  async getValidatorByTokenId(tokenId: string): Promise<null | Validator> {
+    const validators = await this.getValidators();
+    return validators.find(v => v.tokenId === tokenId) || null;
+  }
+
+  async getValidatorListings(params: { limit?: number; offset?: number } = {}): Promise<ValidatorListingsResponse> {
+      const query = new URLSearchParams();
+      if (params.limit) query.set('limit', String(params.limit));
+      if (params.offset) query.set('offset', String(params.offset));
+      const path = `/api/v2/nfts/validators/listings${query.toString() ? '?' + query.toString() : ''}`;
+      return this.request<ValidatorListingsResponse>(path, 'Validator Listings');
+    }
+
+  async getValidators(): Promise<Validator[]> {
+    return this.request<Validator[]>('/api/v2/xp/validators', 'Validators');
+  }
+
+  async getVotes(activityId: number, type: VoteType, params: { isUpvote?: boolean; limit?: number; offset?: number } = {}): Promise<VotesResponse> {
+    const query = new URLSearchParams();
+    query.set('activityId', String(activityId));
+    query.set('type', type);
+    if (params.isUpvote !== undefined) query.set('isUpvote', String(params.isUpvote));
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    return this.request<VotesResponse>(`/api/v2/votes?${query}`, 'Votes');
+  }
+
+  async getVoteStats(activityId: number, type: VoteType): Promise<VoteStats> {
+    const query = new URLSearchParams();
+    query.set('activityId', String(activityId));
+    query.set('type', type);
+    return this.request<VoteStats>(`/api/v2/votes/stats?${query}`, 'Vote Stats');
+  }
+
+  async getVouches(params: VouchQueryParams = {}): Promise<VouchesResponse> {
+    const body: Record<string, unknown> = {};
+    if (params.ids) body.ids = params.ids;
+    if (params.subjectUserkeys) body.subjectUserkeys = params.subjectUserkeys;
+    if (params.authorProfileIds) body.authorProfileIds = params.authorProfileIds;
+    if (params.subjectProfileIds) body.subjectProfileIds = params.subjectProfileIds;
+    if (params.archived !== undefined) body.archived = params.archived;
+    if (params.limit) body.limit = params.limit;
+    if (params.offset) body.offset = params.offset;
+
+    const response = await this.request<{ data: VouchesResponse; ok: boolean; }>('/api/v1/vouches', 'Vouches', {
+      body: JSON.stringify(body),
+      method: 'POST',
+    });
+    return response.data;
+  }
+
+  async getXpBySeason(userkey: string, seasonId: number): Promise<number> {
+    return this.request<number>(
+      `/api/v2/xp/user/${encodeURIComponent(userkey)}/season/${seasonId}`,
+      'XP for Season'
+    );
+  }
+
+  async getXpTotal(userkey: string): Promise<number> {
+    return this.request<number>(`/api/v2/xp/user/${encodeURIComponent(userkey)}`, 'XP Balance');
+  }
+
+  async resolveUser(identifier: string): Promise<EthosUser> {
+    const parsed = parseIdentifier(identifier);
+    return this.resolveUserFromParsed(parsed);
+  }
+
+  async resolveUserFromParsed(parsed: ParsedIdentifier): Promise<EthosUser> {
+    switch (parsed.type) {
+      case 'address': {
+        return this.getUserByAddress(parsed.value);
+      }
+      
+      case 'ens': {
+        return this.resolveEnsUser(parsed.value);
+      }
+      
+      case 'profileId': {
+        return this.getUserByProfileId(parsed.value);
+      }
+      
+      default: {
+        // Handles 'twitter' and any other cases
+        return this.getUserByTwitter(parsed.value);
+      }
+    }
+  }
+
+  async searchUsers(query: string, limit = 10): Promise<SearchResult> {
+    const params = new URLSearchParams({ limit: String(limit), query });
+    return this.request<SearchResult>(`/api/v2/users/search?${params}`, 'Users');
+  }
+
   private log(message: string, data?: unknown): void {
     if (this.debug) {
       console.error(`[DEBUG] ${message}`, data || '');
     }
   }
 
-   private async request<T>(path: string, resourceType?: string, options?: RequestInit): Promise<T> {
+  private async request<T>(path: string, resourceType?: string, options?: Parameters<typeof fetch>[1]): Promise<T> {
      const url = `${this.baseUrl}${path}`;
      const controller = new AbortController();
-     const timeoutId = setTimeout(() => controller.abort(), 10000);
+     const timeoutId = setTimeout(() => controller.abort(), 10_000);
 
      this.log(`Fetching ${url}`);
 
@@ -595,7 +919,7 @@ export class EchoClient {
             if (responseText) errorMessage = responseText;
           }
 
-          this.log('API Error', { status: response.status, body: errorBody });
+          this.log('API Error', { body: errorBody, status: response.status });
           throw new APIError(errorMessage, response.status, errorBody);
         }
 
@@ -629,45 +953,6 @@ export class EchoClient {
      }
    }
 
-  async getUserByTwitter(username: string): Promise<EthosUser> {
-    return this.request<EthosUser>(`/api/v2/user/by/x/${encodeURIComponent(username)}`, 'User');
-  }
-
-  async getUserByAddress(address: string): Promise<EthosUser> {
-    return this.request<EthosUser>(`/api/v2/user/by/address/${encodeURIComponent(address)}`, 'User');
-  }
-
-  async getUserByProfileId(profileId: string): Promise<EthosUser> {
-    return this.request<EthosUser>(`/api/v2/user/by/profile-id/${encodeURIComponent(profileId)}`, 'User');
-  }
-
-  async searchUsers(query: string, limit = 10): Promise<SearchResult> {
-    const params = new URLSearchParams({ query, limit: String(limit) });
-    return this.request<SearchResult>(`/api/v2/users/search?${params}`, 'Users');
-  }
-
-  async resolveUser(identifier: string): Promise<EthosUser> {
-    const parsed = parseIdentifier(identifier);
-    return this.resolveUserFromParsed(parsed);
-  }
-
-  async resolveUserFromParsed(parsed: ParsedIdentifier): Promise<EthosUser> {
-    switch (parsed.type) {
-      case 'address':
-        return this.getUserByAddress(parsed.value);
-      
-      case 'ens':
-        return this.resolveEnsUser(parsed.value);
-      
-      case 'profileId':
-        return this.getUserByProfileId(parsed.value);
-      
-      case 'twitter':
-      default:
-        return this.getUserByTwitter(parsed.value);
-    }
-  }
-
   private async resolveEnsUser(ensName: string): Promise<EthosUser> {
     const searchResult = await this.searchUsers(ensName, 5);
     
@@ -689,285 +974,5 @@ export class EchoClient {
     }
     
     throw new NotFoundError('User', ensName);
-  }
-
-  async getXpTotal(userkey: string): Promise<number> {
-    return this.request<number>(`/api/v2/xp/user/${encodeURIComponent(userkey)}`, 'XP Balance');
-  }
-
-  async getSeasons(): Promise<SeasonsResponse> {
-    return this.request<SeasonsResponse>('/api/v2/xp/seasons', 'XP Seasons');
-  }
-
-  async getLeaderboardRank(userkey: string): Promise<number> {
-    return this.request<number>(`/api/v2/xp/user/${encodeURIComponent(userkey)}/leaderboard-rank`, 'Leaderboard Rank');
-  }
-
-  async getXpBySeason(userkey: string, seasonId: number): Promise<number> {
-    return this.request<number>(
-      `/api/v2/xp/user/${encodeURIComponent(userkey)}/season/${seasonId}`,
-      'XP for Season'
-    );
-  }
-
-  async getActivities(userkey: string, types: ActivityType[] = ['review', 'vouch'], limit = 10): Promise<Activity[]> {
-    const params = new URLSearchParams({ userkey, limit: String(limit) });
-    for (const type of types) {
-      params.append('activityType', type);
-    }
-    return this.request<Activity[]>(`/api/v2/activities/userkey?${params}`, 'Activities');
-  }
-
-  getPrimaryUserkey(user: EthosUser): string | null {
-    if (user.profileId) {
-      return `profileId:${user.profileId}`;
-    }
-    
-    const addressKey = user.userkeys?.find(uk => uk.startsWith('address:'));
-    if (addressKey) return addressKey;
-    
-    return user.userkeys?.[0] || null;
-  }
-
-  /** @deprecated Use resolveUser instead */
-  async getUserByUsername(username: string): Promise<EthosUser> {
-    return this.getUserByTwitter(username);
-  }
-
-   /** @deprecated Use getXpTotal instead */
-   async getTotalXp(userkey: string): Promise<number> {
-     return this.getXpTotal(userkey);
-   }
-
-   async getSlashes(params: { author?: string; subject?: string; status?: 'open' | 'closed'; limit?: number; offset?: number } = {}): Promise<SlashesResponse> {
-     const query = new URLSearchParams();
-     if (params.author) query.set('author', params.author);
-     if (params.subject) query.set('subject', params.subject);
-     if (params.status) query.set('status', params.status);
-     if (params.limit) query.set('limit', String(params.limit));
-     if (params.offset) query.set('offset', String(params.offset));
-     const path = `/api/v1/slashes${query.toString() ? '?' + query.toString() : ''}`;
-     return this.request<SlashesResponse>(path, 'Slashes');
-   }
-
-   async getSlashRoles(slashId: number, profileIds: number[]): Promise<Record<number, string>> {
-     const query = new URLSearchParams();
-     profileIds.forEach(id => query.append('profileId', String(id)));
-     return this.request<Record<number, string>>(`/api/v1/slashes/${slashId}/roles?${query.toString()}`, 'Slash Roles');
-   }
-
-  async getBrokerPosts(params: BrokerListParams = {}): Promise<BrokerListResponse> {
-    const query = new URLSearchParams();
-    if (params.type) query.set('type', params.type);
-    if (params.search) query.set('search', params.search);
-    if (params.sortBy) query.set('sortBy', params.sortBy);
-    if (params.minScore) query.set('minScore', String(params.minScore));
-    if (params.limit) query.set('limit', String(params.limit));
-    if (params.offset) query.set('offset', String(params.offset));
-    const path = `/api/v2/broker/posts${query.toString() ? '?' + query.toString() : ''}`;
-    return this.request<BrokerListResponse>(path, 'Broker Posts');
-  }
-
-  async getBrokerPost(id: number): Promise<BrokerPost> {
-    return this.request<BrokerPost>(`/api/v2/broker/posts/${id}`, 'Broker Post');
-  }
-
-  async getBrokerPostsByAuthor(profileId: number, params: { type?: BrokerPostType; limit?: number } = {}): Promise<BrokerListResponse> {
-    const query = new URLSearchParams();
-    if (params.type) query.set('type', params.type);
-    if (params.limit) query.set('limit', String(params.limit));
-    const path = `/api/v2/broker/author/${profileId}/posts${query.toString() ? '?' + query.toString() : ''}`;
-    return this.request<BrokerListResponse>(path, 'Author Posts');
-  }
-
-  async getProjects(params: { status?: string[]; limit?: number; offset?: number } = {}): Promise<ProjectListResponse> {
-    const query = new URLSearchParams();
-    if (params.status) params.status.forEach(s => query.append('status[]', s));
-    if (params.limit) query.set('limit', String(params.limit));
-    if (params.offset) query.set('offset', String(params.offset));
-    return this.request<ProjectListResponse>(`/api/v2/projects${query.toString() ? '?' + query.toString() : ''}`, 'Projects');
-  }
-
-  async getProjectDetails(projectId: number): Promise<Project> {
-    return this.request<Project>(`/api/v2/projects/${projectId}/details`, 'Project');
-  }
-
-  async getProjectByUsername(username: string): Promise<Project> {
-    return this.request<Project>(`/api/v2/projects/username/${encodeURIComponent(username)}`, 'Project');
-  }
-
-  async getProjectVoters(projectId: number, params: { limit?: number; offset?: number; sentiment?: 'bullish' | 'bearish' } = {}): Promise<ProjectVotersResponse> {
-    const query = new URLSearchParams();
-    if (params.limit) query.set('limit', String(params.limit));
-    if (params.offset) query.set('offset', String(params.offset));
-    if (params.sentiment) query.set('sentiment', params.sentiment);
-    return this.request<ProjectVotersResponse>(`/api/v2/projects/${projectId}/voters${query.toString() ? '?' + query.toString() : ''}`, 'Voters');
-  }
-
-   async getProjectTeam(projectId: number): Promise<EthosUser[]> {
-     return this.request<EthosUser[]>(`/api/v2/projects/${projectId}/team`, 'Team');
-   }
-
-   async getNftsForUser(userkey: string, params: { limit?: number; offset?: number } = {}): Promise<NftsResponse> {
-     const query = new URLSearchParams();
-     if (params.limit) query.set('limit', String(params.limit));
-     if (params.offset) query.set('offset', String(params.offset));
-     const path = `/api/v2/nfts/user/${encodeURIComponent(userkey)}${query.toString() ? '?' + query.toString() : ''}`;
-     return this.request<NftsResponse>(path, 'User NFTs');
-   }
-
-   async checkValidatorOwnership(userkey: string): Promise<NFT[]> {
-     return this.request<NFT[]>(`/api/v2/nfts/user/${encodeURIComponent(userkey)}/owns-validator`, 'Validator Check');
-   }
-
-    async getValidatorListings(params: { limit?: number; offset?: number } = {}): Promise<ValidatorListingsResponse> {
-      const query = new URLSearchParams();
-      if (params.limit) query.set('limit', String(params.limit));
-      if (params.offset) query.set('offset', String(params.offset));
-      const path = `/api/v2/nfts/validators/listings${query.toString() ? '?' + query.toString() : ''}`;
-      return this.request<ValidatorListingsResponse>(path, 'Validator Listings');
-    }
-
-    async getAuctions(params: { limit?: number; offset?: number; status?: string } = {}): Promise<AuctionsResponse> {
-      const query = new URLSearchParams();
-      if (params.limit) query.set('limit', String(params.limit));
-      if (params.offset) query.set('offset', String(params.offset));
-      if (params.status) query.set('status', params.status);
-      const path = `/api/v2/auctions${query.toString() ? '?' + query.toString() : ''}`;
-      return this.request<AuctionsResponse>(path, 'Auctions');
-    }
-
-    async getActiveAuction(): Promise<Auction | null> {
-      return this.request<Auction | null>('/api/v2/auctions/active', 'Active Auction');
-    }
-
-    async getAuction(auctionId: number): Promise<Auction> {
-      return this.request<Auction>(`/api/v2/auctions/${auctionId}`, 'Auction');
-    }
-
-  async getMarkets(params: MarketListParams = {}): Promise<MarketListResponse> {
-    const query = new URLSearchParams();
-    if (params.limit) query.set('limit', String(params.limit));
-    if (params.offset) query.set('offset', String(params.offset));
-    if (params.orderBy) query.set('orderBy', params.orderBy);
-    if (params.orderDirection) query.set('orderDirection', params.orderDirection);
-    if (params.filterQuery) query.set('filterQuery', params.filterQuery);
-    return this.request<MarketListResponse>(`/api/v2/markets${query.toString() ? '?' + query.toString() : ''}`, 'Markets');
-  }
-
-  async getFeaturedMarkets(): Promise<FeaturedMarketsResponse> {
-    return this.request<FeaturedMarketsResponse>('/api/v2/markets/featured', 'Featured Markets');
-  }
-
-  async getMarketInfo(profileId: number): Promise<Market> {
-    return this.request<Market>(`/api/v2/markets/${profileId}/info`, 'Market Info', {
-      method: 'POST',
-      body: JSON.stringify({ profileId, includeTopHolders: true, includeMarketChange: true }),
-    });
-  }
-
-  async getMarketHolders(profileId: number, params: { limit?: number } = {}): Promise<MarketHoldersResponse> {
-    const query = new URLSearchParams();
-    if (params.limit) query.set('limit', String(params.limit));
-    return this.request<MarketHoldersResponse>(`/api/v2/markets/${profileId}/holders${query.toString() ? '?' + query.toString() : ''}`, 'Market Holders');
-  }
-
-  async getMarketByTwitter(username: string): Promise<MarketUserByTwitter> {
-    return this.request<MarketUserByTwitter>(`/api/v2/markets/users/by/x/${encodeURIComponent(username)}`, 'Market User');
-  }
-
-  async getScoreBreakdownByUserkey(userkey: string): Promise<ScoreBreakdownResponse> {
-    const params = new URLSearchParams({ userkey });
-    return this.request<ScoreBreakdownResponse>(`/api/v1/score/userkey?${params}`, 'Score');
-  }
-
-  async getScoreBreakdownByAddress(address: string): Promise<ScoreBreakdownResponse> {
-    const params = new URLSearchParams({ address });
-    return this.request<ScoreBreakdownResponse>(`/api/v1/score/address?${params}`, 'Score');
-  }
-
-  convertScoreToLevel(score: number): ScoreLevel {
-    if (score < 800) return 'untrusted';
-    if (score < 1200) return 'questionable';
-    if (score < 1600) return 'neutral';
-    if (score < 2000) return 'reputable';
-    return 'exemplary';
-  }
-
-  async getScoreStatus(userkey: string): Promise<ScoreStatus> {
-    const params = new URLSearchParams({ userkey });
-    return this.request<ScoreStatus>(`/api/v2/score/status?${params}`, 'Score Status');
-  }
-
-  async getVouches(params: VouchQueryParams = {}): Promise<VouchesResponse> {
-    const body: Record<string, unknown> = {};
-    if (params.ids) body.ids = params.ids;
-    if (params.subjectUserkeys) body.subjectUserkeys = params.subjectUserkeys;
-    if (params.authorProfileIds) body.authorProfileIds = params.authorProfileIds;
-    if (params.subjectProfileIds) body.subjectProfileIds = params.subjectProfileIds;
-    if (params.archived !== undefined) body.archived = params.archived;
-    if (params.limit) body.limit = params.limit;
-    if (params.offset) body.offset = params.offset;
-
-    const response = await this.request<{ ok: boolean; data: VouchesResponse }>('/api/v1/vouches', 'Vouches', {
-      method: 'POST',
-      body: JSON.stringify(body),
-    });
-    return response.data;
-  }
-
-  async getMutualVouchers(viewerProfileId: number, targetProfileId: number, params: { limit?: number } = {}): Promise<{ values: VouchUser[]; total: number }> {
-    const query = new URLSearchParams();
-    query.set('viewerProfileId', String(viewerProfileId));
-    query.set('targetProfileId', String(targetProfileId));
-    if (params.limit) query.set('limit', String(params.limit));
-    return this.request<{ values: VouchUser[]; total: number }>(`/api/v2/vouches/mutual-vouchers?${query}`, 'Mutual Vouchers');
-  }
-
-  async getVotes(activityId: number, type: VoteType, params: { isUpvote?: boolean; limit?: number; offset?: number } = {}): Promise<VotesResponse> {
-    const query = new URLSearchParams();
-    query.set('activityId', String(activityId));
-    query.set('type', type);
-    if (params.isUpvote !== undefined) query.set('isUpvote', String(params.isUpvote));
-    if (params.limit) query.set('limit', String(params.limit));
-    if (params.offset) query.set('offset', String(params.offset));
-    return this.request<VotesResponse>(`/api/v2/votes?${query}`, 'Votes');
-  }
-
-  async getVoteStats(activityId: number, type: VoteType): Promise<VoteStats> {
-    const query = new URLSearchParams();
-    query.set('activityId', String(activityId));
-    query.set('type', type);
-    return this.request<VoteStats>(`/api/v2/votes/stats?${query}`, 'Vote Stats');
-  }
-
-  async getValidators(): Promise<Validator[]> {
-    return this.request<Validator[]>('/api/v2/xp/validators', 'Validators');
-  }
-
-  async getValidatorByTokenId(tokenId: string): Promise<Validator | null> {
-    const validators = await this.getValidators();
-    return validators.find(v => v.tokenId === tokenId) || null;
-  }
-
-  async getReview(reviewId: number): Promise<Review> {
-    return this.request<Review>(`/api/v2/activities/review/${reviewId}`, 'Review');
-  }
-
-  async getReviewsForUser(userkey: string, params: { limit?: number; offset?: number } = {}): Promise<Activity[]> {
-    const query = new URLSearchParams({ userkey });
-    query.append('activityType', 'review');
-    if (params.limit) query.set('limit', String(params.limit));
-    if (params.offset) query.set('offset', String(params.offset));
-    return this.request<Activity[]>(`/api/v2/activities/userkey?${query}`, 'Reviews');
-  }
-
-  async getInvitations(params: { senderProfileId?: number; status?: 'INVITED' | 'ACCEPTED'; limit?: number; offset?: number } = {}): Promise<InvitationsResponse> {
-    const query = new URLSearchParams();
-    if (params.senderProfileId) query.set('senderProfileId', String(params.senderProfileId));
-    if (params.status) query.set('status', params.status);
-    if (params.limit) query.set('limit', String(params.limit));
-    if (params.offset) query.set('offset', String(params.offset));
-    return this.request<InvitationsResponse>(`/api/v2/invitations${query.toString() ? '?' + query.toString() : ''}`, 'Invitations');
   }
 }

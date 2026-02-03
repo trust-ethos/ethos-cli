@@ -1,20 +1,18 @@
-import { Args, Flags } from '@oclif/core';
+import { Args } from '@oclif/core';
+
 import { BaseCommand } from '../../lib/base-command.js';
 import { formatBrokerPost, output } from '../../lib/formatting/output.js';
 
 export default class BrokerInfo extends BaseCommand {
-  static description = 'Get details of a specific broker post';
-
   static args = {
     id: Args.integer({ description: 'Broker post ID', required: true }),
   };
-
-  static examples = [
+static description = 'Get details of a specific broker post';
+static examples = [
     '<%= config.bin %> <%= command.id %> 123',
     '<%= config.bin %> <%= command.id %> 123 --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
   };
 

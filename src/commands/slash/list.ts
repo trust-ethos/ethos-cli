@@ -1,27 +1,26 @@
 import { Flags } from '@oclif/core';
+
 import { BaseCommand } from '../../lib/base-command.js';
 import { formatSlashes, output } from '../../lib/formatting/output.js';
 
 export default class SlashList extends BaseCommand {
   static description = 'List reputation slashes';
-
-  static examples = [
+static examples = [
     '<%= config.bin %> <%= command.id %>',
     '<%= config.bin %> <%= command.id %> --status open',
     '<%= config.bin %> <%= command.id %> --subject twitter:0xNowater',
     '<%= config.bin %> <%= command.id %> --limit 5 --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
+    author: Flags.string({ description: 'Filter by slasher userkey' }),
+    limit: Flags.integer({ char: 'l', default: 10, description: 'Max results per request' }),
+    offset: Flags.integer({ char: 'o', default: 0, description: 'Number of results to skip' }),
     status: Flags.string({
       description: 'Filter by status',
       options: ['open', 'closed'],
     }),
-    author: Flags.string({ description: 'Filter by slasher userkey' }),
     subject: Flags.string({ description: 'Filter by subject userkey' }),
-    limit: Flags.integer({ char: 'l', description: 'Max results per request', default: 10 }),
-    offset: Flags.integer({ char: 'o', description: 'Number of results to skip', default: 0 }),
   };
 
   async run(): Promise<void> {
@@ -31,10 +30,10 @@ export default class SlashList extends BaseCommand {
       const response = await this.withSpinner('Fetching slashes', () =>
         this.client.getSlashes({
           author: flags.author,
-          subject: flags.subject,
-          status: flags.status as any,
           limit: flags.limit,
           offset: flags.offset,
+          status: flags.status as 'closed' | 'open' | undefined,
+          subject: flags.subject,
         })
       );
 

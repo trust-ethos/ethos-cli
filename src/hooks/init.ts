@@ -1,6 +1,7 @@
 import { Hook } from '@oclif/core';
-import { execSync } from 'child_process';
+import { execSync } from 'node:child_process';
 import pc from 'picocolors';
+
 import {
   applyPendingUpdate,
   checkForUpdate,
@@ -19,10 +20,12 @@ const hook: Hook<'init'> = async function () {
       const args = process.argv.slice(2);
       try {
         execSync(`"${process.execPath}" ${args.map(a => `"${a}"`).join(' ')}`, { 
-          stdio: 'inherit',
           env: { ...process.env, ETHOS_SKIP_UPDATE_CHECK: '1' },
+          stdio: 'inherit',
         });
       } catch {}
+
+      // eslint-disable-next-line n/no-process-exit, unicorn/no-process-exit -- Exit after re-executing updated CLI
       process.exit(0);
     }
   }

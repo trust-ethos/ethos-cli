@@ -25,7 +25,7 @@
     "typescript": "^5"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=21.0.0"
   },
   "files": [
     "./bin",
@@ -107,7 +107,7 @@
     "build:ts": "shx rm -rf dist && tsc -b",
     "build:binaries": "./scripts/build-binaries.sh",
     "dev": "./bin/dev.js",
-    "lint": "oxlint src || true",
+    "lint": "eslint src/",
     "postpack": "shx rm -f oclif.manifest.json",
     "prepack": "oclif manifest && oclif readme",
     "readme": "oclif readme",

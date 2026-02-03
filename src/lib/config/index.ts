@@ -1,6 +1,6 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { homedir } from 'os';
-import { join, dirname } from 'path';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { dirname, join } from 'node:path';
 
 const DEFAULT_API_URL = 'https://api.ethos.network';
 
@@ -14,8 +14,9 @@ export function loadConfig(): EthosConfig {
   if (!existsSync(CONFIG_PATH)) {
     return { apiUrl: DEFAULT_API_URL };
   }
+
   try {
-    const content = readFileSync(CONFIG_PATH, 'utf-8');
+    const content = readFileSync(CONFIG_PATH, 'utf8');
     const parsed = JSON.parse(content);
     return { 
       apiUrl: parsed.apiUrl || DEFAULT_API_URL,

@@ -1,18 +1,17 @@
 import { Args, Command } from '@oclif/core';
 import pc from 'picocolors';
+
 import { saveConfig } from '../../lib/config/index.js';
 
 export default class ConfigSet extends Command {
-  static description = 'Set configuration value';
-
   static args = {
     value: Args.string({
       description: 'Configuration in format: apiUrl=<url>',
       required: true,
     }),
   };
-
-  static examples = [
+static description = 'Set configuration value';
+static examples = [
     '<%= config.bin %> <%= command.id %> apiUrl=https://api.ethos.network',
     '<%= config.bin %> <%= command.id %> apiUrl=https://api.dev.ethos.network',
   ];

@@ -1,23 +1,21 @@
-import { Args, Flags } from '@oclif/core';
+import { Args } from '@oclif/core';
+
 import { BaseCommand } from '../../lib/base-command.js';
 import { formatValidator, output } from '../../lib/formatting/output.js';
 
 export default class ValidatorInfo extends BaseCommand {
-  static description = 'Get details of a specific validator NFT';
-
   static args = {
     tokenId: Args.string({
       description: 'Validator token ID',
       required: true,
     }),
   };
-
-  static examples = [
+static description = 'Get details of a specific validator NFT';
+static examples = [
     '<%= config.bin %> <%= command.id %> 1',
     '<%= config.bin %> <%= command.id %> 42 --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
   };
 

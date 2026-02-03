@@ -1,16 +1,13 @@
-import { Flags } from '@oclif/core';
 import { BaseCommand } from '../../lib/base-command.js';
 import { formatFeaturedMarkets, output } from '../../lib/formatting/output.js';
 
 export default class MarketFeatured extends BaseCommand {
   static description = 'Show top gainers and losers';
-
-  static examples = [
+static examples = [
     '<%= config.bin %> <%= command.id %>',
     '<%= config.bin %> <%= command.id %> --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
   };
 

@@ -3,13 +3,11 @@ import { formatSeasons, output } from '../../lib/formatting/output.js';
 
 export default class XpSeasons extends BaseCommand {
   static description = 'List all XP seasons';
-
-  static examples = [
+static examples = [
     '<%= config.bin %> <%= command.id %>',
     '<%= config.bin %> <%= command.id %> --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
   };
 

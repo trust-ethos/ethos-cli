@@ -1,34 +1,32 @@
 import { Flags } from '@oclif/core';
-import { BaseCommand } from '../../lib/base-command.js';
+
 import { type MarketOrderBy } from '../../lib/api/echo-client.js';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatMarkets, output } from '../../lib/formatting/output.js';
 
 export default class MarketList extends BaseCommand {
   static aliases = ['ml'];
-
-  static description = 'List trust markets';
-
-  static examples = [
+static description = 'List trust markets';
+static examples = [
     '<%= config.bin %> <%= command.id %>',
     '<%= config.bin %> <%= command.id %> --sort priceChange24hPercent --order desc',
     '<%= config.bin %> <%= command.id %> --search "vitalik" --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
-    sort: Flags.string({
-      description: 'Sort by field',
-      options: ['marketCapWei', 'volume24hWei', 'priceChange24hPercent', 'score', 'createdAt'],
-      default: 'marketCapWei',
-    }),
+    limit: Flags.integer({ char: 'l', default: 10, description: 'Max results per request' }),
+    offset: Flags.integer({ char: 'o', default: 0, description: 'Number of results to skip' }),
     order: Flags.string({
+      default: 'desc',
       description: 'Sort direction',
       options: ['asc', 'desc'],
-      default: 'desc',
     }),
     search: Flags.string({ char: 's', description: 'Search by name/username' }),
-    limit: Flags.integer({ char: 'l', description: 'Max results per request', default: 10 }),
-    offset: Flags.integer({ char: 'o', description: 'Number of results to skip', default: 0 }),
+    sort: Flags.string({
+      default: 'marketCapWei',
+      description: 'Sort by field',
+      options: ['marketCapWei', 'volume24hWei', 'priceChange24hPercent', 'score', 'createdAt'],
+    }),
   };
 
   async run(): Promise<void> {
@@ -37,11 +35,11 @@ export default class MarketList extends BaseCommand {
     try {
       const response = await this.withSpinner('Fetching markets', () =>
         this.client.getMarkets({
-          orderBy: flags.sort as MarketOrderBy,
-          orderDirection: flags.order as 'asc' | 'desc',
           filterQuery: flags.search,
           limit: flags.limit,
           offset: flags.offset,
+          orderBy: flags.sort as MarketOrderBy,
+          orderDirection: flags.order as 'asc' | 'desc',
         })
       );
 

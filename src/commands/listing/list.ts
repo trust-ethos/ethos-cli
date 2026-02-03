@@ -1,25 +1,24 @@
 import { Flags } from '@oclif/core';
+
 import { BaseCommand } from '../../lib/base-command.js';
 import { formatListings, output } from '../../lib/formatting/output.js';
 
 export default class ListingList extends BaseCommand {
   static description = 'List projects on Ethos Listings';
-
-  static examples = [
+static examples = [
     '<%= config.bin %> <%= command.id %>',
     '<%= config.bin %> <%= command.id %> --status active',
     '<%= config.bin %> <%= command.id %> --limit 20 --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
+    limit: Flags.integer({ char: 'l', default: 10, description: 'Max results per request' }),
+    offset: Flags.integer({ char: 'o', default: 0, description: 'Number of results to skip' }),
     status: Flags.string({
+      default: 'active',
       description: 'Filter by status',
       options: ['active', 'pending', 'archived'],
-      default: 'active',
     }),
-    limit: Flags.integer({ char: 'l', description: 'Max results per request', default: 10 }),
-    offset: Flags.integer({ char: 'o', description: 'Number of results to skip', default: 0 }),
   };
 
   async run(): Promise<void> {
@@ -28,9 +27,9 @@ export default class ListingList extends BaseCommand {
     try {
       const response = await this.withSpinner('Fetching listings', () =>
         this.client.getProjects({
-          status: [flags.status.toUpperCase()],
           limit: flags.limit,
           offset: flags.offset,
+          status: [flags.status.toUpperCase()],
         })
       );
 

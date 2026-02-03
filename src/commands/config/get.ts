@@ -1,20 +1,19 @@
 import { Command, Flags } from '@oclif/core';
 import pc from 'picocolors';
-import { loadConfig, getConfigPath } from '../../lib/config/index.js';
+
+import { getConfigPath, loadConfig } from '../../lib/config/index.js';
 
 export default class ConfigGet extends Command {
   static description = 'Show current configuration';
-
-  static examples = [
+static examples = [
     '<%= config.bin %> <%= command.id %>',
     '<%= config.bin %> <%= command.id %> --json',
   ];
-
-  static flags = {
+static flags = {
     json: Flags.boolean({
       char: 'j',
-      description: 'Output as JSON',
       default: false,
+      description: 'Output as JSON',
     }),
   };
 

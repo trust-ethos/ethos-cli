@@ -1,25 +1,22 @@
-import { Args, Flags } from '@oclif/core';
+import { Args } from '@oclif/core';
+
 import { BaseCommand } from '../../lib/base-command.js';
 import { formatReview, output } from '../../lib/formatting/output.js';
 
 export default class ReviewInfo extends BaseCommand {
   static aliases = ['ri'];
-
-  static args = {
+static args = {
     id: Args.integer({
       description: 'Review ID',
       required: true,
     }),
   };
-
-  static description = 'Get details of a specific review';
-
-  static examples = [
+static description = 'Get details of a specific review';
+static examples = [
     '<%= config.bin %> <%= command.id %> 1139',
     '<%= config.bin %> <%= command.id %> 1139 --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
   };
 

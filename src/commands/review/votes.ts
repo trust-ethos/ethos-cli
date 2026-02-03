@@ -1,4 +1,5 @@
 import { Args, Flags } from '@oclif/core';
+
 import { BaseCommand } from '../../lib/base-command.js';
 import { formatVotes, formatVoteStats, output } from '../../lib/formatting/output.js';
 
@@ -9,40 +10,37 @@ export default class ReviewVotes extends BaseCommand {
       required: true,
     }),
   };
-
-  static description = 'Show votes on a review';
-
-  static examples = [
+static description = 'Show votes on a review';
+static examples = [
     '<%= config.bin %> <%= command.id %> 123',
     '<%= config.bin %> <%= command.id %> 123 --stats',
     '<%= config.bin %> <%= command.id %> 123 --upvotes',
     '<%= config.bin %> <%= command.id %> 123 --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
-    stats: Flags.boolean({
-      char: 's',
-      description: 'Show vote statistics only',
-      default: false,
-    }),
-    upvotes: Flags.boolean({
-      description: 'Show only upvotes',
-      exclusive: ['downvotes'],
-    }),
     downvotes: Flags.boolean({
       description: 'Show only downvotes',
       exclusive: ['upvotes'],
     }),
     limit: Flags.integer({
       char: 'l',
-      description: 'Max results per request',
       default: 10,
+      description: 'Max results per request',
     }),
     offset: Flags.integer({
       char: 'o',
-      description: 'Number of results to skip',
       default: 0,
+      description: 'Number of results to skip',
+    }),
+    stats: Flags.boolean({
+      char: 's',
+      default: false,
+      description: 'Show vote statistics only',
+    }),
+    upvotes: Flags.boolean({
+      description: 'Show only upvotes',
+      exclusive: ['downvotes'],
     }),
   };
 
@@ -57,6 +55,7 @@ export default class ReviewVotes extends BaseCommand {
         } else {
           this.log(formatVoteStats(stats, 'review', args.id));
         }
+
         return;
       }
 

@@ -1,4 +1,5 @@
 import { Args, Flags } from '@oclif/core';
+
 import { BaseCommand } from '../../lib/base-command.js';
 import { formatInvitations, output } from '../../lib/formatting/output.js';
 
@@ -9,31 +10,28 @@ export default class UserInvitations extends BaseCommand {
       required: true,
     }),
   };
-
-  static description = 'List invitations sent by a user';
-
-  static examples = [
+static description = 'List invitations sent by a user';
+static examples = [
     '<%= config.bin %> <%= command.id %> sethgho',
     '<%= config.bin %> <%= command.id %> 0xNowater --status ACCEPTED',
     '<%= config.bin %> <%= command.id %> vitalik.eth --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
+    limit: Flags.integer({
+      char: 'l',
+      default: 10,
+      description: 'Max results per request',
+    }),
+    offset: Flags.integer({
+      char: 'o',
+      default: 0,
+      description: 'Number of results to skip',
+    }),
     status: Flags.string({
       char: 's',
       description: 'Filter by status',
       options: ['INVITED', 'ACCEPTED'],
-    }),
-    limit: Flags.integer({
-      char: 'l',
-      description: 'Max results per request',
-      default: 10,
-    }),
-    offset: Flags.integer({
-      char: 'o',
-      description: 'Number of results to skip',
-      default: 0,
     }),
   };
 
@@ -51,10 +49,10 @@ export default class UserInvitations extends BaseCommand {
 
       const response = await this.withSpinner('Fetching invitations', () =>
         this.client.getInvitations({
-          senderProfileId: user.profileId!,
-          status: flags.status as 'INVITED' | 'ACCEPTED' | undefined,
           limit: flags.limit,
           offset: flags.offset,
+          senderProfileId: user.profileId!,
+          status: flags.status as 'ACCEPTED' | 'INVITED' | undefined,
         })
       );
 

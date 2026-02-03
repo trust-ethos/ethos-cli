@@ -1,26 +1,25 @@
 import { Flags } from '@oclif/core';
+
 import { BaseCommand } from '../../lib/base-command.js';
 import { formatValidatorListings, output } from '../../lib/formatting/output.js';
 
 export default class ValidatorSales extends BaseCommand {
   static description = 'List validator NFTs for sale on OpenSea';
-
-  static examples = [
+static examples = [
     '<%= config.bin %> <%= command.id %>',
     '<%= config.bin %> <%= command.id %> --limit 20 --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
     limit: Flags.integer({
       char: 'l',
-      description: 'Max results per request',
       default: 10,
+      description: 'Max results per request',
     }),
     offset: Flags.integer({
       char: 'o',
-      description: 'Number of results to skip',
       default: 0,
+      description: 'Number of results to skip',
     }),
   };
 

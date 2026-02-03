@@ -1,26 +1,23 @@
 import { Args, Flags } from '@oclif/core';
+
 import { BaseCommand } from '../../lib/base-command.js';
 import { formatRank, output } from '../../lib/formatting/output.js';
 
 export default class XpRank extends BaseCommand {
   static aliases = ['rank'];
-
-  static args = {
+static args = {
     identifier: Args.string({
       description: 'Twitter username, ETH address, or ENS name',
       required: true,
     }),
   };
-
-  static description = 'Show leaderboard rank for a user';
-
-  static examples = [
+static description = 'Show leaderboard rank for a user';
+static examples = [
     '<%= config.bin %> <%= command.id %> 0xNowater',
     '<%= config.bin %> <%= command.id %> 0xNowater --season 2',
     '<%= config.bin %> <%= command.id %> 0xNowater --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
     season: Flags.integer({
       char: 's',
@@ -50,18 +47,28 @@ export default class XpRank extends BaseCommand {
       }
 
       if (flags.json) {
-        const output_data: any = { rank, user: user.username || user.displayName, userkey };
+        const outputData: { rank: number; season?: number; seasonXp?: number; user: string; userkey: string } = { 
+          rank, 
+          user: user.username || user.displayName, 
+          userkey 
+        };
         if (seasonXp !== undefined) {
-          output_data.seasonXp = seasonXp;
-          output_data.season = flags.season;
+          outputData.seasonXp = seasonXp;
+          outputData.season = flags.season;
         }
-        this.log(output(output_data));
+
+        this.log(output(outputData));
       } else {
-        const formatData: any = { rank, userkey, username: user.username || user.displayName };
+        const formatData: { rank: number; season?: number; seasonXp?: number; userkey: string; username: string } = { 
+          rank, 
+          userkey, 
+          username: user.username || user.displayName 
+        };
         if (seasonXp !== undefined) {
           formatData.seasonXp = seasonXp;
           formatData.season = flags.season;
         }
+
         this.log(formatRank(formatData));
       }
     } catch (error) {

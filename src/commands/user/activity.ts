@@ -1,4 +1,5 @@
 import { Args, Flags } from '@oclif/core';
+
 import { BaseCommand } from '../../lib/base-command.js';
 import { formatActivities, output } from '../../lib/formatting/output.js';
 
@@ -9,22 +10,19 @@ export default class UserActivity extends BaseCommand {
       required: true,
     }),
   };
-
-  static description = 'Show recent reviews and vouches for a user';
-
-  static examples = [
+static description = 'Show recent reviews and vouches for a user';
+static examples = [
     '<%= config.bin %> <%= command.id %> 0xNowater',
     '<%= config.bin %> <%= command.id %> 0xNowater --type vouch',
     '<%= config.bin %> <%= command.id %> 0xNowater --type review --limit 5',
     '<%= config.bin %> <%= command.id %> 0xNowater --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
     limit: Flags.integer({
       char: 'l',
-      description: 'Maximum number of activities',
       default: 10,
+      description: 'Maximum number of activities',
     }),
     type: Flags.string({
       char: 't',
@@ -59,7 +57,7 @@ export default class UserActivity extends BaseCommand {
       );
 
       if (flags.json) {
-        this.log(output({ user: user.username || user.displayName, activities }));
+        this.log(output({ activities, user: user.username || user.displayName }));
       } else {
         this.log(formatActivities(activities, user.username || user.displayName));
       }

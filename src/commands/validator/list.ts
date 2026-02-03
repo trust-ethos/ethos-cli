@@ -1,33 +1,32 @@
 import { Flags } from '@oclif/core';
+
 import { BaseCommand } from '../../lib/base-command.js';
 import { formatValidators, output } from '../../lib/formatting/output.js';
 
 export default class ValidatorList extends BaseCommand {
   static description = 'List all Ethos validator NFT owners';
-
-  static examples = [
+static examples = [
     '<%= config.bin %> <%= command.id %>',
     '<%= config.bin %> <%= command.id %> --limit 20',
     '<%= config.bin %> <%= command.id %> --available',
     '<%= config.bin %> <%= command.id %> --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
+    available: Flags.boolean({
+      char: 'a',
+      default: false,
+      description: 'Show only validators with remaining XP capacity',
+    }),
     limit: Flags.integer({
       char: 'l',
-      description: 'Max results to display',
       default: 10,
+      description: 'Max results to display',
     }),
     offset: Flags.integer({
       char: 'o',
-      description: 'Number of results to skip',
       default: 0,
-    }),
-    available: Flags.boolean({
-      char: 'a',
-      description: 'Show only validators with remaining XP capacity',
-      default: false,
+      description: 'Number of results to skip',
     }),
   };
 
@@ -47,7 +46,7 @@ export default class ValidatorList extends BaseCommand {
       validators = validators.slice(flags.offset, flags.offset + flags.limit);
 
       if (flags.json) {
-        this.log(output({ values: validators, total, limit: flags.limit, offset: flags.offset }));
+        this.log(output({ limit: flags.limit, offset: flags.offset, total, values: validators }));
       } else {
         this.log(formatValidators(validators, total));
       }

@@ -1,17 +1,15 @@
-import { Flags } from '@oclif/core';
 import pc from 'picocolors';
+
 import { BaseCommand } from '../../lib/base-command.js';
 import { formatAuction, output } from '../../lib/formatting/output.js';
 
 export default class AuctionActive extends BaseCommand {
   static description = 'Show the currently active auction';
-
-  static examples = [
+static examples = [
     '<%= config.bin %> <%= command.id %>',
     '<%= config.bin %> <%= command.id %> --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
   };
 

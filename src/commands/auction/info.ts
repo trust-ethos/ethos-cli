@@ -1,21 +1,19 @@
-import { Args, Flags } from '@oclif/core';
-import { BaseCommand } from '../../lib/base-command.js';
+import { Args } from '@oclif/core';
+
 import { type Auction } from '../../lib/api/echo-client.js';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatAuction, output } from '../../lib/formatting/output.js';
 
 export default class AuctionInfo extends BaseCommand {
-  static description = 'Get details of a specific auction';
-
   static args = {
     id: Args.integer({ description: 'Auction ID', required: true }),
   };
-
-  static examples = [
+static description = 'Get details of a specific auction';
+static examples = [
     '<%= config.bin %> <%= command.id %> 1',
     '<%= config.bin %> <%= command.id %> 1 --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
   };
 

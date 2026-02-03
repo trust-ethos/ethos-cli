@@ -1,4 +1,5 @@
 import pc from 'picocolors';
+
 import type { Activity, Auction, BrokerPost, EthosUser, FeaturedMarketsResponse, InvitationWithUser, Market, MarketHolder, Project, ProjectVoter, ProjectVotersTotals, Review, ScoreLevel, ScoreResponse, ScoreStatus, Season, Slash, Validator, Vote, VoteStats, Vouch, VouchUser } from '../api/echo-client.js';
 
 export function output<T>(data: T): string {
@@ -34,9 +35,11 @@ export function formatUser(user: EthosUser): string {
 
   const level = getScoreLevel(user.score);
   const levelColor = LEVEL_COLORS[level] || pc.white;
-  lines.push(`${pc.dim('Score:')} ${pc.green(String(user.score))} ${levelColor(`(${level.toUpperCase()})`)}`);
-  lines.push(`${pc.dim('Status:')} ${user.status}`);
-  lines.push(`${pc.dim('XP:')} ${pc.green(user.xpTotal.toLocaleString())}`);
+  lines.push(
+    `${pc.dim('Score:')} ${pc.green(String(user.score))} ${levelColor(`(${level.toUpperCase()})`)}`,
+    `${pc.dim('Status:')} ${user.status}`,
+    `${pc.dim('XP:')} ${pc.green(user.xpTotal.toLocaleString())}`
+  );
   
   if (user.xpStreakDays > 0) {
     const dayWord = pluralize(user.xpStreakDays, 'day');
@@ -44,8 +47,7 @@ export function formatUser(user: EthosUser): string {
   }
 
   if (user.stats) {
-    lines.push('');
-    lines.push(pc.bold('Stats'));
+    lines.push('', pc.bold('Stats'));
     
     const reviews = user.stats.review.received;
     const reviewTotal = reviews.positive + reviews.neutral + reviews.negative;
@@ -60,15 +62,14 @@ export function formatUser(user: EthosUser): string {
   }
 
   if (user.links?.profile) {
-    lines.push('');
-    lines.push(`${pc.dim('Profile:')} ${user.links.profile}`);
+    lines.push('', `${pc.dim('Profile:')} ${user.links.profile}`);
   }
 
   return lines.join('\n');
 }
 
 export function formatInvitations(invitations: InvitationWithUser[], total: number): string {
-  if (!invitations.length) {
+  if (invitations.length === 0) {
     return pc.yellow('No invitations found.');
   }
 
@@ -79,13 +80,15 @@ export function formatInvitations(invitations: InvitationWithUser[], total: numb
     const user = inv.invitedUser;
     const statusIcon = i.status === 'ACCEPTED' ? pc.green('✓') : pc.yellow('○');
     const userName = user?.username ? `@${user.username}` : user?.displayName || i.recipientAddress.slice(0, 10) + '...';
-    const date = new Date(i.dateInvited).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const date = new Date(i.dateInvited).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 
-    lines.push(`${statusIcon} ${pc.bold(userName)} ${pc.dim(`(${i.status})`)}`);
-    lines.push(`   ${pc.dim('Invited:')} ${date}`);
+    lines.push(
+      `${statusIcon} ${pc.bold(userName)} ${pc.dim(`(${i.status})`)}`,
+      `   ${pc.dim('Invited:')} ${date}`
+    );
     
     if (i.dateAccepted) {
-      const acceptedDate = new Date(i.dateAccepted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const acceptedDate = new Date(i.dateAccepted).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
       lines.push(`   ${pc.dim('Accepted:')} ${acceptedDate}`);
     }
 
@@ -107,15 +110,16 @@ export function formatSeasons(seasons: Season[], currentSeason?: Season): string
   const lines = [pc.bold(pc.cyan('XP Seasons')), ''];
 
   if (currentSeason) {
-    lines.push(`${pc.dim('Current:')} Season ${currentSeason.id} (Week ${currentSeason.week || 1})`);
-    lines.push('');
+    lines.push(`${pc.dim('Current:')} Season ${currentSeason.id} (Week ${currentSeason.week || 1})`, '');
   }
 
   for (const season of seasons) {
     const isCurrent = currentSeason && season.id === currentSeason.id;
     const prefix = isCurrent ? pc.green('*') : ' ';
-    lines.push(`${prefix} ${pc.bold(`Season ${season.id}`)}`);
-    lines.push(`    ${pc.dim('Start:')} ${new Date(season.startDate).toLocaleDateString()}`);
+    lines.push(
+      `${prefix} ${pc.bold(`Season ${season.id}`)}`,
+      `    ${pc.dim('Start:')} ${new Date(season.startDate).toLocaleDateString()}`
+    );
     if (season.endDate) {
       lines.push(`    ${pc.dim('End:')} ${new Date(season.endDate).toLocaleDateString()}`);
     }
@@ -124,7 +128,7 @@ export function formatSeasons(seasons: Season[], currentSeason?: Season): string
   return lines.join('\n');
 }
 
-export function formatRank(data: { rank: number; totalXp?: number; userkey?: string; username?: string; seasonXp?: number; season?: number }): string {
+export function formatRank(data: { rank: number; season?: number; seasonXp?: number; totalXp?: number; userkey?: string; username?: string; }): string {
   const lines = [
     pc.bold(pc.cyan('Leaderboard Rank')),
     '',
@@ -148,7 +152,7 @@ export function formatRank(data: { rank: number; totalXp?: number; userkey?: str
   return lines.join('\n');
 }
 
-export function formatXP(data: { totalXp: number; username?: string; userkey?: string }): string {
+export function formatXP(data: { totalXp: number; userkey?: string; username?: string; }): string {
   const lines = [
     pc.bold(pc.cyan('XP Balance')),
     '',
@@ -176,13 +180,17 @@ export function formatSearchResults(results: EthosUser[]): string {
 
   for (const user of results) {
     const displayName = user.displayName || user.username || 'Unknown';
-    lines.push(pc.bold(displayName));
     if (user.username) {
-      lines.push(`  ${pc.dim('Username:')} @${user.username}`);
+      lines.push(pc.bold(displayName), `  ${pc.dim('Username:')} @${user.username}`);
+    } else {
+      lines.push(pc.bold(displayName));
     }
-    lines.push(`  ${pc.dim('Score:')} ${pc.green(String(user.score))}`);
-    lines.push(`  ${pc.dim('XP:')} ${user.xpTotal.toLocaleString()}`);
-    lines.push('');
+
+    lines.push(
+      `  ${pc.dim('Score:')} ${pc.green(String(user.score))}`,
+      `  ${pc.dim('XP:')} ${user.xpTotal.toLocaleString()}`,
+      ''
+    );
   }
 
   return lines.join('\n');
@@ -190,7 +198,7 @@ export function formatSearchResults(results: EthosUser[]): string {
 
 function formatTimestamp(ts: number): string {
   const date = new Date(ts * 1000);
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function parseMetadata(metadata?: string): { description?: string } {
@@ -225,7 +233,7 @@ export function formatActivities(activities: Activity[], username?: string): str
     
     if (activity.data.comment) {
       const comment = activity.data.comment.length > 60 
-        ? activity.data.comment.substring(0, 57) + '...'
+        ? activity.data.comment.slice(0, 57) + '...'
         : activity.data.comment;
       lines.push(`   ${pc.dim('Title:')} ${comment}`);
     }
@@ -239,7 +247,7 @@ export function formatActivities(activities: Activity[], username?: string): str
     const meta = parseMetadata(activity.data.metadata);
     if (meta.description) {
       const desc = meta.description.length > 80 
-        ? meta.description.substring(0, 77) + '...'
+        ? meta.description.slice(0, 77) + '...'
         : meta.description;
       lines.push(`   ${pc.dim(desc)}`);
     }
@@ -273,7 +281,7 @@ export function formatSlash(slash: Slash): string {
 }
 
 export function formatSlashes(slashes: Slash[], total: number): string {
-  if (!slashes.length) {
+  if (slashes.length === 0) {
     return pc.yellow('No slashes found.');
   }
 
@@ -285,27 +293,26 @@ export function formatSlashes(slashes: Slash[], total: number): string {
     
     lines.push(`${statusIcon} ${pc.bold('#' + s.id)} Author: ${s.authorProfileId} → Subject: ${s.subject || 'Unknown'}`);
     const commentPreview = s.comment ? (s.comment.slice(0, 40) + (s.comment.length > 40 ? '...' : '')) : 'No reason';
-    lines.push(`   ${pc.dim('Amount:')} ${s.amount} ${pc.dim('|')} ${commentPreview}`);
-    lines.push('');
+    lines.push(`   ${pc.dim('Amount:')} ${s.amount} ${pc.dim('|')} ${commentPreview}`, '');
   }
 
   return lines.join('\n');
 }
 
 const REVIEW_SCORE_COLORS: Record<string, (s: string) => string> = {
-  positive: pc.green,
-  neutral: pc.yellow,
   negative: pc.red,
+  neutral: pc.yellow,
+  positive: pc.green,
 };
 
 const REVIEW_SCORE_ICONS: Record<string, string> = {
-  positive: '👍',
-  neutral: '😐',
   negative: '👎',
+  neutral: '😐',
+  positive: '👍',
 };
 
 export function formatReview(review: Review): string {
-  const score = review.data.score;
+  const {score} = review.data;
   const scoreColor = REVIEW_SCORE_COLORS[score] || pc.white;
   const scoreIcon = REVIEW_SCORE_ICONS[score] || '📝';
   
@@ -325,8 +332,7 @@ export function formatReview(review: Review): string {
     lines.push('', pc.dim('Comment:'), review.data.comment);
   }
 
-  lines.push('');
-  lines.push(`${pc.dim('Votes:')} 👍 ${review.votes?.upvotes || 0}  👎 ${review.votes?.downvotes || 0}`);
+  lines.push('', `${pc.dim('Votes:')} 👍 ${review.votes?.upvotes || 0}  👎 ${review.votes?.downvotes || 0}`);
   
   if (review.replySummary?.count > 0) {
     lines.push(`${pc.dim('Replies:')} ${review.replySummary.count}`);
@@ -344,11 +350,11 @@ export function formatReview(review: Review): string {
 export function formatReviews(activities: Activity[], total?: number): string {
   const reviews = activities.filter(a => a.type === 'review');
   
-  if (!reviews.length) {
+  if (reviews.length === 0) {
     return pc.yellow('No reviews found.');
   }
 
-  const lines = [pc.bold(`Reviews${total !== undefined ? ` (${total} total)` : ''}`), ''];
+  const lines = [pc.bold(`Reviews${total === undefined ? '' : ` (${total} total)`}`), ''];
 
   for (const r of reviews) {
     const score = r.data.score || 'neutral';
@@ -357,7 +363,7 @@ export function formatReviews(activities: Activity[], total?: number): string {
     
     const authorName = r.author?.username ? `@${r.author.username}` : r.author?.name || 'Unknown';
     const subjectName = r.subject?.username ? `@${r.subject.username}` : r.subject?.name || 'Unknown';
-    const date = new Date(r.timestamp * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const date = new Date(r.timestamp * 1000).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 
     lines.push(`${scoreIcon} ${pc.bold('#' + r.data.id)} ${authorName} → ${subjectName} ${scoreColor(`[${score.toUpperCase()}]`)}`);
     
@@ -366,26 +372,25 @@ export function formatReviews(activities: Activity[], total?: number): string {
       lines.push(`   ${pc.dim(preview)}`);
     }
     
-    lines.push(`   ${pc.dim(date)}`);
-    lines.push('');
+    lines.push(`   ${pc.dim(date)}`, '');
   }
 
   return lines.join('\n');
 }
 
 const BROKER_TYPE_EMOJI: Record<string, string> = {
-  'SELL': '🏷️',
-  'BUY': '🛒',
-  'HIRE': '👔',
-  'FOR_HIRE': '🧑‍💻',
   'BOUNTY': '🎯',
+  'BUY': '🛒',
+  'FOR_HIRE': '🧑‍💻',
+  'HIRE': '👔',
+  'SELL': '🏷️',
 };
 
 const BROKER_STATUS_COLOR: Record<string, (s: string) => string> = {
-  'OPEN': pc.green,
-  'COMPLETED': pc.blue,
   'CLOSED': pc.gray,
+  'COMPLETED': pc.blue,
   'EXPIRED': pc.red,
+  'OPEN': pc.green,
 };
 
 export function formatBrokerPost(post: BrokerPost): string {
@@ -400,7 +405,7 @@ export function formatBrokerPost(post: BrokerPost): string {
     `${pc.dim('Author:')} ${post.author?.username ? '@' + post.author.username : post.author?.displayName || 'Unknown'} (Score: ${post.author?.score || 0})`,
     '',
     pc.dim('Description:'),
-    post.description?.slice(0, 300) + (post.description?.length > 300 ? '...' : ''),
+    (post.description?.slice(0, 300) ?? '') + ((post.description?.length ?? 0) > 300 ? '...' : ''),
     '',
     `${pc.dim('Votes:')} 👍 ${post.votes?.upvotes || 0}  👎 ${post.votes?.downvotes || 0}  💬 ${post.replyCount || 0} replies`,
   ];
@@ -417,7 +422,7 @@ export function formatBrokerPost(post: BrokerPost): string {
 }
 
 export function formatBrokerPosts(posts: BrokerPost[], total: number): string {
-  if (!posts.length) {
+  if (posts.length === 0) {
     return pc.yellow('No broker posts found.');
   }
 
@@ -430,12 +435,10 @@ export function formatBrokerPosts(posts: BrokerPost[], total: number): string {
     const typeEmoji = BROKER_TYPE_EMOJI[post.type] || '📝';
     const status = post.status === 'OPEN' ? pc.green('●') : pc.gray('○');
     lines.push(
-      `${status} ${typeEmoji} ${pc.bold('#' + post.id)} ${post.title.slice(0, 50)}${post.title.length > 50 ? '...' : ''}`
+      `${status} ${typeEmoji} ${pc.bold('#' + post.id)} ${post.title.slice(0, 50)}${post.title.length > 50 ? '...' : ''}`,
+      `   ${pc.dim('by')} ${post.author?.username ? '@' + post.author.username : 'Unknown'} ${pc.dim('|')} 👍 ${post.votes?.upvotes || 0} ${pc.dim('|')} 💬 ${post.replyCount || 0}`,
+      ''
     );
-    lines.push(
-      `   ${pc.dim('by')} ${post.author?.username ? '@' + post.author.username : 'Unknown'} ${pc.dim('|')} 👍 ${post.votes?.upvotes || 0} ${pc.dim('|')} 💬 ${post.replyCount || 0}`
-    );
-    lines.push('');
   }
 
   return lines.join('\n');
@@ -483,7 +486,7 @@ export function formatListing(project: Project): string {
 }
 
 export function formatListings(projects: Project[], total: number): string {
-  if (!projects.length) {
+  if (projects.length === 0) {
     return pc.yellow('No listings found.');
   }
 
@@ -499,6 +502,7 @@ export function formatListings(projects: Project[], total: number): string {
     if (p.votes) {
       lines.push(`   ${pc.green(bullish + '% bullish')} | ${p.votes.all?.totalVoters || 0} voters`);
     }
+
     lines.push('');
   }
 
@@ -506,7 +510,7 @@ export function formatListings(projects: Project[], total: number): string {
 }
 
 export function formatListingVoters(voters: ProjectVoter[], totals: ProjectVotersTotals): string {
-  if (!voters.length) {
+  if (voters.length === 0) {
     return pc.yellow('No voters found.');
   }
 
@@ -520,48 +524,60 @@ export function formatListingVoters(voters: ProjectVoter[], totals: ProjectVoter
   for (const v of voters) {
     const name = v.user?.username ? `@${v.user.username}` : v.user?.displayName || 'Unknown';
     const sentiment = v.bullishCount > v.bearishCount ? pc.green('>>') : pc.red('<<');
-    lines.push(`${sentiment} ${pc.bold(name)} (Score: ${v.user?.score || 0})`);
-    lines.push(`   Bullish: ${v.bullishCount} | Bearish: ${v.bearishCount} | Total: ${v.totalVotes}`);
+    lines.push(`${sentiment} ${pc.bold(name)} (Score: ${v.user?.score || 0})`, `   Bullish: ${v.bullishCount} | Bearish: ${v.bearishCount} | Total: ${v.totalVotes}`);
     const reasons = [...(v.bullishReasons || []), ...(v.bearishReasons || [])];
-    if (reasons.length) {
+    if (reasons.length > 0) {
       lines.push(`   ${pc.dim('Reasons:')} ${reasons.slice(0, 3).join(', ')}`);
     }
+
     lines.push('');
   }
 
   return lines.join('\n');
 }
 
-export function formatNfts(nfts: any[], total: number): string {
-  if (!nfts.length) {
+export function formatNfts(nfts: { contractName?: null | string; name?: null | string; tokenId: string }[], total: number): string {
+  if (nfts.length === 0) {
     return pc.yellow('No NFTs found.');
   }
 
   const lines = [pc.bold(`NFTs (${total} total)`), ''];
 
   for (const nft of nfts) {
-    lines.push(`🖼️  ${pc.bold(nft.name || `Token #${nft.tokenId}`)}`);
-    if (nft.contractName) lines.push(`   ${pc.dim('Collection:')} ${nft.contractName}`);
-    lines.push(`   ${pc.dim('Token ID:')} ${nft.tokenId}`);
-    lines.push('');
+    if (nft.contractName) {
+      lines.push(
+        `🖼️  ${pc.bold(nft.name || `Token #${nft.tokenId}`)}`,
+        `   ${pc.dim('Collection:')} ${nft.contractName}`,
+        `   ${pc.dim('Token ID:')} ${nft.tokenId}`,
+        ''
+      );
+    } else {
+      lines.push(
+        `🖼️  ${pc.bold(nft.name || `Token #${nft.tokenId}`)}`,
+        `   ${pc.dim('Token ID:')} ${nft.tokenId}`,
+        ''
+      );
+    }
   }
 
   return lines.join('\n');
 }
 
-export function formatValidatorListings(listings: any[], total: number): string {
-  if (!listings.length) {
+export function formatValidatorListings(listings: { name?: null | string; openseaUrl: string; priceEth: string; seller: string; tokenId: string }[], total: number): string {
+  if (listings.length === 0) {
     return pc.yellow('No validator NFTs listed for sale.');
   }
 
   const lines = [pc.bold(`🎫 Validator NFTs For Sale (${total} total)`), ''];
 
   for (const l of listings) {
-    lines.push(`🎫 ${pc.bold(l.name || `Validator #${l.tokenId}`)}`);
-    lines.push(`   ${pc.dim('Price:')} ${pc.green(l.priceEth + ' ETH')}`);
-    lines.push(`   ${pc.dim('Seller:')} ${l.seller.slice(0, 10)}...`);
-    lines.push(`   ${pc.dim('OpenSea:')} ${l.openseaUrl}`);
-    lines.push('');
+    lines.push(
+      `🎫 ${pc.bold(l.name || `Validator #${l.tokenId}`)}`,
+      `   ${pc.dim('Price:')} ${pc.green(l.priceEth + ' ETH')}`,
+      `   ${pc.dim('Seller:')} ${l.seller.slice(0, 10)}...`,
+      `   ${pc.dim('OpenSea:')} ${l.openseaUrl}`,
+      ''
+    );
   }
 
   return lines.join('\n');
@@ -569,9 +585,9 @@ export function formatValidatorListings(listings: any[], total: number): string 
 
 export function formatAuction(auction: Auction): string {
   const statusColors: Record<string, (s: string) => string> = {
-    'PENDING': pc.yellow,
     'ENABLED': pc.green,
     'ENDED': pc.gray,
+    'PENDING': pc.yellow,
     'SOLD': pc.blue,
   };
   const statusFn = statusColors[auction.status] || pc.white;
@@ -606,7 +622,7 @@ export function formatAuction(auction: Auction): string {
 }
 
 export function formatAuctions(auctions: Auction[], total: number): string {
-  if (!auctions.length) {
+  if (auctions.length === 0) {
     return pc.yellow('No auctions found.');
   }
 
@@ -615,19 +631,22 @@ export function formatAuctions(auctions: Auction[], total: number): string {
   for (const a of auctions) {
     const statusColor = a.status === 'ENABLED' ? pc.green : a.status === 'SOLD' ? pc.blue : pc.yellow;
     const startEth = formatWeiToEth(a.startPrice);
-    lines.push(`🎫 ${pc.bold(`Validator #${a.nftTokenId}`)} ${statusColor(`[${a.status}]`)}`);
-    lines.push(`   ${pc.dim('Start Price:')} ${startEth} ETH`);
+    lines.push(
+      `🎫 ${pc.bold(`Validator #${a.nftTokenId}`)} ${statusColor(`[${a.status}]`)}`,
+      `   ${pc.dim('Start Price:')} ${startEth} ETH`
+    );
     if (a.pricePaid) {
       lines.push(`   ${pc.dim('Sold For:')} ${pc.green(formatWeiToEth(a.pricePaid) + ' ETH')}`);
     }
+
     if (a.buyerAddress) {
       const buyerName = a.buyerUser?.username 
         ? `@${a.buyerUser.username}` 
         : a.buyerUser?.displayName || `${a.buyerAddress.slice(0, 10)}...`;
       lines.push(`   ${pc.dim('Buyer:')} ${buyerName}`);
     }
-    lines.push(`   ${pc.dim('Starts:')} ${new Date(a.startTime).toLocaleDateString()}`);
-    lines.push('');
+
+    lines.push(`   ${pc.dim('Starts:')} ${new Date(a.startTime).toLocaleDateString()}`, '');
   }
 
   return lines.join('\n');
@@ -646,7 +665,6 @@ export function formatMarket(market: Market): string {
   const priceChangeColor = priceChange >= 0 ? pc.green : pc.red;
   const positivePrice = formatWeiToEth(market.positivePrice);
   const marketCap = formatWeiToEth(market.stats?.marketCapWei || '0');
-  const totalHolders = market.trustVotes + market.distrustVotes;
 
   const lines = [
     pc.bold(pc.cyan(name)),
@@ -672,7 +690,7 @@ export function formatMarket(market: Market): string {
 }
 
 export function formatMarkets(markets: Market[], total: number): string {
-  if (!markets.length) {
+  if (markets.length === 0) {
     return pc.yellow('No markets found.');
   }
 
@@ -683,19 +701,20 @@ export function formatMarkets(markets: Market[], total: number): string {
     const priceChange = m.stats?.priceChange24hPercent || 0;
     const priceChangeColor = priceChange >= 0 ? pc.green : pc.red;
     const marketCap = formatWeiToEth(m.stats?.marketCapWei || '0');
-    const totalHolders = m.trustVotes + m.distrustVotes;
     
-    lines.push(`${pc.bold(name)} ${m.user?.username ? pc.dim('@' + m.user.username) : ''}`);
-    lines.push(`   Cap: ${marketCap} ETH | ${priceChangeColor(`${priceChange >= 0 ? '+' : ''}${priceChange.toFixed(1)}%`)} | Score: ${m.user?.score || 0}`);
-    lines.push(`   Trust: ${pc.green(String(m.trustVotes))} | Distrust: ${pc.red(String(m.distrustVotes))}`);
-    lines.push('');
+    lines.push(
+      `${pc.bold(name)} ${m.user?.username ? pc.dim('@' + m.user.username) : ''}`,
+      `   Cap: ${marketCap} ETH | ${priceChangeColor(`${priceChange >= 0 ? '+' : ''}${priceChange.toFixed(1)}%`)} | Score: ${m.user?.score || 0}`,
+      `   Trust: ${pc.green(String(m.trustVotes))} | Distrust: ${pc.red(String(m.distrustVotes))}`,
+      ''
+    );
   }
 
   return lines.join('\n');
 }
 
 export function formatMarketHolders(holders: MarketHolder[], total: number): string {
-  if (!holders.length) {
+  if (holders.length === 0) {
     return pc.yellow('No holders found.');
   }
 
@@ -706,52 +725,56 @@ export function formatMarketHolders(holders: MarketHolder[], total: number): str
     const voteColor = h.voteType === 'trust' ? pc.green : pc.red;
     const voteIcon = h.voteType === 'trust' ? '📈' : '📉';
     
-    lines.push(`${voteIcon} ${pc.bold(name)} ${h.user?.username ? pc.dim('@' + h.user.username) : ''}`);
-    lines.push(`   ${voteColor(h.voteType.toUpperCase())}: ${h.total} votes`);
-    lines.push(`   Score: ${h.user?.score || 0}`);
-    lines.push('');
+    lines.push(
+      `${voteIcon} ${pc.bold(name)} ${h.user?.username ? pc.dim('@' + h.user.username) : ''}`,
+      `   ${voteColor(h.voteType.toUpperCase())}: ${h.total} votes`,
+      `   Score: ${h.user?.score || 0}`,
+      ''
+    );
   }
 
   return lines.join('\n');
 }
 
 export function formatFeaturedMarkets(response: FeaturedMarketsResponse): string {
-  if (!response.length) {
+  if (response.length === 0) {
     return pc.yellow('No featured markets found.');
   }
 
   const lines = [pc.bold(pc.cyan('Featured Markets')), ''];
 
-  const typeLabels: Record<string, { label: string; icon: string; color: (s: string) => string }> = {
-    'top-volume': { label: 'Top Volume', icon: '📈', color: pc.green },
-    'undervalued': { label: 'Undervalued', icon: '💎', color: pc.blue },
-    'rugging': { label: 'Rugging', icon: '⚠️', color: pc.red },
+  const typeLabels: Record<string, { color: (s: string) => string; icon: string; label: string; }> = {
+    'rugging': { color: pc.red, icon: '⚠️', label: 'Rugging' },
+    'top-volume': { color: pc.green, icon: '📈', label: 'Top Volume' },
+    'undervalued': { color: pc.blue, icon: '💎', label: 'Undervalued' },
   };
 
   for (const featured of response) {
     const m = featured.market;
-    const typeInfo = typeLabels[featured.type] || { label: featured.type, icon: '📊', color: pc.white };
+    const typeInfo = typeLabels[featured.type] || { color: pc.white, icon: '📊', label: featured.type };
     const name = m.user?.displayName || m.user?.username || 'Unknown';
     const priceChange = m.stats?.priceChange24hPercent || 0;
     const marketCap = formatWeiToEth(m.stats?.marketCapWei || '0');
     const mcChange = m.stats?.marketCapChange24hPercent || 0;
 
-    lines.push(`${typeInfo.icon} ${typeInfo.color(pc.bold(typeInfo.label))}`);
-    lines.push(`   ${pc.bold(name)} ${m.user?.username ? pc.dim('@' + m.user.username) : ''}`);
-    lines.push(`   Cap: ${marketCap} ETH (${mcChange >= 0 ? pc.green(`+${mcChange}%`) : pc.red(`${mcChange}%`)})`);
-    lines.push(`   Score: ${m.user?.score || 0} | Price: ${priceChange >= 0 ? '+' : ''}${priceChange.toFixed(1)}%`);
-    lines.push('');
+    lines.push(
+      `${typeInfo.icon} ${typeInfo.color(pc.bold(typeInfo.label))}`,
+      `   ${pc.bold(name)} ${m.user?.username ? pc.dim('@' + m.user.username) : ''}`,
+      `   Cap: ${marketCap} ETH (${mcChange >= 0 ? pc.green(`+${mcChange}%`) : pc.red(`${mcChange}%`)})`,
+      `   Score: ${m.user?.score || 0} | Price: ${priceChange >= 0 ? '+' : ''}${priceChange.toFixed(1)}%`,
+      ''
+    );
   }
 
   return lines.join('\n');
 }
 
 const LEVEL_COLORS: Record<ScoreLevel, (s: string) => string> = {
-  untrusted: pc.red,
-  questionable: pc.yellow,
-  neutral: pc.white,
-  reputable: pc.green,
   exemplary: pc.cyan,
+  neutral: pc.white,
+  questionable: pc.yellow,
+  reputable: pc.green,
+  untrusted: pc.red,
 };
 
 export function formatScore(data: ScoreResponse & { identifier?: string }): string {
@@ -827,7 +850,7 @@ export function formatVouch(vouch: Vouch): string {
 }
 
 export function formatVouches(vouches: Vouch[], total: number): string {
-  if (!vouches.length) {
+  if (vouches.length === 0) {
     return pc.yellow('No vouches found.');
   }
 
@@ -839,12 +862,15 @@ export function formatVouches(vouches: Vouch[], total: number): string {
     const statusIcon = v.archived ? pc.gray('○') : v.unhealthy ? pc.yellow('⚠') : pc.green('●');
     const mutualTag = v.mutualId ? pc.cyan(' [MUTUAL]') : '';
 
-    lines.push(`${statusIcon} ${pc.bold('#' + v.id)} ${authorName} → ${subjectName}${mutualTag}`);
-    lines.push(`   ${pc.dim('Amount:')} ${formatVouchAmount(v.balance)}`);
+    lines.push(
+      `${statusIcon} ${pc.bold('#' + v.id)} ${authorName} → ${subjectName}${mutualTag}`,
+      `   ${pc.dim('Amount:')} ${formatVouchAmount(v.balance)}`
+    );
     if (v.comment) {
       const preview = v.comment.slice(0, 50) + (v.comment.length > 50 ? '...' : '');
       lines.push(`   ${pc.dim(preview)}`);
     }
+
     lines.push('');
   }
 
@@ -852,7 +878,7 @@ export function formatVouches(vouches: Vouch[], total: number): string {
 }
 
 export function formatMutualVouchers(users: VouchUser[], total: number): string {
-  if (!users.length) {
+  if (users.length === 0) {
     return pc.yellow('No mutual vouchers found.');
   }
 
@@ -860,18 +886,18 @@ export function formatMutualVouchers(users: VouchUser[], total: number): string 
 
   for (const u of users) {
     const name = u.username ? `@${u.username}` : u.displayName || 'Unknown';
-    lines.push(`🤝 ${pc.bold(name)}`);
-    if (u.score !== undefined) {
-      lines.push(`   ${pc.dim('Score:')} ${u.score}`);
+    if (u.score === undefined) {
+      lines.push(`🤝 ${pc.bold(name)}`, '');
+    } else {
+      lines.push(`🤝 ${pc.bold(name)}`, `   ${pc.dim('Score:')} ${u.score}`, '');
     }
-    lines.push('');
   }
 
   return lines.join('\n');
 }
 
 export function formatVotes(votes: Vote[], total: number, activityType?: string): string {
-  if (!votes.length) {
+  if (votes.length === 0) {
     return pc.yellow('No votes found.');
   }
 
@@ -880,16 +906,18 @@ export function formatVotes(votes: Vote[], total: number, activityType?: string)
   for (const v of votes) {
     const voteIcon = v.isUpvote ? pc.green('👍') : pc.red('👎');
     const voterName = v.user.username ? `@${v.user.username}` : v.user.displayName || `Profile #${v.user.profileId}`;
-    lines.push(`${voteIcon} ${pc.bold(voterName)} (Score: ${v.user.score})`);
-    lines.push(`   ${pc.dim('Voted:')} ${new Date(v.createdAt * 1000).toLocaleDateString()}`);
-    lines.push('');
+    lines.push(
+      `${voteIcon} ${pc.bold(voterName)} (Score: ${v.user.score})`,
+      `   ${pc.dim('Voted:')} ${new Date(v.createdAt * 1000).toLocaleDateString()}`,
+      ''
+    );
   }
 
   return lines.join('\n');
 }
 
 export function formatVoteStats(stats: VoteStats, activityType?: string, activityId?: number): string {
-  const { upvotes, downvotes } = stats.counts;
+  const { downvotes, upvotes } = stats.counts;
   const total = upvotes + downvotes;
 
   const lines = [
@@ -927,7 +955,7 @@ export function formatValidator(validator: Validator): string {
 }
 
 export function formatValidators(validators: Validator[], total: number): string {
-  if (!validators.length) {
+  if (validators.length === 0) {
     return pc.yellow('No validators found.');
   }
 
@@ -939,10 +967,12 @@ export function formatValidators(validators: Validator[], total: number): string
     const capacityColor = v.isFull ? pc.red : capacityPercent > 80 ? pc.yellow : pc.green;
     const fullTag = v.isFull ? pc.red(' [FULL]') : '';
 
-    lines.push(`🎫 ${pc.bold(v.name)} (Token #${v.tokenId})${fullTag}`);
-    lines.push(`   ${pc.dim('Owner:')} ${ownerName}`);
-    lines.push(`   ${pc.dim('Delegated:')} ${v.currentXp.toLocaleString()} / ${v.xpCap.toLocaleString()} ${capacityColor(`(${capacityPercent}%)`)}`);
-    lines.push('');
+    lines.push(
+      `🎫 ${pc.bold(v.name)} (Token #${v.tokenId})${fullTag}`,
+      `   ${pc.dim('Owner:')} ${ownerName}`,
+      `   ${pc.dim('Delegated:')} ${v.currentXp.toLocaleString()} / ${v.xpCap.toLocaleString()} ${capacityColor(`(${capacityPercent}%)`)}`,
+      ''
+    );
   }
 
   return lines.join('\n');

@@ -1,56 +1,56 @@
 export type IdentifierType = 
   | 'address'
-  | 'ens'
-  | 'twitter'
   | 'discord'
-  | 'telegram'
+  | 'ens'
   | 'farcaster'
   | 'profileId'
+  | 'telegram'
+  | 'twitter'
   | 'unknown';
 
 export interface ParsedIdentifier {
+  original: string;
   type: IdentifierType;
   value: string;
-  original: string;
 }
 
 const EXPLICIT_PREFIX_MAP: Record<string, IdentifierType> = {
   'address': 'address',
+  'discord': 'discord',
+  'farcaster': 'farcaster',
+  'profile': 'profileId',
+  'profileid': 'profileId',
+  'service': 'unknown',
+  'telegram': 'telegram',
   'twitter': 'twitter',
   'x': 'twitter',
-  'discord': 'discord',
-  'telegram': 'telegram',
-  'farcaster': 'farcaster',
-  'profileid': 'profileId',
-  'profile': 'profileId',
-  'service': 'unknown',
 };
 
 const SERVICE_TYPE_MAP: Record<string, IdentifierType> = {
-  'x.com': 'twitter',
   'discord': 'discord',
-  'telegram': 'telegram',
   'farcaster': 'farcaster',
+  'telegram': 'telegram',
+  'x.com': 'twitter',
 };
 
-function parseExplicitPrefix(identifier: string): ParsedIdentifier | null {
+function parseExplicitPrefix(identifier: string): null | ParsedIdentifier {
   if (!identifier.includes(':')) return null;
   
   const colonIndex = identifier.indexOf(':');
-  const prefix = identifier.substring(0, colonIndex).toLowerCase();
-  const value = identifier.substring(colonIndex + 1);
+  const prefix = identifier.slice(0, Math.max(0, colonIndex)).toLowerCase();
+  const value = identifier.slice(Math.max(0, colonIndex + 1));
   
   if (prefix === 'service') {
     const parts = value.split(':');
     const serviceType = SERVICE_TYPE_MAP[parts[0]];
     if (serviceType) {
-      return { type: serviceType, value: parts.slice(1).join(':'), original: identifier };
+      return { original: identifier, type: serviceType, value: parts.slice(1).join(':') };
     }
   }
   
   const type = EXPLICIT_PREFIX_MAP[prefix];
   if (type && type !== 'unknown') {
-    return { type, value, original: identifier };
+    return { original: identifier, type, value };
   }
   
   return null;
@@ -63,36 +63,49 @@ export function parseIdentifier(identifier: string): ParsedIdentifier {
   if (explicitResult) return explicitResult;
   
   if (/^0x[a-fA-F0-9]{40}$/i.test(trimmed)) {
-    return { type: 'address', value: trimmed, original: trimmed };
+    return { original: trimmed, type: 'address', value: trimmed };
   }
   
   if (trimmed.toLowerCase().endsWith('.eth')) {
-    return { type: 'ens', value: trimmed, original: trimmed };
+    return { original: trimmed, type: 'ens', value: trimmed };
   }
   
   if (/^\d+$/.test(trimmed)) {
-    return { type: 'profileId', value: trimmed, original: trimmed };
+    return { original: trimmed, type: 'profileId', value: trimmed };
   }
   
-  return { type: 'twitter', value: trimmed, original: trimmed };
+  return { original: trimmed, type: 'twitter', value: trimmed };
 }
 
 export function toUserkey(parsed: ParsedIdentifier): string {
   switch (parsed.type) {
-    case 'address':
+    case 'address': {
       return `address:${parsed.value}`;
-    case 'profileId':
-      return `profileId:${parsed.value}`;
-    case 'twitter':
-      return `service:x.com:${parsed.value}`;
-    case 'discord':
+    }
+
+    case 'discord': {
       return `service:discord:${parsed.value}`;
-    case 'telegram':
-      return `service:telegram:${parsed.value}`;
-    case 'farcaster':
+    }
+
+    case 'farcaster': {
       return `service:farcaster:${parsed.value}`;
-    default:
+    }
+
+    case 'profileId': {
+      return `profileId:${parsed.value}`;
+    }
+
+    case 'telegram': {
+      return `service:telegram:${parsed.value}`;
+    }
+
+    case 'twitter': {
+      return `service:x.com:${parsed.value}`;
+    }
+
+    default: {
       return parsed.original;
+    }
   }
 }
 
@@ -106,5 +119,6 @@ export function parseUserkey(identifier: string): string {
   if (parsed.type === 'address') {
     return `address:${parsed.value}`;
   }
+
   return identifier;
 }

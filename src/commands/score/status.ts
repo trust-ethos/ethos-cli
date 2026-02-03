@@ -1,4 +1,5 @@
-import { Args, Flags } from '@oclif/core';
+import { Args } from '@oclif/core';
+
 import { BaseCommand } from '../../lib/base-command.js';
 import { formatScoreStatus, output } from '../../lib/formatting/output.js';
 
@@ -9,16 +10,13 @@ export default class ScoreStatus extends BaseCommand {
       required: true,
     }),
   };
-
-  static description = 'Check score calculation status for a user';
-
-  static examples = [
+static description = 'Check score calculation status for a user';
+static examples = [
     '<%= config.bin %> <%= command.id %> 0xNowater',
     '<%= config.bin %> <%= command.id %> vitalik.eth',
     '<%= config.bin %> <%= command.id %> 0xNowater --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
   };
 

@@ -1,25 +1,22 @@
-import { Args, Flags } from '@oclif/core';
+import { Args } from '@oclif/core';
+
 import { BaseCommand } from '../../lib/base-command.js';
 import { formatVouch, output } from '../../lib/formatting/output.js';
 
 export default class VouchInfo extends BaseCommand {
   static aliases = ['vi'];
-
-  static args = {
+static args = {
     id: Args.integer({
       description: 'Vouch ID',
       required: true,
     }),
   };
-
-  static description = 'Get details of a specific vouch';
-
-  static examples = [
+static description = 'Get details of a specific vouch';
+static examples = [
     '<%= config.bin %> <%= command.id %> 123',
     '<%= config.bin %> <%= command.id %> 123 --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
   };
 
@@ -29,7 +26,7 @@ export default class VouchInfo extends BaseCommand {
     try {
       const response = await this.withSpinner('Fetching vouch', () => this.client.getVouches({ ids: [args.id], limit: 1 }));
 
-      if (!response.values.length) {
+      if (response.values.length === 0) {
         this.error(`Vouch #${args.id} not found`, { exit: 1 });
       }
 

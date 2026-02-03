@@ -1,23 +1,20 @@
-import { Args, Flags } from '@oclif/core';
+import { Args } from '@oclif/core';
+
 import { BaseCommand } from '../../lib/base-command.js';
 import { formatMarket, output } from '../../lib/formatting/output.js';
 
 export default class MarketInfo extends BaseCommand {
   static aliases = ['mi'];
-
-  static description = 'Get trust market info for a user';
-
-  static args = {
+static args = {
     identifier: Args.string({ description: 'Profile ID or Twitter username', required: true }),
   };
-
-  static examples = [
+static description = 'Get trust market info for a user';
+static examples = [
     '<%= config.bin %> <%= command.id %> 123',
     '<%= config.bin %> <%= command.id %> vitalik',
     '<%= config.bin %> <%= command.id %> vitalik --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
   };
 
@@ -31,7 +28,7 @@ export default class MarketInfo extends BaseCommand {
 
       if (isNumeric) {
         market = await this.withSpinner('Fetching market info', () =>
-          this.client.getMarketInfo(parseInt(args.identifier))
+          this.client.getMarketInfo(Number.parseInt(args.identifier, 10))
         );
       } else {
         const marketUser = await this.withSpinner('Fetching market info', () =>

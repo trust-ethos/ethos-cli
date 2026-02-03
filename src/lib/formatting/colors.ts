@@ -13,7 +13,7 @@ const ETHOS_GRAY_RGB = [193, 192, 182] as const;
  */
 export function ethosGray(text: string): string {
   const [r, g, b] = ETHOS_GRAY_RGB;
-  return `\x1b[38;2;${r};${g};${b}m${text}\x1b[0m`;
+  return `\u001B[38;2;${r};${g};${b}m${text}\u001B[0m`;
 }
 
 /**
@@ -21,5 +21,5 @@ export function ethosGray(text: string): string {
  */
 export function ethosGrayBold(text: string): string {
   const [r, g, b] = ETHOS_GRAY_RGB;
-  return `\x1b[1m\x1b[38;2;${r};${g};${b}m${text}\x1b[0m`;
+  return `\u001B[1m\u001B[38;2;${r};${g};${b}m${text}\u001B[0m`;
 }

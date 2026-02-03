@@ -1,45 +1,42 @@
 import { Args, Flags } from '@oclif/core';
+
 import { BaseCommand } from '../../lib/base-command.js';
 import { formatVouches, output } from '../../lib/formatting/output.js';
 
 export default class VouchList extends BaseCommand {
   static aliases = ['vl'];
-
-  static args = {
+static args = {
     identifier: Args.string({
       description: 'Twitter username, ETH address, or ENS name (optional, filter by subject)',
       required: false,
     }),
   };
-
-  static description = 'List vouches for a user or all vouches';
-
-  static examples = [
+static description = 'List vouches for a user or all vouches';
+static examples = [
     '<%= config.bin %> <%= command.id %>',
     '<%= config.bin %> <%= command.id %> 0xNowater',
     '<%= config.bin %> <%= command.id %> --author 0xNowater',
     '<%= config.bin %> <%= command.id %> --active',
     '<%= config.bin %> <%= command.id %> --limit 20 --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
+    active: Flags.boolean({
+      default: false,
+      description: 'Show only active (non-archived) vouches',
+    }),
     author: Flags.string({
       description: 'Filter by author (Twitter username, ETH address, or ENS name)',
     }),
-    active: Flags.boolean({
-      description: 'Show only active (non-archived) vouches',
-      default: false,
-    }),
     limit: Flags.integer({
       char: 'l',
-      description: 'Max results per request',
       default: 10,
+      description: 'Max results per request',
     }),
     offset: Flags.integer({
       char: 'o',
-      description: 'Number of results to skip',
       default: 0,
+      description: 'Number of results to skip',
     }),
   };
 
@@ -47,7 +44,7 @@ export default class VouchList extends BaseCommand {
     const { args, flags } = await this.parse(VouchList);
 
     try {
-      const params: { subjectUserkeys?: string[]; authorProfileIds?: number[]; archived?: boolean; limit?: number; offset?: number } = {
+      const params: { archived?: boolean; authorProfileIds?: number[]; limit?: number; offset?: number; subjectUserkeys?: string[]; } = {
         limit: flags.limit,
         offset: flags.offset,
       };

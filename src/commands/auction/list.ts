@@ -1,25 +1,24 @@
 import { Flags } from '@oclif/core';
-import { BaseCommand } from '../../lib/base-command.js';
+
 import { type Auction } from '../../lib/api/echo-client.js';
+import { BaseCommand } from '../../lib/base-command.js';
 import { formatAuctions, output } from '../../lib/formatting/output.js';
 
 export default class AuctionList extends BaseCommand {
   static description = 'List validator NFT auctions';
-
-  static examples = [
+static examples = [
     '<%= config.bin %> <%= command.id %>',
     '<%= config.bin %> <%= command.id %> --status active',
     '<%= config.bin %> <%= command.id %> --json',
   ];
-
-  static flags = {
+static flags = {
     ...BaseCommand.baseFlags,
+    limit: Flags.integer({ char: 'l', default: 10, description: 'Max results per request' }),
+    offset: Flags.integer({ char: 'o', default: 0, description: 'Number of results to skip' }),
     status: Flags.string({
       description: 'Filter by status',
       options: ['pending', 'active', 'ended', 'settled'],
     }),
-    limit: Flags.integer({ char: 'l', description: 'Max results per request', default: 10 }),
-    offset: Flags.integer({ char: 'o', description: 'Number of results to skip', default: 0 }),
   };
 
   async run(): Promise<void> {
@@ -47,7 +46,7 @@ export default class AuctionList extends BaseCommand {
     
     if (buyerAddresses.length === 0) return auctions;
 
-    const buyerMap = new Map<string, { displayName?: string; username?: string | null }>();
+    const buyerMap = new Map<string, { displayName?: string; username?: null | string }>();
     
     await Promise.all(
       buyerAddresses.map(async (address) => {

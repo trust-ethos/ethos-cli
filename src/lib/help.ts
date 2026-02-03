@@ -1,5 +1,6 @@
 import { Help } from '@oclif/core';
 import pc from 'picocolors';
+
 import { loadConfig } from './config/index.js';
 import { ethosGray } from './formatting/colors.js';
 
