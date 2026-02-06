@@ -6,6 +6,7 @@ import {
   checkForUpdate,
   detectInstallMethod,
   getInstallPath,
+  refreshEthosBinSymlink,
 } from '../lib/update/index.js';
 
 export default class Update extends Command {
@@ -85,6 +86,7 @@ static flags = {
       execSync(`rm -f "${tarball}"`, { stdio: 'ignore' });
       execSync(`rm -f "${installPath}/current"`, { stdio: 'ignore' });
       execSync(`ln -sf "${extractDir}" "${installPath}/current"`, { stdio: 'ignore' });
+      refreshEthosBinSymlink();
       
       this.log(pc.green(`Updated to v${version}`));
       this.log(pc.dim('Restart your terminal or run a new ethos command to use the new version.'));

@@ -3,7 +3,7 @@ set -e
 
 REPO="trust-ethos/ethos-cli"
 INSTALL_DIR="$HOME/.ethos"
-BIN_DIR="$INSTALL_DIR/current/bin"
+BIN_DIR="$INSTALL_DIR/bin"
 
 info() {
   printf "\033[0;34m%s\033[0m\n" "$1"
@@ -85,10 +85,18 @@ download_and_install() {
 
   rm -f "$INSTALL_DIR/current"
   ln -sf "$VERSION_DIR" "$INSTALL_DIR/current"
+
+  # Create a dedicated bin directory with ONLY the ethos symlink.
+  # This prevents the bundled node binary (included by oclif pack)
+  # from overriding users' system node / nvm / fnm / volta installations.
+  mkdir -p "$BIN_DIR"
+  rm -f "$BIN_DIR/ethos"
+  ln -sf "$INSTALL_DIR/current/bin/ethos" "$BIN_DIR/ethos"
 }
 
 setup_path() {
   SHELL_NAME=$(basename "$SHELL")
+  OLD_BIN_DIR="$INSTALL_DIR/current/bin"
   
   case "$SHELL_NAME" in
     bash)
@@ -110,6 +118,13 @@ setup_path() {
   
   if [ "$SHELL_NAME" = "fish" ]; then
     PATH_LINE="set -gx PATH $BIN_DIR \$PATH"
+  fi
+
+  # Remove old PATH entry that exposed bundled node binary
+  if grep -q "$OLD_BIN_DIR" "$PROFILE" 2>/dev/null; then
+    sed -i.bak "/$( echo "$OLD_BIN_DIR" | sed 's/[\/&]/\\&/g' )/d" "$PROFILE"
+    rm -f "${PROFILE}.bak"
+    info "Removed old PATH entry ($OLD_BIN_DIR) from $PROFILE"
   fi
 
   if ! grep -q "$BIN_DIR" "$PROFILE" 2>/dev/null; then
