@@ -10,6 +10,7 @@ const ETHOS_HOME = join(homedir(), '.ethos');
 const UPDATE_DIR = join(ETHOS_HOME, 'updates');
 const VERSIONS_DIR = join(ETHOS_HOME, 'versions');
 const CURRENT_LINK = join(ETHOS_HOME, 'current');
+const SAFE_BIN_DIR = join(ETHOS_HOME, 'bin');
 const CACHE_FILE = join(UPDATE_DIR, 'version-cache.json');
 const PENDING_FILE = join(UPDATE_DIR, 'pending.json');
 
@@ -67,6 +68,16 @@ function ensureDir(dir: string): void {
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
   }
+}
+
+export function refreshEthosBinSymlink(): void {
+  ensureDir(SAFE_BIN_DIR);
+  const symlinkPath = join(SAFE_BIN_DIR, 'ethos');
+  const target = join(CURRENT_LINK, 'bin', 'ethos');
+  try {
+    if (existsSync(symlinkPath)) unlinkSync(symlinkPath);
+    symlinkSync(target, symlinkPath);
+  } catch {}
 }
 
 function loadCache(): null | VersionCache {
@@ -254,6 +265,7 @@ export function applyPendingUpdate(): boolean {
   try {
     if (existsSync(CURRENT_LINK)) unlinkSync(CURRENT_LINK);
     symlinkSync(pending.path, CURRENT_LINK);
+    refreshEthosBinSymlink();
     unlinkSync(PENDING_FILE);
     cleanupOldVersions(pending.version);
     return true;
