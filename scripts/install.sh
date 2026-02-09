@@ -96,7 +96,6 @@ download_and_install() {
 
 setup_path() {
   SHELL_NAME=$(basename "$SHELL")
-  OLD_BIN_DIR="$INSTALL_DIR/current/bin"
   
   case "$SHELL_NAME" in
     bash)
@@ -120,19 +119,20 @@ setup_path() {
     PATH_LINE="set -gx PATH $BIN_DIR \$PATH"
   fi
 
-  # Remove old PATH entry that exposed bundled node binary
-  if grep -q "$OLD_BIN_DIR" "$PROFILE" 2>/dev/null; then
-    sed -i.bak "/$( echo "$OLD_BIN_DIR" | sed 's/[\/&]/\\&/g' )/d" "$PROFILE"
-    rm -f "${PROFILE}.bak"
-    info "Removed old PATH entry ($OLD_BIN_DIR) from $PROFILE"
+  # Remove all existing ethos PATH entries and comments, then re-add cleanly.
+  # Uses grep -v + cat (not sed -i) because sed -i breaks on symlinked dotfiles.
+  if [ -f "$PROFILE" ] && grep -q '\.ethos' "$PROFILE" 2>/dev/null; then
+    TMP="${PROFILE}.ethos.tmp"
+    grep -v '# Ethos CLI' "$PROFILE" | grep -v '\.ethos.*bin' > "$TMP"
+    cat "$TMP" > "$PROFILE"
+    rm -f "$TMP"
+    info "Cleaned up old Ethos PATH entries from $PROFILE"
   fi
 
-  if ! grep -q "$BIN_DIR" "$PROFILE" 2>/dev/null; then
-    echo "" >> "$PROFILE"
-    echo "# Ethos CLI" >> "$PROFILE"
-    echo "$PATH_LINE" >> "$PROFILE"
-    info "Added $BIN_DIR to PATH in $PROFILE"
-  fi
+  echo "" >> "$PROFILE"
+  echo "# Ethos CLI" >> "$PROFILE"
+  echo "$PATH_LINE" >> "$PROFILE"
+  info "Added $BIN_DIR to PATH in $PROFILE"
 }
 
 main() {
