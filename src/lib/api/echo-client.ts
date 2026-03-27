@@ -1,3 +1,4 @@
+import { getApiKey } from '../auth/config.js';
 import { loadConfig } from '../config/index.js';
 import { APIError, NetworkError, NotFoundError } from '../errors/cli-error.js';
 import { httpFetch } from '../http/fetch.js';
@@ -543,6 +544,18 @@ export interface VoteStats {
   };
 }
 
+// CLI Auth types (tRPC cliAuth procedures)
+export interface CliAuthSession {
+  expiresAt: string;
+  nonce: string;
+  sessionId: string;
+}
+
+export type CliAuthPollResult =
+  | { status: 'complete'; apiKey: string; user: { displayName: string; primaryAddress: string; profileId: number | null; username: string | null } }
+  | { status: 'expired' }
+  | { status: 'pending' };
+
 export class EchoClient {
   private baseUrl: string;
   private debug: boolean;
@@ -551,6 +564,14 @@ export class EchoClient {
     const config = loadConfig();
     this.baseUrl = config.apiUrl;
     this.debug = process.env.DEBUG === 'ethos:*';
+  }
+
+  async cliAuthCreateSession(hostname: string): Promise<CliAuthSession> {
+    return this.trpcMutation<CliAuthSession>('cliAuth.createSession', { hostname });
+  }
+
+  async cliAuthPoll(sessionId: string): Promise<CliAuthPollResult> {
+    return this.trpcQuery<CliAuthPollResult>('cliAuth.poll', { sessionId });
   }
 
   async checkValidatorOwnership(userkey: string): Promise<NFT[]> {
@@ -891,10 +912,12 @@ export class EchoClient {
      this.log(`Fetching ${url}`);
 
       try {
+        const apiKey = getApiKey();
         const response = await httpFetch(url, {
-          headers: { 
+          headers: {
             'Accept': 'application/json',
             'X-Ethos-Client': 'ethos-cli',
+            ...(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {}),
             ...(options?.body ? { 'Content-Type': 'application/json' } : {}),
           },
           signal: controller.signal,
@@ -953,6 +976,86 @@ export class EchoClient {
        clearTimeout(timeoutId);
      }
    }
+
+  private async trpcMutation<T>(procedure: string, input: unknown): Promise<T> {
+    const url = `${this.baseUrl}/api/v2/trpc/${procedure}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
+    this.log(`tRPC mutation ${procedure}`, input);
+
+    try {
+      const response = await httpFetch(url, {
+        body: JSON.stringify(input),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-Ethos-Client': 'ethos-cli',
+        },
+        method: 'POST',
+        signal: controller.signal,
+      });
+
+      const data = await response.json() as { error?: { message: string }; result?: { data: T } };
+
+      if (!response.ok || data.error) {
+        const message = data.error?.message || `tRPC call failed with status ${response.status}`;
+        throw new APIError(message, response.status);
+      }
+
+      this.log(`tRPC response ${procedure}`, data);
+      return data.result!.data;
+    } catch (error) {
+      if (error instanceof APIError) throw error;
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') throw new NetworkError('Request timed out after 10 seconds', url);
+        throw new NetworkError(error.message, url);
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  private async trpcQuery<T>(procedure: string, input: unknown): Promise<T> {
+    const encoded = encodeURIComponent(JSON.stringify(input));
+    const url = `${this.baseUrl}/api/v2/trpc/${procedure}?input=${encoded}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
+    this.log(`tRPC query ${procedure}`, input);
+
+    try {
+      const response = await httpFetch(url, {
+        headers: {
+          'Accept': 'application/json',
+          'X-Ethos-Client': 'ethos-cli',
+        },
+        signal: controller.signal,
+      });
+
+      const data = await response.json() as { error?: { message: string }; result?: { data: T } };
+
+      if (!response.ok || data.error) {
+        const message = data.error?.message || `tRPC call failed with status ${response.status}`;
+        throw new APIError(message, response.status);
+      }
+
+      this.log(`tRPC response ${procedure}`, data);
+      return data.result!.data;
+    } catch (error) {
+      if (error instanceof APIError) throw error;
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') throw new NetworkError('Request timed out after 10 seconds', url);
+        throw new NetworkError(error.message, url);
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
 
   private async resolveEnsUser(ensName: string): Promise<EthosUser> {
     const searchResult = await this.searchUsers(ensName, 5);
