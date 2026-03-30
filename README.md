@@ -105,6 +105,42 @@ ethos xp rank 0xNowater
 ethos xp rank vitalik.eth --json
 ```
 
+## Authentication
+
+Some commands require authentication. The CLI uses a browser-based wallet signing flow — your private key never leaves your browser.
+
+### Login
+
+```bash
+ethos auth login
+```
+
+This opens your browser to sign a message with your wallet. Once signed, the CLI receives an API key and stores it locally at `~/.ethos/config.json` (permissions: `0600`).
+
+### Check Status
+
+```bash
+ethos auth status
+ethos auth status --json
+```
+
+### Logout
+
+```bash
+ethos auth logout
+```
+
+### CI / Automation
+
+For CI pipelines and scripts, set the `ETHOS_API_KEY` environment variable instead of using `ethos auth login`. You can create an API key from the [Ethos web app](https://app.ethos.network).
+
+```bash
+export ETHOS_API_KEY="your-api-key"
+ethos user info vitalik.eth   # API key is sent automatically
+```
+
+The environment variable takes precedence over the stored config file.
+
 ## Identifier Formats
 
 The CLI intelligently detects identifier types:
