@@ -5,8 +5,8 @@ import { dirname, join } from 'node:path';
 export interface AuthUser {
   displayName: string;
   primaryAddress: string;
-  profileId: number | null;
-  username: string | null;
+  profileId: null | number;
+  username: null | string;
 }
 
 export interface AuthConfig {
@@ -71,6 +71,6 @@ export function deleteAuthConfig(): void {
  * Get the API key from ETHOS_API_KEY env var or auth config.
  * Env var takes precedence (for CI usage).
  */
-export function getApiKey(): string | null {
+export function getApiKey(): null | string {
   return process.env.ETHOS_API_KEY || loadAuthConfig()?.apiKey || null;
 }

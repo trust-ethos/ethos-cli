@@ -5,7 +5,7 @@ import { exec } from 'node:child_process';
  * Errors are silently ignored (user can manually visit the URL).
  */
 export function openUrl(url: string): void {
-  const platform = process.platform;
+  const {platform} = process;
 
   let command: string;
   if (platform === 'darwin') {

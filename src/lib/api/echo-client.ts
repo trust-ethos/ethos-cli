@@ -552,7 +552,7 @@ export interface CliAuthSession {
 }
 
 export type CliAuthPollResult =
-  | { status: 'complete'; apiKey: string; user: { displayName: string; primaryAddress: string; profileId: number | null; username: string | null } }
+  | { apiKey: string; status: 'complete'; user: { displayName: string; primaryAddress: string; profileId: null | number; username: null | string } }
   | { status: 'expired' }
   | { status: 'pending' };
 
@@ -566,6 +566,10 @@ export class EchoClient {
     this.debug = process.env.DEBUG === 'ethos:*';
   }
 
+  async checkValidatorOwnership(userkey: string): Promise<NFT[]> {
+     return this.request<NFT[]>(`/api/v2/nfts/user/${encodeURIComponent(userkey)}/owns-validator`, 'Validator Check');
+   }
+
   async cliAuthCreateSession(hostname: string): Promise<CliAuthSession> {
     return this.trpcMutation<CliAuthSession>('cliAuth.createSession', { hostname });
   }
@@ -573,10 +577,6 @@ export class EchoClient {
   async cliAuthPoll(sessionId: string): Promise<CliAuthPollResult> {
     return this.trpcQuery<CliAuthPollResult>('cliAuth.poll', { sessionId });
   }
-
-  async checkValidatorOwnership(userkey: string): Promise<NFT[]> {
-     return this.request<NFT[]>(`/api/v2/nfts/user/${encodeURIComponent(userkey)}/owns-validator`, 'Validator Check');
-   }
 
    convertScoreToLevel(score: number): ScoreLevel {
     if (score < 800) return 'untrusted';
@@ -977,6 +977,29 @@ export class EchoClient {
      }
    }
 
+  private async resolveEnsUser(ensName: string): Promise<EthosUser> {
+    const searchResult = await this.searchUsers(ensName, 5);
+    
+    const exactMatch = searchResult.values.find(u => 
+      u.displayName?.toLowerCase() === ensName.toLowerCase() ||
+      u.username?.toLowerCase() === ensName.toLowerCase()
+    );
+    
+    if (exactMatch) return exactMatch;
+    
+    const addressMatch = searchResult.values.find(u =>
+      u.userkeys?.some(uk => uk.startsWith('address:'))
+    );
+    
+    if (addressMatch) return addressMatch;
+    
+    if (searchResult.values.length > 0) {
+      return searchResult.values[0];
+    }
+    
+    throw new NotFoundError('User', ensName);
+  }
+
   private async trpcMutation<T>(procedure: string, input: unknown): Promise<T> {
     const url = `${this.baseUrl}/api/v2/trpc/${procedure}`;
     const controller = new AbortController();
@@ -1055,28 +1078,5 @@ export class EchoClient {
     } finally {
       clearTimeout(timeoutId);
     }
-  }
-
-  private async resolveEnsUser(ensName: string): Promise<EthosUser> {
-    const searchResult = await this.searchUsers(ensName, 5);
-    
-    const exactMatch = searchResult.values.find(u => 
-      u.displayName?.toLowerCase() === ensName.toLowerCase() ||
-      u.username?.toLowerCase() === ensName.toLowerCase()
-    );
-    
-    if (exactMatch) return exactMatch;
-    
-    const addressMatch = searchResult.values.find(u =>
-      u.userkeys?.some(uk => uk.startsWith('address:'))
-    );
-    
-    if (addressMatch) return addressMatch;
-    
-    if (searchResult.values.length > 0) {
-      return searchResult.values[0];
-    }
-    
-    throw new NotFoundError('User', ensName);
   }
 }

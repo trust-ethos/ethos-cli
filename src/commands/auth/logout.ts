@@ -4,8 +4,7 @@ import { deleteAuthConfig, loadAuthConfig } from '../../lib/auth/config.js';
 
 export default class AuthLogout extends Command {
   static description = 'Log out and remove stored API key';
-
-  static examples = [
+static examples = [
     '<%= config.bin %> auth logout',
   ];
 

@@ -6,13 +6,11 @@ import { output } from '../../lib/formatting/output.js';
 
 export default class AuthStatus extends Command {
   static description = 'Show current authentication status';
-
-  static examples = [
+static examples = [
     '<%= config.bin %> auth status',
     '<%= config.bin %> auth status --json',
   ];
-
-  static flags = {
+static flags = {
     json: Flags.boolean({
       char: 'j',
       default: false,
@@ -59,7 +57,7 @@ export default class AuthStatus extends Command {
     }
   }
 
-  private logUserInfo(user: { displayName: string; primaryAddress: string; profileId: number | null; username: string | null }): void {
+  private logUserInfo(user: { displayName: string; primaryAddress: string; profileId: null | number; username: null | string }): void {
     this.log('');
     this.log(`${pc.dim('Display Name:')} ${user.displayName}`);
     if (user.username) {

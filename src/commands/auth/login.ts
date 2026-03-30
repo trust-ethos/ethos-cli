@@ -7,8 +7,7 @@ import { openUrl } from '../../lib/browser.js';
 
 export default class AuthLogin extends Command {
   static description = 'Authenticate with Ethos via browser-based wallet signing';
-
-  static examples = [
+static examples = [
     '<%= config.bin %> auth login',
   ];
 
@@ -48,7 +47,9 @@ export default class AuthLogin extends Command {
 
     try {
       while (Date.now() < deadline) {
+        // eslint-disable-next-line no-await-in-loop
         await sleep(2000);
+        // eslint-disable-next-line no-await-in-loop
         const result = await client.cliAuthPoll(session.sessionId);
 
         if (result.status === 'complete') {
