@@ -217,6 +217,13 @@ This CLI is designed to be agent-friendly:
 
 See [SKILL.md](./SKILL.md) for detailed LLM agent integration guide.
 
+## Filesystem layout
+
+This CLI claims a small set of paths under `~/.ethos/` for its install
+root. See [docs/filesystem-layout.md](./docs/filesystem-layout.md) for
+the cross-CLI ownership contract (covers both the public `ethos` CLI
+and the monorepo developer CLI `ethosdev`).
+
 ## Contributing
 
 Contributions are welcome! Please read [CLAUDE.md](./CLAUDE.md) for development guidelines.

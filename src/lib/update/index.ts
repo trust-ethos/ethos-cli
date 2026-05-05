@@ -1,12 +1,13 @@
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
-import { arch, homedir, platform } from 'node:os';
+import { arch, platform } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { assertAllowedInstallPath, ETHOS_HOME } from '../install-root.js';
+
 const GITHUB_REPO = 'trust-ethos/ethos-cli';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-const ETHOS_HOME = join(homedir(), '.ethos');
 const UPDATE_DIR = join(ETHOS_HOME, 'updates');
 const VERSIONS_DIR = join(ETHOS_HOME, 'versions');
 const CURRENT_LINK = join(ETHOS_HOME, 'current');
@@ -277,11 +278,15 @@ export function applyPendingUpdate(): boolean {
 function cleanupOldVersions(keepVersion: string): void {
   try {
     if (!existsSync(VERSIONS_DIR)) return;
-    
+
     const versions = readdirSync(VERSIONS_DIR);
     for (const ver of versions) {
       if (ver !== `v${keepVersion}` && ver !== keepVersion) {
         const verPath = join(VERSIONS_DIR, ver);
+        // Hard contract: only paths inside the documented install root may
+        // be removed. Belt-and-suspenders against future code that joins
+        // user-controlled segments into this loop.
+        assertAllowedInstallPath(verPath, 'remove old version');
         rmSync(verPath, { force: true, recursive: true });
       }
     }
@@ -290,8 +295,15 @@ function cleanupOldVersions(keepVersion: string): void {
 
 export function clearUpdateData(): void {
   try {
-    if (existsSync(CACHE_FILE)) unlinkSync(CACHE_FILE);
-    if (existsSync(PENDING_FILE)) unlinkSync(PENDING_FILE);
+    if (existsSync(CACHE_FILE)) {
+      assertAllowedInstallPath(CACHE_FILE, 'remove update cache');
+      unlinkSync(CACHE_FILE);
+    }
+
+    if (existsSync(PENDING_FILE)) {
+      assertAllowedInstallPath(PENDING_FILE, 'remove pending-update marker');
+      unlinkSync(PENDING_FILE);
+    }
   } catch {}
 }
 
