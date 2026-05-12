@@ -180,13 +180,29 @@ jobs:
           VERSION: ${{ needs.check-version.outputs.version }}
           TAG: ${{ needs.check-version.outputs.tag }}
         run: |
-          set -e
+          set -euo pipefail
 
           get_sha256() {
             local platform=$1
-            local asset_name=$(gh release view "$TAG" --repo trust-ethos/ethos-cli --json assets --jq ".assets[].name" | grep "${platform}.tar.gz$")
+            local asset_name
+            asset_name=$(gh release view "$TAG" --repo trust-ethos/ethos-cli --json assets --jq ".assets[].name" | grep "${platform}.tar.gz$" || true)
+            if [ -z "$asset_name" ]; then
+              echo "No asset matching ${platform}.tar.gz found in release $TAG" >&2
+              return 1
+            fi
             local url="https://github.com/trust-ethos/ethos-cli/releases/download/${TAG}/${asset_name}"
-            curl -sL "$url" | sha256sum | cut -d' ' -f1
+            local tmpfile
+            tmpfile=$(mktemp)
+            trap 'rm -f "$tmpfile"' RETURN
+            if ! curl --fail --silent --show-error --location --output "$tmpfile" "$url"; then
+              echo "Failed to download $url" >&2
+              return 1
+            fi
+            if [ ! -s "$tmpfile" ]; then
+              echo "Downloaded asset $url is empty" >&2
+              return 1
+            fi
+            sha256sum "$tmpfile" | cut -d' ' -f1
           }
 
           SHA_DARWIN_ARM64=$(get_sha256 "darwin-arm64")
