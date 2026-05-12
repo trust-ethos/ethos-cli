@@ -4,23 +4,28 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   check-version:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       should_release: ${{ steps.version-check.outputs.should_release }}
       tag: ${{ steps.version-check.outputs.tag }}
       version: ${{ steps.version-check.outputs.version }}
       sha: ${{ steps.version-check.outputs.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Check if version already exists
         id: version-check
         run: |
           package_version=$(grep '"version"' package.json | head -1 | sed 's/.*: "\(.*\)".*/\1/')
           echo "version=$package_version" >> $GITHUB_OUTPUT
           echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
-          
+
           if git ls-remote --tags origin | grep -q "refs/tags/v$package_version"; then
             echo "Version v$package_version already exists"
             echo "::warning file=package.json::Version v$package_version already exists - no release will be created"
@@ -31,61 +36,87 @@ jobs:
             echo "tag=v$package_version" >> $GITHUB_OUTPUT
           fi
 
-  release:
+  build-tarball:
+    needs: check-version
+    if: needs.check-version.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: none
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.check-version.outputs.sha }}
+      - uses: oven-sh/setup-bun@4bc047ad259df6fc24a6c9b0f9a0cb08cf17fbe5 # v2.0.1
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Build
+        run: bun run build
+      - name: Generate oclif manifest
+        run: bun run prepack
+      - name: Pack npm tarball
+        run: npm pack
+      - name: Upload tarball artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: npm-tarball
+          path: '*.tgz'
+          if-no-files-found: error
+          retention-days: 1
+
+  create-draft-release:
     needs: check-version
     if: needs.check-version.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      id-token: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          registry-url: 'https://registry.npmjs.org'
-      - uses: oven-sh/setup-bun@v2
-
-      - name: Upgrade npm for OIDC Trusted Publishing
-        run: |
-          npm install -g npm@^11.5.1
-          npm --version
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Build
-        run: bun run build
-
-      - name: Generate oclif manifest
-        run: bun run prepack
-
       - name: Create draft GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
         with:
           tag_name: ${{ needs.check-version.outputs.tag }}
           name: ${{ needs.check-version.outputs.tag }}
           generate_release_notes: true
           draft: true
+          target_commitish: ${{ needs.check-version.outputs.sha }}
 
-      - name: Publish to npm
+  publish-npm:
+    needs: [check-version, build-tarball]
+    if: needs.check-version.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4.3.0
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: npm-tarball
+      - name: Pin npm version for OIDC trusted publishing
+        run: npm install -g npm@11.5.1
+      - name: Publish to npm with provenance
         env:
-          NPM_CONFIG_PROVENANCE: true
-          NODE_AUTH_TOKEN: ""
+          NPM_CONFIG_PROVENANCE: 'true'
+          NPM_PKG_VERSION: ${{ needs.check-version.outputs.version }}
         run: |
-          unset NODE_AUTH_TOKEN
           rm -f ~/.npmrc || true
-          rm -f "$NPM_CONFIG_USERCONFIG" || true
-          if npm view @trust-ethos/cli@${{ needs.check-version.outputs.version }} > /dev/null 2>&1; then
-            echo "Version ${{ needs.check-version.outputs.version }} already published, skipping"
-          else
-            npm publish --access public
+          rm -f "${NPM_CONFIG_USERCONFIG:-/dev/null}" || true
+          TARBALL=$(ls *.tgz | head -1)
+          if [ -z "$TARBALL" ]; then
+            echo "No tarball found"
+            exit 1
           fi
-
-      - run: bun run postpack
+          if npm view "@trust-ethos/cli@${NPM_PKG_VERSION}" > /dev/null 2>&1; then
+            echo "Version ${NPM_PKG_VERSION} already published, skipping"
+            exit 0
+          fi
+          npm publish "$TARBALL" --access public --provenance
 
   build-binaries:
-    needs: [check-version, release]
+    needs: [check-version, create-draft-release]
     if: needs.check-version.outputs.should_release == 'true'
     permissions:
       contents: write
@@ -104,11 +135,11 @@ jobs:
             target: win32-x64
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ needs.check-version.outputs.sha }}
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install
+      - uses: oven-sh/setup-bun@4bc047ad259df6fc24a6c9b0f9a0cb08cf17fbe5 # v2.0.1
+      - run: bun install --frozen-lockfile
       - run: bun run build
       - run: bun run prepack
 
@@ -116,7 +147,7 @@ jobs:
         run: bunx oclif pack tarballs --root=. --targets=${{ matrix.target }} --xz
 
       - name: Upload release assets
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
         with:
           tag_name: ${{ needs.check-version.outputs.tag }}
           files: |
@@ -124,7 +155,7 @@ jobs:
             dist/*.tar.xz
 
   publish-release:
-    needs: [check-version, build-binaries]
+    needs: [check-version, build-binaries, publish-npm]
     if: needs.check-version.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -140,6 +171,8 @@ jobs:
     needs: [check-version, publish-release]
     if: needs.check-version.outputs.should_release == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Generate and push Homebrew formula
         env:
@@ -148,25 +181,25 @@ jobs:
           TAG: ${{ needs.check-version.outputs.tag }}
         run: |
           set -e
-          
+
           get_sha256() {
             local platform=$1
             local asset_name=$(gh release view "$TAG" --repo trust-ethos/ethos-cli --json assets --jq ".assets[].name" | grep "${platform}.tar.gz$")
             local url="https://github.com/trust-ethos/ethos-cli/releases/download/${TAG}/${asset_name}"
             curl -sL "$url" | sha256sum | cut -d' ' -f1
           }
-          
+
           SHA_DARWIN_ARM64=$(get_sha256 "darwin-arm64")
           SHA_DARWIN_X64=$(get_sha256 "darwin-x64")
           SHA_LINUX_ARM64=$(get_sha256 "linux-arm64")
           SHA_LINUX_X64=$(get_sha256 "linux-x64")
-          
+
           ASSETS=$(gh release view "$TAG" --repo trust-ethos/ethos-cli --json assets --jq '.assets[].name')
           ASSET_DARWIN_ARM64=$(echo "$ASSETS" | grep "darwin-arm64.tar.gz$")
           ASSET_DARWIN_X64=$(echo "$ASSETS" | grep "darwin-x64.tar.gz$")
           ASSET_LINUX_ARM64=$(echo "$ASSETS" | grep "linux-arm64.tar.gz$")
           ASSET_LINUX_X64=$(echo "$ASSETS" | grep "linux-x64.tar.gz$")
-          
+
           cat > /tmp/ethos.rb << EOF
           class Ethos < Formula
             desc "CLI for querying Ethos user profiles, XP balances, and reputation data"
@@ -206,12 +239,12 @@ jobs:
             end
           end
           EOF
-          
+
           sed -i 's/^          //' /tmp/ethos.rb
-          
+
           git clone "https://x-access-token:${GH_TOKEN}@github.com/trust-ethos/homebrew-tap.git" /tmp/homebrew-tap
           cp /tmp/ethos.rb /tmp/homebrew-tap/Formula/ethos.rb
-          
+
           cd /tmp/homebrew-tap
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
