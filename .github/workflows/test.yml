@@ -6,53 +6,62 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   lint-and-typecheck:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: oven-sh/setup-bun@4bc047ad259df6fc24a6c9b0f9a0cb08cf17fbe5 # v2.0.1
+      - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun run lint
 
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: oven-sh/setup-bun@4bc047ad259df6fc24a6c9b0f9a0cb08cf17fbe5 # v2.0.1
+      - run: bun install --frozen-lockfile
       - run: bun run build
       - run: bun test
 
   test-update-system:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: oven-sh/setup-bun@4bc047ad259df6fc24a6c9b0f9a0cb08cf17fbe5 # v2.0.1
+
       - name: Install dependencies
-        run: bun install
-      
+        run: bun install --frozen-lockfile
+
       - name: Build
         run: bun run build
-      
+
       - name: Generate manifest
         run: bun run prepack
-      
+
       - name: Build tarball for linux-x64
         run: bunx oclif pack tarballs --root=. --targets=linux-x64
-      
+
       - name: Find tarball
         id: find-tarball
         run: |
           TARBALL=$(ls dist/*.tar.gz | head -1)
           echo "tarball=$TARBALL" >> $GITHUB_OUTPUT
           echo "Found tarball: $TARBALL"
-      
+
       - name: Build test Docker image
         run: docker build -t ethos-local-test -f test/e2e/Dockerfile.local-test test/e2e/
-      
+
       - name: Run update system E2E tests
         run: |
           docker run --rm \
