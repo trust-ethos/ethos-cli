@@ -248,7 +248,7 @@ $ npm install -g @trust-ethos/cli
 $ ethos COMMAND
 running command...
 $ ethos (--version)
-@trust-ethos/cli/0.0.12 darwin-arm64 node-v24.13.0
+@trust-ethos/cli/0.0.16 darwin-arm64 node-v24.15.0
 $ ethos --help [COMMAND]
 USAGE
   $ ethos COMMAND
@@ -256,6 +256,9 @@ USAGE
 ```
 <!-- usagestop -->
 <!-- commands -->
+* [`ethos account current`](#ethos-account-current)
+* [`ethos account list`](#ethos-account-list)
+* [`ethos account remove NAME`](#ethos-account-remove-name)
 * [`ethos auction active`](#ethos-auction-active)
 * [`ethos auction info ID`](#ethos-auction-info-id)
 * [`ethos auction list`](#ethos-auction-list)
@@ -270,14 +273,18 @@ USAGE
 * [`ethos listing info IDENTIFIER`](#ethos-listing-info-identifier)
 * [`ethos listing list`](#ethos-listing-list)
 * [`ethos listing voters PROJECTID`](#ethos-listing-voters-projectid)
+* [`ethos login`](#ethos-login)
+* [`ethos logout`](#ethos-logout)
 * [`ethos market featured`](#ethos-market-featured)
 * [`ethos market holders IDENTIFIER`](#ethos-market-holders-identifier)
 * [`ethos market info IDENTIFIER`](#ethos-market-info-identifier)
 * [`ethos market list`](#ethos-market-list)
+* [`ethos mcp`](#ethos-mcp)
 * [`ethos mi IDENTIFIER`](#ethos-mi-identifier)
 * [`ethos ml`](#ethos-ml)
 * [`ethos nft list IDENTIFIER`](#ethos-nft-list-identifier)
 * [`ethos rank IDENTIFIER`](#ethos-rank-identifier)
+* [`ethos review add IDENTIFIER`](#ethos-review-add-identifier)
 * [`ethos review info ID`](#ethos-review-info-id)
 * [`ethos review list IDENTIFIER`](#ethos-review-list-identifier)
 * [`ethos review votes ID`](#ethos-review-votes-id)
@@ -288,6 +295,12 @@ USAGE
 * [`ethos slash info ID`](#ethos-slash-info-id)
 * [`ethos slash list`](#ethos-slash-list)
 * [`ethos slash votes ID`](#ethos-slash-votes-id)
+* [`ethos switch NAME`](#ethos-switch-name)
+* [`ethos trade close MARKETONCHAINID`](#ethos-trade-close-marketonchainid)
+* [`ethos trade list`](#ethos-trade-list)
+* [`ethos trade open MARKETONCHAINID`](#ethos-trade-open-marketonchainid)
+* [`ethos trade position MARKETONCHAINID`](#ethos-trade-position-marketonchainid)
+* [`ethos trade quote MARKETONCHAINID`](#ethos-trade-quote-marketonchainid)
 * [`ethos u IDENTIFIER`](#ethos-u-identifier)
 * [`ethos ui IDENTIFIER`](#ethos-ui-identifier)
 * [`ethos update`](#ethos-update)
@@ -302,12 +315,91 @@ USAGE
 * [`ethos validator sales`](#ethos-validator-sales)
 * [`ethos vi ID`](#ethos-vi-id)
 * [`ethos vl [IDENTIFIER]`](#ethos-vl-identifier)
+* [`ethos vouch create IDENTIFIER`](#ethos-vouch-create-identifier)
 * [`ethos vouch info ID`](#ethos-vouch-info-id)
 * [`ethos vouch list [IDENTIFIER]`](#ethos-vouch-list-identifier)
 * [`ethos vouch mutual TARGET VIEWER`](#ethos-vouch-mutual-target-viewer)
+* [`ethos vouch remove IDENTIFIER`](#ethos-vouch-remove-identifier)
 * [`ethos vouch votes ID`](#ethos-vouch-votes-id)
+* [`ethos whoami`](#ethos-whoami)
 * [`ethos xp rank IDENTIFIER`](#ethos-xp-rank-identifier)
 * [`ethos xp seasons`](#ethos-xp-seasons)
+
+## `ethos account current`
+
+Show the active Ethos account
+
+```
+USAGE
+  $ ethos account current [--account <value>] [-j] [-v]
+
+FLAGS
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
+
+DESCRIPTION
+  Show the active Ethos account
+
+EXAMPLES
+  $ ethos account current
+
+  $ ethos account current --json
+```
+
+_See code: [src/commands/account/current.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/account/current.ts)_
+
+## `ethos account list`
+
+List your named Ethos accounts
+
+```
+USAGE
+  $ ethos account list [--account <value>] [-j] [-v]
+
+FLAGS
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
+
+DESCRIPTION
+  List your named Ethos accounts
+
+EXAMPLES
+  $ ethos account list
+
+  $ ethos account list --json
+```
+
+_See code: [src/commands/account/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/account/list.ts)_
+
+## `ethos account remove NAME`
+
+Remove a named Ethos account
+
+```
+USAGE
+  $ ethos account remove NAME [--account <value>] [-j] [-v] [-y]
+
+ARGUMENTS
+  NAME  Account name to remove
+
+FLAGS
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+  -y, --yes              Skip the confirmation prompt
+      --account=<value>  Named account to use for this command (see: ethos account list)
+
+DESCRIPTION
+  Remove a named Ethos account
+
+EXAMPLES
+  $ ethos account remove work
+
+  $ ethos account remove work --yes
+```
+
+_See code: [src/commands/account/remove.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/account/remove.ts)_
 
 ## `ethos auction active`
 
@@ -315,11 +407,12 @@ Show the currently active auction
 
 ```
 USAGE
-  $ ethos auction active [-j] [-v]
+  $ ethos auction active [--account <value>] [-j] [-v]
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Show the currently active auction
@@ -330,7 +423,7 @@ EXAMPLES
   $ ethos auction active --json
 ```
 
-_See code: [src/commands/auction/active.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/auction/active.ts)_
+_See code: [src/commands/auction/active.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/auction/active.ts)_
 
 ## `ethos auction info ID`
 
@@ -338,14 +431,15 @@ Get details of a specific auction
 
 ```
 USAGE
-  $ ethos auction info ID [-j] [-v]
+  $ ethos auction info ID [--account <value>] [-j] [-v]
 
 ARGUMENTS
   ID  Auction ID
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Get details of a specific auction
@@ -356,7 +450,7 @@ EXAMPLES
   $ ethos auction info 1 --json
 ```
 
-_See code: [src/commands/auction/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/auction/info.ts)_
+_See code: [src/commands/auction/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/auction/info.ts)_
 
 ## `ethos auction list`
 
@@ -364,13 +458,15 @@ List validator NFT auctions
 
 ```
 USAGE
-  $ ethos auction list [-j] [-v] [-l <value>] [-o <value>] [--status pending|active|ended|settled]
+  $ ethos auction list [--account <value>] [-j] [-v] [-l <value>] [-o <value>] [--status
+    pending|active|ended|settled]
 
 FLAGS
   -j, --json             Output as JSON
   -l, --limit=<value>    [default: 10] Max results per request
   -o, --offset=<value>   Number of results to skip
   -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
       --status=<option>  Filter by status
                          <options: pending|active|ended|settled>
 
@@ -385,7 +481,7 @@ EXAMPLES
   $ ethos auction list --json
 ```
 
-_See code: [src/commands/auction/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/auction/list.ts)_
+_See code: [src/commands/auction/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/auction/list.ts)_
 
 ## `ethos autocomplete [SHELL]`
 
@@ -424,14 +520,15 @@ Get details of a specific broker post
 
 ```
 USAGE
-  $ ethos broker info ID [-j] [-v]
+  $ ethos broker info ID [--account <value>] [-j] [-v]
 
 ARGUMENTS
   ID  Broker post ID
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Get details of a specific broker post
@@ -442,7 +539,7 @@ EXAMPLES
   $ ethos broker info 123 --json
 ```
 
-_See code: [src/commands/broker/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/broker/info.ts)_
+_See code: [src/commands/broker/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/broker/info.ts)_
 
 ## `ethos broker list`
 
@@ -450,19 +547,20 @@ List broker posts (jobs, services, bounties)
 
 ```
 USAGE
-  $ ethos broker list [-j] [-v] [-l <value>] [-o <value>] [-s <value>] [--sort newest|top|hot] [-t
-    sell|buy|hire|for-hire|bounty]
+  $ ethos broker list [--account <value>] [-j] [-v] [-l <value>] [-o <value>] [-s <value>] [--sort
+    newest|top|hot] [-t sell|buy|hire|for-hire|bounty]
 
 FLAGS
-  -j, --json            Output as JSON
-  -l, --limit=<value>   [default: 10] Max results per request
-  -o, --offset=<value>  Number of results to skip
-  -s, --search=<value>  Search in title/description
-  -t, --type=<option>   Filter by post type
-                        <options: sell|buy|hire|for-hire|bounty>
-  -v, --verbose         Show detailed error information
-      --sort=<option>   [default: hot] Sort order
-                        <options: newest|top|hot>
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Max results per request
+  -o, --offset=<value>   Number of results to skip
+  -s, --search=<value>   Search in title/description
+  -t, --type=<option>    Filter by post type
+                         <options: sell|buy|hire|for-hire|bounty>
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
+      --sort=<option>    [default: hot] Sort order
+                         <options: newest|top|hot>
 
 DESCRIPTION
   List broker posts (jobs, services, bounties)
@@ -477,7 +575,7 @@ EXAMPLES
   $ ethos broker list --type sell --limit 5 --json
 ```
 
-_See code: [src/commands/broker/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/broker/list.ts)_
+_See code: [src/commands/broker/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/broker/list.ts)_
 
 ## `ethos config get`
 
@@ -499,7 +597,7 @@ EXAMPLES
   $ ethos config get --json
 ```
 
-_See code: [src/commands/config/get.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/config/get.ts)_
+_See code: [src/commands/config/get.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/config/get.ts)_
 
 ## `ethos config path`
 
@@ -516,7 +614,7 @@ EXAMPLES
   $ ethos config path
 ```
 
-_See code: [src/commands/config/path.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/config/path.ts)_
+_See code: [src/commands/config/path.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/config/path.ts)_
 
 ## `ethos config set VALUE`
 
@@ -527,7 +625,7 @@ USAGE
   $ ethos config set VALUE
 
 ARGUMENTS
-  VALUE  Configuration in format: apiUrl=<url>
+  VALUE  Configuration in format: apiUrl=<url> or webUrl=<url>
 
 DESCRIPTION
   Set configuration value
@@ -536,9 +634,11 @@ EXAMPLES
   $ ethos config set apiUrl=https://api.ethos.network
 
   $ ethos config set apiUrl=https://api.dev.ethos.network
+
+  $ ethos config set webUrl=https://app.ethos.network
 ```
 
-_See code: [src/commands/config/set.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/config/set.ts)_
+_See code: [src/commands/config/set.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/config/set.ts)_
 
 ## `ethos find QUERY`
 
@@ -546,15 +646,16 @@ Search for users by name, username, or address
 
 ```
 USAGE
-  $ ethos find QUERY [-j] [-v] [-l <value>]
+  $ ethos find QUERY [--account <value>] [-j] [-v] [-l <value>]
 
 ARGUMENTS
   QUERY  Search query
 
 FLAGS
-  -j, --json           Output as JSON
-  -l, --limit=<value>  [default: 10] Maximum number of results
-  -v, --verbose        Show detailed error information
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Maximum number of results
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Search for users by name, username, or address
@@ -598,14 +699,15 @@ Get details of a specific listing/project
 
 ```
 USAGE
-  $ ethos listing info IDENTIFIER [-j] [-v]
+  $ ethos listing info IDENTIFIER [--account <value>] [-j] [-v]
 
 ARGUMENTS
   IDENTIFIER  Project ID or username
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Get details of a specific listing/project
@@ -618,7 +720,7 @@ EXAMPLES
   $ ethos listing info uniswap --json
 ```
 
-_See code: [src/commands/listing/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/listing/info.ts)_
+_See code: [src/commands/listing/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/listing/info.ts)_
 
 ## `ethos listing list`
 
@@ -626,13 +728,14 @@ List projects on Ethos Listings
 
 ```
 USAGE
-  $ ethos listing list [-j] [-v] [-l <value>] [-o <value>] [--status active|pending|archived]
+  $ ethos listing list [--account <value>] [-j] [-v] [-l <value>] [-o <value>] [--status active|pending|archived]
 
 FLAGS
   -j, --json             Output as JSON
   -l, --limit=<value>    [default: 10] Max results per request
   -o, --offset=<value>   Number of results to skip
   -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
       --status=<option>  [default: active] Filter by status
                          <options: active|pending|archived>
 
@@ -647,7 +750,7 @@ EXAMPLES
   $ ethos listing list --limit 20 --json
 ```
 
-_See code: [src/commands/listing/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/listing/list.ts)_
+_See code: [src/commands/listing/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/listing/list.ts)_
 
 ## `ethos listing voters PROJECTID`
 
@@ -655,7 +758,8 @@ Show voters for a listing/project
 
 ```
 USAGE
-  $ ethos listing voters PROJECTID [-j] [-v] [-l <value>] [-o <value>] [--sentiment bullish|bearish]
+  $ ethos listing voters PROJECTID [--account <value>] [-j] [-v] [-l <value>] [-o <value>] [--sentiment
+    bullish|bearish]
 
 ARGUMENTS
   PROJECTID  Project ID
@@ -665,6 +769,7 @@ FLAGS
   -l, --limit=<value>       [default: 10] Max results per request
   -o, --offset=<value>      Number of results to skip
   -v, --verbose             Show detailed error information
+      --account=<value>     Named account to use for this command (see: ethos account list)
       --sentiment=<option>  Filter by sentiment
                             <options: bullish|bearish>
 
@@ -679,7 +784,64 @@ EXAMPLES
   $ ethos listing voters 123 --limit 20 --json
 ```
 
-_See code: [src/commands/listing/voters.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/listing/voters.ts)_
+_See code: [src/commands/listing/voters.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/listing/voters.ts)_
+
+## `ethos login`
+
+Sign in to Ethos from this device
+
+```
+USAGE
+  $ ethos login [--account <value>] [-j] [-v] [--browser] [--timeout <value>]
+
+FLAGS
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
+      --[no-]browser     Open the sign-in page in your browser automatically
+      --timeout=<value>  [default: 600] Seconds to wait for sign-in before giving up
+
+DESCRIPTION
+  Sign in to Ethos from this device
+
+EXAMPLES
+  $ ethos login
+
+  $ ethos login --account work
+
+  $ ethos login --no-browser
+
+  $ ethos login --json
+```
+
+_See code: [src/commands/login.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/login.ts)_
+
+## `ethos logout`
+
+Sign out of Ethos on this device
+
+```
+USAGE
+  $ ethos logout [--account <value>] [-j] [-v] [--all]
+
+FLAGS
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
+      --all              Sign out of every account
+
+DESCRIPTION
+  Sign out of Ethos on this device
+
+EXAMPLES
+  $ ethos logout
+
+  $ ethos logout --account work
+
+  $ ethos logout --all
+```
+
+_See code: [src/commands/logout.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/logout.ts)_
 
 ## `ethos market featured`
 
@@ -687,11 +849,12 @@ Show top gainers and losers
 
 ```
 USAGE
-  $ ethos market featured [-j] [-v]
+  $ ethos market featured [--account <value>] [-j] [-v]
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Show top gainers and losers
@@ -702,7 +865,7 @@ EXAMPLES
   $ ethos market featured --json
 ```
 
-_See code: [src/commands/market/featured.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/market/featured.ts)_
+_See code: [src/commands/market/featured.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/market/featured.ts)_
 
 ## `ethos market holders IDENTIFIER`
 
@@ -710,15 +873,16 @@ Show who holds trust/distrust in a user
 
 ```
 USAGE
-  $ ethos market holders IDENTIFIER [-j] [-v] [-l <value>]
+  $ ethos market holders IDENTIFIER [--account <value>] [-j] [-v] [-l <value>]
 
 ARGUMENTS
   IDENTIFIER  Twitter username, ETH address, or ENS name
 
 FLAGS
-  -j, --json           Output as JSON
-  -l, --limit=<value>  [default: 10] Max results
-  -v, --verbose        Show detailed error information
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Max results
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Show who holds trust/distrust in a user
@@ -731,7 +895,7 @@ EXAMPLES
   $ ethos market holders vitalik.eth --json
 ```
 
-_See code: [src/commands/market/holders.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/market/holders.ts)_
+_See code: [src/commands/market/holders.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/market/holders.ts)_
 
 ## `ethos market info IDENTIFIER`
 
@@ -739,14 +903,15 @@ Get trust market info for a user
 
 ```
 USAGE
-  $ ethos market info IDENTIFIER [-j] [-v]
+  $ ethos market info IDENTIFIER [--account <value>] [-j] [-v]
 
 ARGUMENTS
   IDENTIFIER  Profile ID or Twitter username
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Get trust market info for a user
@@ -762,7 +927,7 @@ EXAMPLES
   $ ethos market info vitalik --json
 ```
 
-_See code: [src/commands/market/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/market/info.ts)_
+_See code: [src/commands/market/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/market/info.ts)_
 
 ## `ethos market list`
 
@@ -770,19 +935,20 @@ List trust markets
 
 ```
 USAGE
-  $ ethos market list [-j] [-v] [-l <value>] [-o <value>] [--order asc|desc] [-s <value>] [--sort
-    marketCapWei|volume24hWei|priceChange24hPercent|score|createdAt]
+  $ ethos market list [--account <value>] [-j] [-v] [-l <value>] [-o <value>] [--order asc|desc] [-s <value>]
+    [--sort marketCapWei|volume24hWei|priceChange24hPercent|score|createdAt]
 
 FLAGS
-  -j, --json            Output as JSON
-  -l, --limit=<value>   [default: 10] Max results per request
-  -o, --offset=<value>  Number of results to skip
-  -s, --search=<value>  Search by name/username
-  -v, --verbose         Show detailed error information
-      --order=<option>  [default: desc] Sort direction
-                        <options: asc|desc>
-      --sort=<option>   [default: marketCapWei] Sort by field
-                        <options: marketCapWei|volume24hWei|priceChange24hPercent|score|createdAt>
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Max results per request
+  -o, --offset=<value>   Number of results to skip
+  -s, --search=<value>   Search by name/username
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
+      --order=<option>   [default: desc] Sort direction
+                         <options: asc|desc>
+      --sort=<option>    [default: marketCapWei] Sort by field
+                         <options: marketCapWei|volume24hWei|priceChange24hPercent|score|createdAt>
 
 DESCRIPTION
   List trust markets
@@ -798,7 +964,37 @@ EXAMPLES
   $ ethos market list --search "vitalik" --json
 ```
 
-_See code: [src/commands/market/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/market/list.ts)_
+_See code: [src/commands/market/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/market/list.ts)_
+
+## `ethos mcp`
+
+Run the Ethos CLI as an MCP (Model Context Protocol) stdio server, exposing Ethos actions as tools for an AI agent. Read-only by default.
+
+```
+USAGE
+  $ ethos mcp [--account <value>] [-j] [-v] [--allow-trading] [--allow-writes] [--max-spend <value>]
+
+FLAGS
+  -j, --json               Output as JSON
+  -v, --verbose            Show detailed error information
+      --account=<value>    Named account to use for this command (see: ethos account list)
+      --allow-trading      Register trading tools (open/close positions). Implies --allow-writes.
+      --allow-writes       Register write tools (review, vouch).
+      --max-spend=<value>  [default: 50] Max credits ethos_open_position may spend in a single call.
+
+DESCRIPTION
+  Run the Ethos CLI as an MCP (Model Context Protocol) stdio server, exposing Ethos actions as tools for an AI agent.
+  Read-only by default.
+
+EXAMPLES
+  $ ethos mcp
+
+  $ ethos mcp --allow-writes
+
+  $ ethos mcp --allow-trading --max-spend 25
+```
+
+_See code: [src/commands/mcp.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/mcp.ts)_
 
 ## `ethos mi IDENTIFIER`
 
@@ -806,14 +1002,15 @@ Get trust market info for a user
 
 ```
 USAGE
-  $ ethos mi IDENTIFIER [-j] [-v]
+  $ ethos mi IDENTIFIER [--account <value>] [-j] [-v]
 
 ARGUMENTS
   IDENTIFIER  Profile ID or Twitter username
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Get trust market info for a user
@@ -835,19 +1032,20 @@ List trust markets
 
 ```
 USAGE
-  $ ethos ml [-j] [-v] [-l <value>] [-o <value>] [--order asc|desc] [-s <value>] [--sort
-    marketCapWei|volume24hWei|priceChange24hPercent|score|createdAt]
+  $ ethos ml [--account <value>] [-j] [-v] [-l <value>] [-o <value>] [--order asc|desc] [-s <value>]
+    [--sort marketCapWei|volume24hWei|priceChange24hPercent|score|createdAt]
 
 FLAGS
-  -j, --json            Output as JSON
-  -l, --limit=<value>   [default: 10] Max results per request
-  -o, --offset=<value>  Number of results to skip
-  -s, --search=<value>  Search by name/username
-  -v, --verbose         Show detailed error information
-      --order=<option>  [default: desc] Sort direction
-                        <options: asc|desc>
-      --sort=<option>   [default: marketCapWei] Sort by field
-                        <options: marketCapWei|volume24hWei|priceChange24hPercent|score|createdAt>
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Max results per request
+  -o, --offset=<value>   Number of results to skip
+  -s, --search=<value>   Search by name/username
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
+      --order=<option>   [default: desc] Sort direction
+                         <options: asc|desc>
+      --sort=<option>    [default: marketCapWei] Sort by field
+                         <options: marketCapWei|volume24hWei|priceChange24hPercent|score|createdAt>
 
 DESCRIPTION
   List trust markets
@@ -869,16 +1067,17 @@ List NFTs owned by a user
 
 ```
 USAGE
-  $ ethos nft list IDENTIFIER [-j] [-v] [-l <value>] [-o <value>]
+  $ ethos nft list IDENTIFIER [--account <value>] [-j] [-v] [-l <value>] [-o <value>]
 
 ARGUMENTS
   IDENTIFIER  Twitter username, ETH address, or ENS name
 
 FLAGS
-  -j, --json            Output as JSON
-  -l, --limit=<value>   [default: 10] Max results per request
-  -o, --offset=<value>  Number of results to skip
-  -v, --verbose         Show detailed error information
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Max results per request
+  -o, --offset=<value>   Number of results to skip
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   List NFTs owned by a user
@@ -891,7 +1090,7 @@ EXAMPLES
   $ ethos nft list vitalik.eth --json
 ```
 
-_See code: [src/commands/nft/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/nft/list.ts)_
+_See code: [src/commands/nft/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/nft/list.ts)_
 
 ## `ethos rank IDENTIFIER`
 
@@ -899,15 +1098,16 @@ Show leaderboard rank for a user
 
 ```
 USAGE
-  $ ethos rank IDENTIFIER [-j] [-v] [-s <value>]
+  $ ethos rank IDENTIFIER [--account <value>] [-j] [-v] [-s <value>]
 
 ARGUMENTS
   IDENTIFIER  Twitter username, ETH address, or ENS name
 
 FLAGS
-  -j, --json            Output as JSON
-  -s, --season=<value>  Show XP for specific season
-  -v, --verbose         Show detailed error information
+  -j, --json             Output as JSON
+  -s, --season=<value>   Show XP for specific season
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Show leaderboard rank for a user
@@ -923,20 +1123,56 @@ EXAMPLES
   $ ethos rank 0xNowater --json
 ```
 
+## `ethos review add IDENTIFIER`
+
+Write a review for a user
+
+```
+USAGE
+  $ ethos review add IDENTIFIER --score negative|neutral|positive -t <value> [--account <value>] [-j] [-v] [-c
+    <value>] [-y]
+
+ARGUMENTS
+  IDENTIFIER  Twitter username, ETH address, ENS name, or profile ID to review
+
+FLAGS
+  -c, --comment=<value>  Longer review comment
+  -j, --json             Output as JSON
+  -t, --title=<value>    (required) Short review title
+  -v, --verbose          Show detailed error information
+  -y, --yes              Skip the confirmation prompt
+      --account=<value>  Named account to use for this command (see: ethos account list)
+      --score=<option>   (required) Review sentiment
+                         <options: negative|neutral|positive>
+
+DESCRIPTION
+  Write a review for a user
+
+EXAMPLES
+  $ ethos review add 0xNowater --score positive --title "Great to work with"
+
+  $ ethos review add vitalik.eth --score neutral --title "No strong opinion" --comment "..."
+
+  $ ethos review add someuser --score negative --title "Avoid" --yes
+```
+
+_See code: [src/commands/review/add.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/review/add.ts)_
+
 ## `ethos review info ID`
 
 Get details of a specific review
 
 ```
 USAGE
-  $ ethos review info ID [-j] [-v]
+  $ ethos review info ID [--account <value>] [-j] [-v]
 
 ARGUMENTS
   ID  Review ID
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Get details of a specific review
@@ -950,7 +1186,7 @@ EXAMPLES
   $ ethos review info 1139 --json
 ```
 
-_See code: [src/commands/review/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/review/info.ts)_
+_See code: [src/commands/review/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/review/info.ts)_
 
 ## `ethos review list IDENTIFIER`
 
@@ -958,16 +1194,17 @@ List reviews for a user
 
 ```
 USAGE
-  $ ethos review list IDENTIFIER [-j] [-v] [-l <value>] [-o <value>]
+  $ ethos review list IDENTIFIER [--account <value>] [-j] [-v] [-l <value>] [-o <value>]
 
 ARGUMENTS
   IDENTIFIER  Twitter username, ETH address, or ENS name
 
 FLAGS
-  -j, --json            Output as JSON
-  -l, --limit=<value>   [default: 10] Max results per request
-  -o, --offset=<value>  Number of results to skip
-  -v, --verbose         Show detailed error information
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Max results per request
+  -o, --offset=<value>   Number of results to skip
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   List reviews for a user
@@ -983,7 +1220,7 @@ EXAMPLES
   $ ethos review list vitalik.eth --json
 ```
 
-_See code: [src/commands/review/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/review/list.ts)_
+_See code: [src/commands/review/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/review/list.ts)_
 
 ## `ethos review votes ID`
 
@@ -991,19 +1228,20 @@ Show votes on a review
 
 ```
 USAGE
-  $ ethos review votes ID [-j] [-v] [--downvotes | --upvotes] [-l <value>] [-o <value>] [-s]
+  $ ethos review votes ID [--account <value>] [-j] [-v] [--downvotes | --upvotes] [-l <value>] [-o <value>] [-s]
 
 ARGUMENTS
   ID  Review ID
 
 FLAGS
-  -j, --json            Output as JSON
-  -l, --limit=<value>   [default: 10] Max results per request
-  -o, --offset=<value>  Number of results to skip
-  -s, --stats           Show vote statistics only
-  -v, --verbose         Show detailed error information
-      --downvotes       Show only downvotes
-      --upvotes         Show only upvotes
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Max results per request
+  -o, --offset=<value>   Number of results to skip
+  -s, --stats            Show vote statistics only
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
+      --downvotes        Show only downvotes
+      --upvotes          Show only upvotes
 
 DESCRIPTION
   Show votes on a review
@@ -1018,7 +1256,7 @@ EXAMPLES
   $ ethos review votes 123 --json
 ```
 
-_See code: [src/commands/review/votes.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/review/votes.ts)_
+_See code: [src/commands/review/votes.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/review/votes.ts)_
 
 ## `ethos ri ID`
 
@@ -1026,14 +1264,15 @@ Get details of a specific review
 
 ```
 USAGE
-  $ ethos ri ID [-j] [-v]
+  $ ethos ri ID [--account <value>] [-j] [-v]
 
 ARGUMENTS
   ID  Review ID
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Get details of a specific review
@@ -1053,16 +1292,17 @@ List reviews for a user
 
 ```
 USAGE
-  $ ethos rl IDENTIFIER [-j] [-v] [-l <value>] [-o <value>]
+  $ ethos rl IDENTIFIER [--account <value>] [-j] [-v] [-l <value>] [-o <value>]
 
 ARGUMENTS
   IDENTIFIER  Twitter username, ETH address, or ENS name
 
 FLAGS
-  -j, --json            Output as JSON
-  -l, --limit=<value>   [default: 10] Max results per request
-  -o, --offset=<value>  Number of results to skip
-  -v, --verbose         Show detailed error information
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Max results per request
+  -o, --offset=<value>   Number of results to skip
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   List reviews for a user
@@ -1084,14 +1324,15 @@ Check score calculation status for a user
 
 ```
 USAGE
-  $ ethos score status IDENTIFIER [-j] [-v]
+  $ ethos score status IDENTIFIER [--account <value>] [-j] [-v]
 
 ARGUMENTS
   IDENTIFIER  Twitter username, ETH address, or ENS name
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Check score calculation status for a user
@@ -1104,7 +1345,7 @@ EXAMPLES
   $ ethos score status 0xNowater --json
 ```
 
-_See code: [src/commands/score/status.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/score/status.ts)_
+_See code: [src/commands/score/status.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/score/status.ts)_
 
 ## `ethos skill install`
 
@@ -1126,7 +1367,7 @@ EXAMPLES
   $ ethos skill install --yes
 ```
 
-_See code: [src/commands/skill/install.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/skill/install.ts)_
+_See code: [src/commands/skill/install.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/skill/install.ts)_
 
 ## `ethos slash info ID`
 
@@ -1134,14 +1375,15 @@ Get details of a specific slash
 
 ```
 USAGE
-  $ ethos slash info ID [-j] [-v]
+  $ ethos slash info ID [--account <value>] [-j] [-v]
 
 ARGUMENTS
   ID  Slash ID
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Get details of a specific slash
@@ -1152,7 +1394,7 @@ EXAMPLES
   $ ethos slash info 123 --json
 ```
 
-_See code: [src/commands/slash/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/slash/info.ts)_
+_See code: [src/commands/slash/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/slash/info.ts)_
 
 ## `ethos slash list`
 
@@ -1160,14 +1402,15 @@ List reputation slashes
 
 ```
 USAGE
-  $ ethos slash list [-j] [-v] [--author <value>] [-l <value>] [-o <value>] [--status open|closed] [--subject
-    <value>]
+  $ ethos slash list [--account <value>] [-j] [-v] [--author <value>] [-l <value>] [-o <value>] [--status
+    open|closed] [--subject <value>]
 
 FLAGS
   -j, --json             Output as JSON
   -l, --limit=<value>    [default: 10] Max results per request
   -o, --offset=<value>   Number of results to skip
   -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
       --author=<value>   Filter by slasher userkey
       --status=<option>  Filter by status
                          <options: open|closed>
@@ -1186,7 +1429,7 @@ EXAMPLES
   $ ethos slash list --limit 5 --json
 ```
 
-_See code: [src/commands/slash/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/slash/list.ts)_
+_See code: [src/commands/slash/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/slash/list.ts)_
 
 ## `ethos slash votes ID`
 
@@ -1194,19 +1437,20 @@ Show votes on a slash
 
 ```
 USAGE
-  $ ethos slash votes ID [-j] [-v] [--downvotes | --upvotes] [-l <value>] [-o <value>] [-s]
+  $ ethos slash votes ID [--account <value>] [-j] [-v] [--downvotes | --upvotes] [-l <value>] [-o <value>] [-s]
 
 ARGUMENTS
   ID  Slash ID
 
 FLAGS
-  -j, --json            Output as JSON
-  -l, --limit=<value>   [default: 10] Max results per request
-  -o, --offset=<value>  Number of results to skip
-  -s, --stats           Show vote statistics only
-  -v, --verbose         Show detailed error information
-      --downvotes       Show only downvotes
-      --upvotes         Show only upvotes
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Max results per request
+  -o, --offset=<value>   Number of results to skip
+  -s, --stats            Show vote statistics only
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
+      --downvotes        Show only downvotes
+      --upvotes          Show only upvotes
 
 DESCRIPTION
   Show votes on a slash
@@ -1221,7 +1465,197 @@ EXAMPLES
   $ ethos slash votes 195 --json
 ```
 
-_See code: [src/commands/slash/votes.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/slash/votes.ts)_
+_See code: [src/commands/slash/votes.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/slash/votes.ts)_
+
+## `ethos switch NAME`
+
+Switch the active Ethos account
+
+```
+USAGE
+  $ ethos switch NAME [--account <value>] [-j] [-v]
+
+ARGUMENTS
+  NAME  Account name to switch to
+
+FLAGS
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
+
+DESCRIPTION
+  Switch the active Ethos account
+
+EXAMPLES
+  $ ethos switch work
+
+  $ ethos switch work --json
+```
+
+_See code: [src/commands/switch.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/switch.ts)_
+
+## `ethos trade close MARKETONCHAINID`
+
+Close a position in a reputation market
+
+```
+USAGE
+  $ ethos trade close MARKETONCHAINID --side long|short --tokens <value> [--account <value>] [-j] [-v]
+    [--min-credits <value>] [--slippage <value>] [-y]
+
+ARGUMENTS
+  MARKETONCHAINID  On-chain market ID
+
+FLAGS
+  -j, --json                 Output as JSON
+  -v, --verbose              Show detailed error information
+  -y, --yes                  Skip the confirmation prompt
+      --account=<value>      Named account to use for this command (see: ethos account list)
+      --min-credits=<value>  Minimum credits to accept, in wei (defaults to a quote-derived value)
+      --side=<option>        (required) Position side
+                             <options: long|short>
+      --slippage=<value>     [default: 0.02] Max acceptable slippage as a fraction (e.g. 0.02 = 2%)
+      --tokens=<value>       (required) Position tokens to close
+
+DESCRIPTION
+  Close a position in a reputation market
+
+EXAMPLES
+  $ ethos trade close 123 --side long --tokens 5
+
+  $ ethos trade close 123 --side short --tokens 5 --slippage 0.05 --yes
+```
+
+_See code: [src/commands/trade/close.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/trade/close.ts)_
+
+## `ethos trade list`
+
+List reputation markets
+
+```
+USAGE
+  $ ethos trade list [--account <value>] [-j] [-v] [-l <value>] [-s <value>]
+
+FLAGS
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Max results
+  -s, --search=<value>   Filter by name/username
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
+
+DESCRIPTION
+  List reputation markets
+
+EXAMPLES
+  $ ethos trade list
+
+  $ ethos trade list --limit 20 --json
+```
+
+_See code: [src/commands/trade/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/trade/list.ts)_
+
+## `ethos trade open MARKETONCHAINID`
+
+Open a position in a reputation market
+
+```
+USAGE
+  $ ethos trade open MARKETONCHAINID -a <value> --side long|short [--account <value>] [-j] [-v] [--min-tokens
+    <value>] [--slippage <value>] [-y]
+
+ARGUMENTS
+  MARKETONCHAINID  On-chain market ID
+
+FLAGS
+  -a, --amount=<value>      (required) Credits to spend
+  -j, --json                Output as JSON
+  -v, --verbose             Show detailed error information
+  -y, --yes                 Skip the confirmation prompt
+      --account=<value>     Named account to use for this command (see: ethos account list)
+      --min-tokens=<value>  Minimum tokens to accept, in wei (defaults to a quote-derived value)
+      --side=<option>       (required) Position side
+                            <options: long|short>
+      --slippage=<value>    [default: 0.02] Max acceptable slippage as a fraction (e.g. 0.02 = 2%)
+
+DESCRIPTION
+  Open a position in a reputation market
+
+EXAMPLES
+  $ ethos trade open 123 --side long --amount 10
+
+  $ ethos trade open 123 --side short --amount 10 --slippage 0.05 --yes
+```
+
+_See code: [src/commands/trade/open.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/trade/open.ts)_
+
+## `ethos trade position MARKETONCHAINID`
+
+Show your position in a reputation market
+
+```
+USAGE
+  $ ethos trade position MARKETONCHAINID [--account <value>] [-j] [-v] [--address <value>] [--side long|short]
+
+ARGUMENTS
+  MARKETONCHAINID  On-chain market ID
+
+FLAGS
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
+      --address=<value>  Wallet address to look up (defaults to your own wallet)
+      --side=<option>    [default: long] Position side
+                         <options: long|short>
+
+DESCRIPTION
+  Show your position in a reputation market
+
+EXAMPLES
+  $ ethos trade position 123 --side long
+
+  $ ethos trade position 123 --side short --json
+
+  $ ethos trade position 123 --address 0x... --json
+```
+
+_See code: [src/commands/trade/position.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/trade/position.ts)_
+
+## `ethos trade quote MARKETONCHAINID`
+
+Get a price quote for opening or closing a market position
+
+```
+USAGE
+  $ ethos trade quote MARKETONCHAINID --side long|short [--account <value>] [-j] [-v] [-a <value>] [--close]
+    [--seller <value>] [--slippage <value>] [--tokens <value>]
+
+ARGUMENTS
+  MARKETONCHAINID  On-chain market ID
+
+FLAGS
+  -a, --amount=<value>    Credits to spend (open quotes)
+  -j, --json              Output as JSON
+  -v, --verbose           Show detailed error information
+      --account=<value>   Named account to use for this command (see: ethos account list)
+      --close             Quote closing a position instead of opening one
+      --seller=<value>    Wallet address to price the close quote against (defaults to your own wallet)
+      --side=<option>     (required) Position side
+                          <options: long|short>
+      --slippage=<value>  [default: 0.02] Max acceptable slippage as a fraction (e.g. 0.02 = 2%)
+      --tokens=<value>    Position tokens to close (close quotes)
+
+DESCRIPTION
+  Get a price quote for opening or closing a market position
+
+EXAMPLES
+  $ ethos trade quote 123 --side long --amount 10
+
+  $ ethos trade quote 123 --side long --close --tokens 5
+
+  $ ethos trade quote 123 --side short --amount 10 --slippage 0.05 --json
+```
+
+_See code: [src/commands/trade/quote.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/trade/quote.ts)_
 
 ## `ethos u IDENTIFIER`
 
@@ -1229,14 +1663,15 @@ Display user profile by username, address, or ENS name
 
 ```
 USAGE
-  $ ethos u IDENTIFIER [-j] [-v]
+  $ ethos u IDENTIFIER [--account <value>] [-j] [-v]
 
 ARGUMENTS
   IDENTIFIER  Twitter username, ETH address, or ENS name
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Display user profile by username, address, or ENS name
@@ -1261,14 +1696,15 @@ Display user profile by username, address, or ENS name
 
 ```
 USAGE
-  $ ethos ui IDENTIFIER [-j] [-v]
+  $ ethos ui IDENTIFIER [--account <value>] [-j] [-v]
 
 ARGUMENTS
   IDENTIFIER  Twitter username, ETH address, or ENS name
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Display user profile by username, address, or ENS name
@@ -1307,7 +1743,7 @@ EXAMPLES
   $ ethos update --force
 ```
 
-_See code: [src/commands/update.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/update.ts)_
+_See code: [src/commands/update.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/update.ts)_
 
 ## `ethos us IDENTIFIER`
 
@@ -1315,14 +1751,15 @@ Display comprehensive user summary with activity and vouches
 
 ```
 USAGE
-  $ ethos us IDENTIFIER [-j] [-v]
+  $ ethos us IDENTIFIER [--account <value>] [-j] [-v]
 
 ARGUMENTS
   IDENTIFIER  Twitter username, ETH address, or ENS name
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Display comprehensive user summary with activity and vouches
@@ -1344,17 +1781,18 @@ Show recent reviews and vouches for a user
 
 ```
 USAGE
-  $ ethos user activity IDENTIFIER [-j] [-v] [-l <value>] [-t vouch|review]
+  $ ethos user activity IDENTIFIER [--account <value>] [-j] [-v] [-l <value>] [-t vouch|review]
 
 ARGUMENTS
   IDENTIFIER  Twitter username, ETH address, or ENS name
 
 FLAGS
-  -j, --json           Output as JSON
-  -l, --limit=<value>  [default: 10] Maximum number of activities
-  -t, --type=<option>  Filter by activity type
-                       <options: vouch|review>
-  -v, --verbose        Show detailed error information
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Maximum number of activities
+  -t, --type=<option>    Filter by activity type
+                         <options: vouch|review>
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Show recent reviews and vouches for a user
@@ -1369,7 +1807,7 @@ EXAMPLES
   $ ethos user activity 0xNowater --json
 ```
 
-_See code: [src/commands/user/activity.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/user/activity.ts)_
+_See code: [src/commands/user/activity.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/user/activity.ts)_
 
 ## `ethos user info IDENTIFIER`
 
@@ -1377,14 +1815,15 @@ Display user profile by username, address, or ENS name
 
 ```
 USAGE
-  $ ethos user info IDENTIFIER [-j] [-v]
+  $ ethos user info IDENTIFIER [--account <value>] [-j] [-v]
 
 ARGUMENTS
   IDENTIFIER  Twitter username, ETH address, or ENS name
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Display user profile by username, address, or ENS name
@@ -1403,7 +1842,7 @@ EXAMPLES
   $ ethos user info 0xNowater --json
 ```
 
-_See code: [src/commands/user/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/user/info.ts)_
+_See code: [src/commands/user/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/user/info.ts)_
 
 ## `ethos user invitations IDENTIFIER`
 
@@ -1411,7 +1850,7 @@ List invitations sent by a user
 
 ```
 USAGE
-  $ ethos user invitations IDENTIFIER [-j] [-v] [-l <value>] [-o <value>] [-s INVITED|ACCEPTED]
+  $ ethos user invitations IDENTIFIER [--account <value>] [-j] [-v] [-l <value>] [-o <value>] [-s INVITED|ACCEPTED]
 
 ARGUMENTS
   IDENTIFIER  Twitter username, ETH address, or ENS name
@@ -1423,6 +1862,7 @@ FLAGS
   -s, --status=<option>  Filter by status
                          <options: INVITED|ACCEPTED>
   -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   List invitations sent by a user
@@ -1435,7 +1875,7 @@ EXAMPLES
   $ ethos user invitations vitalik.eth --json
 ```
 
-_See code: [src/commands/user/invitations.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/user/invitations.ts)_
+_See code: [src/commands/user/invitations.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/user/invitations.ts)_
 
 ## `ethos user search QUERY`
 
@@ -1443,15 +1883,16 @@ Search for users by name, username, or address
 
 ```
 USAGE
-  $ ethos user search QUERY [-j] [-v] [-l <value>]
+  $ ethos user search QUERY [--account <value>] [-j] [-v] [-l <value>]
 
 ARGUMENTS
   QUERY  Search query
 
 FLAGS
-  -j, --json           Output as JSON
-  -l, --limit=<value>  [default: 10] Maximum number of results
-  -v, --verbose        Show detailed error information
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Maximum number of results
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Search for users by name, username, or address
@@ -1469,7 +1910,7 @@ EXAMPLES
   $ ethos user search web3 --limit 5
 ```
 
-_See code: [src/commands/user/search.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/user/search.ts)_
+_See code: [src/commands/user/search.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/user/search.ts)_
 
 ## `ethos user summary IDENTIFIER`
 
@@ -1477,14 +1918,15 @@ Display comprehensive user summary with activity and vouches
 
 ```
 USAGE
-  $ ethos user summary IDENTIFIER [-j] [-v]
+  $ ethos user summary IDENTIFIER [--account <value>] [-j] [-v]
 
 ARGUMENTS
   IDENTIFIER  Twitter username, ETH address, or ENS name
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Display comprehensive user summary with activity and vouches
@@ -1500,7 +1942,7 @@ EXAMPLES
   $ ethos user summary vitalik.eth --json
 ```
 
-_See code: [src/commands/user/summary.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/user/summary.ts)_
+_See code: [src/commands/user/summary.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/user/summary.ts)_
 
 ## `ethos validator info TOKENID`
 
@@ -1508,14 +1950,15 @@ Get details of a specific validator NFT
 
 ```
 USAGE
-  $ ethos validator info TOKENID [-j] [-v]
+  $ ethos validator info TOKENID [--account <value>] [-j] [-v]
 
 ARGUMENTS
   TOKENID  Validator token ID
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Get details of a specific validator NFT
@@ -1526,7 +1969,7 @@ EXAMPLES
   $ ethos validator info 42 --json
 ```
 
-_See code: [src/commands/validator/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/validator/info.ts)_
+_See code: [src/commands/validator/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/validator/info.ts)_
 
 ## `ethos validator list`
 
@@ -1534,14 +1977,15 @@ List all Ethos validator NFT owners
 
 ```
 USAGE
-  $ ethos validator list [-j] [-v] [-a] [-l <value>] [-o <value>]
+  $ ethos validator list [--account <value>] [-j] [-v] [-a] [-l <value>] [-o <value>]
 
 FLAGS
-  -a, --available       Show only validators with remaining XP capacity
-  -j, --json            Output as JSON
-  -l, --limit=<value>   [default: 10] Max results to display
-  -o, --offset=<value>  Number of results to skip
-  -v, --verbose         Show detailed error information
+  -a, --available        Show only validators with remaining XP capacity
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Max results to display
+  -o, --offset=<value>   Number of results to skip
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   List all Ethos validator NFT owners
@@ -1556,7 +2000,7 @@ EXAMPLES
   $ ethos validator list --json
 ```
 
-_See code: [src/commands/validator/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/validator/list.ts)_
+_See code: [src/commands/validator/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/validator/list.ts)_
 
 ## `ethos validator sales`
 
@@ -1564,13 +2008,14 @@ List validator NFTs for sale on OpenSea
 
 ```
 USAGE
-  $ ethos validator sales [-j] [-v] [-l <value>] [-o <value>]
+  $ ethos validator sales [--account <value>] [-j] [-v] [-l <value>] [-o <value>]
 
 FLAGS
-  -j, --json            Output as JSON
-  -l, --limit=<value>   [default: 10] Max results per request
-  -o, --offset=<value>  Number of results to skip
-  -v, --verbose         Show detailed error information
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Max results per request
+  -o, --offset=<value>   Number of results to skip
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   List validator NFTs for sale on OpenSea
@@ -1581,7 +2026,7 @@ EXAMPLES
   $ ethos validator sales --limit 20 --json
 ```
 
-_See code: [src/commands/validator/sales.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/validator/sales.ts)_
+_See code: [src/commands/validator/sales.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/validator/sales.ts)_
 
 ## `ethos vi ID`
 
@@ -1589,14 +2034,15 @@ Get details of a specific vouch
 
 ```
 USAGE
-  $ ethos vi ID [-j] [-v]
+  $ ethos vi ID [--account <value>] [-j] [-v]
 
 ARGUMENTS
   ID  Vouch ID
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Get details of a specific vouch
@@ -1616,18 +2062,20 @@ List vouches for a user or all vouches
 
 ```
 USAGE
-  $ ethos vl [IDENTIFIER] [-j] [-v] [--active] [--author <value>] [-l <value>] [-o <value>]
+  $ ethos vl [IDENTIFIER] [--account <value>] [-j] [-v] [--active] [--author <value>] [-l <value>] [-o
+    <value>]
 
 ARGUMENTS
   [IDENTIFIER]  Twitter username, ETH address, or ENS name (optional, filter by subject)
 
 FLAGS
-  -j, --json            Output as JSON
-  -l, --limit=<value>   [default: 10] Max results per request
-  -o, --offset=<value>  Number of results to skip
-  -v, --verbose         Show detailed error information
-      --active          Show only active (non-archived) vouches
-      --author=<value>  Filter by author (Twitter username, ETH address, or ENS name)
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Max results per request
+  -o, --offset=<value>   Number of results to skip
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
+      --active           Show only active (non-archived) vouches
+      --author=<value>   Filter by author (Twitter username, ETH address, or ENS name)
 
 DESCRIPTION
   List vouches for a user or all vouches
@@ -1647,20 +2095,50 @@ EXAMPLES
   $ ethos vl --limit 20 --json
 ```
 
+## `ethos vouch create IDENTIFIER`
+
+Vouch for a user by staking credits on their reputation
+
+```
+USAGE
+  $ ethos vouch create IDENTIFIER -a <value> [--account <value>] [-j] [-v] [-y]
+
+ARGUMENTS
+  IDENTIFIER  Twitter username, ETH address, ENS name, or profile ID to vouch for
+
+FLAGS
+  -a, --amount=<value>   (required) Amount of credits to stake
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+  -y, --yes              Skip the confirmation prompt
+      --account=<value>  Named account to use for this command (see: ethos account list)
+
+DESCRIPTION
+  Vouch for a user by staking credits on their reputation
+
+EXAMPLES
+  $ ethos vouch create 0xNowater --amount 10
+
+  $ ethos vouch create vitalik.eth --amount 5.5 --yes
+```
+
+_See code: [src/commands/vouch/create.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/vouch/create.ts)_
+
 ## `ethos vouch info ID`
 
 Get details of a specific vouch
 
 ```
 USAGE
-  $ ethos vouch info ID [-j] [-v]
+  $ ethos vouch info ID [--account <value>] [-j] [-v]
 
 ARGUMENTS
   ID  Vouch ID
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Get details of a specific vouch
@@ -1674,7 +2152,7 @@ EXAMPLES
   $ ethos vouch info 123 --json
 ```
 
-_See code: [src/commands/vouch/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/vouch/info.ts)_
+_See code: [src/commands/vouch/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/vouch/info.ts)_
 
 ## `ethos vouch list [IDENTIFIER]`
 
@@ -1682,18 +2160,20 @@ List vouches for a user or all vouches
 
 ```
 USAGE
-  $ ethos vouch list [IDENTIFIER] [-j] [-v] [--active] [--author <value>] [-l <value>] [-o <value>]
+  $ ethos vouch list [IDENTIFIER] [--account <value>] [-j] [-v] [--active] [--author <value>] [-l <value>] [-o
+    <value>]
 
 ARGUMENTS
   [IDENTIFIER]  Twitter username, ETH address, or ENS name (optional, filter by subject)
 
 FLAGS
-  -j, --json            Output as JSON
-  -l, --limit=<value>   [default: 10] Max results per request
-  -o, --offset=<value>  Number of results to skip
-  -v, --verbose         Show detailed error information
-      --active          Show only active (non-archived) vouches
-      --author=<value>  Filter by author (Twitter username, ETH address, or ENS name)
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Max results per request
+  -o, --offset=<value>   Number of results to skip
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
+      --active           Show only active (non-archived) vouches
+      --author=<value>   Filter by author (Twitter username, ETH address, or ENS name)
 
 DESCRIPTION
   List vouches for a user or all vouches
@@ -1713,7 +2193,7 @@ EXAMPLES
   $ ethos vouch list --limit 20 --json
 ```
 
-_See code: [src/commands/vouch/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/vouch/list.ts)_
+_See code: [src/commands/vouch/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/vouch/list.ts)_
 
 ## `ethos vouch mutual TARGET VIEWER`
 
@@ -1721,16 +2201,17 @@ Find mutual vouchers between two users
 
 ```
 USAGE
-  $ ethos vouch mutual TARGET VIEWER [-j] [-v] [-l <value>]
+  $ ethos vouch mutual TARGET VIEWER [--account <value>] [-j] [-v] [-l <value>]
 
 ARGUMENTS
   TARGET  Target user (Twitter username, ETH address, or ENS name)
   VIEWER  Viewer user (Twitter username, ETH address, or ENS name)
 
 FLAGS
-  -j, --json           Output as JSON
-  -l, --limit=<value>  [default: 10] Max results
-  -v, --verbose        Show detailed error information
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Max results
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Find mutual vouchers between two users
@@ -1743,7 +2224,38 @@ EXAMPLES
   $ ethos vouch mutual 0xNowater VitalikButerin --json
 ```
 
-_See code: [src/commands/vouch/mutual.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/vouch/mutual.ts)_
+_See code: [src/commands/vouch/mutual.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/vouch/mutual.ts)_
+
+## `ethos vouch remove IDENTIFIER`
+
+Release your vouch for a user, reclaiming the staked credits (no-op when you have no active vouch)
+
+```
+USAGE
+  $ ethos vouch remove IDENTIFIER [--account <value>] [-j] [-v] [--unhealthy] [-y]
+
+ARGUMENTS
+  IDENTIFIER  Twitter username, ETH address, ENS name, or profile ID to unvouch
+
+FLAGS
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+  -y, --yes              Skip the confirmation prompt
+      --account=<value>  Named account to use for this command (see: ethos account list)
+      --unhealthy        Mark the relationship unhealthy while unvouching
+
+DESCRIPTION
+  Release your vouch for a user, reclaiming the staked credits (no-op when you have no active vouch)
+
+EXAMPLES
+  $ ethos vouch remove 0xNowater
+
+  $ ethos vouch remove vitalik.eth --yes
+
+  $ ethos vouch remove profileId:42 --unhealthy --yes
+```
+
+_See code: [src/commands/vouch/remove.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/vouch/remove.ts)_
 
 ## `ethos vouch votes ID`
 
@@ -1751,19 +2263,20 @@ Show votes on a vouch
 
 ```
 USAGE
-  $ ethos vouch votes ID [-j] [-v] [--downvotes | --upvotes] [-l <value>] [-o <value>] [-s]
+  $ ethos vouch votes ID [--account <value>] [-j] [-v] [--downvotes | --upvotes] [-l <value>] [-o <value>] [-s]
 
 ARGUMENTS
   ID  Vouch ID
 
 FLAGS
-  -j, --json            Output as JSON
-  -l, --limit=<value>   [default: 10] Max results per request
-  -o, --offset=<value>  Number of results to skip
-  -s, --stats           Show vote statistics only
-  -v, --verbose         Show detailed error information
-      --downvotes       Show only downvotes
-      --upvotes         Show only upvotes
+  -j, --json             Output as JSON
+  -l, --limit=<value>    [default: 10] Max results per request
+  -o, --offset=<value>   Number of results to skip
+  -s, --stats            Show vote statistics only
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
+      --downvotes        Show only downvotes
+      --upvotes          Show only upvotes
 
 DESCRIPTION
   Show votes on a vouch
@@ -1778,7 +2291,33 @@ EXAMPLES
   $ ethos vouch votes 182 --json
 ```
 
-_See code: [src/commands/vouch/votes.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/vouch/votes.ts)_
+_See code: [src/commands/vouch/votes.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/vouch/votes.ts)_
+
+## `ethos whoami`
+
+Show the currently signed-in Ethos account
+
+```
+USAGE
+  $ ethos whoami [--account <value>] [-j] [-v]
+
+FLAGS
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
+
+DESCRIPTION
+  Show the currently signed-in Ethos account
+
+EXAMPLES
+  $ ethos whoami
+
+  $ ethos whoami --account work
+
+  $ ethos whoami --json
+```
+
+_See code: [src/commands/whoami.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/whoami.ts)_
 
 ## `ethos xp rank IDENTIFIER`
 
@@ -1786,15 +2325,16 @@ Show leaderboard rank for a user
 
 ```
 USAGE
-  $ ethos xp rank IDENTIFIER [-j] [-v] [-s <value>]
+  $ ethos xp rank IDENTIFIER [--account <value>] [-j] [-v] [-s <value>]
 
 ARGUMENTS
   IDENTIFIER  Twitter username, ETH address, or ENS name
 
 FLAGS
-  -j, --json            Output as JSON
-  -s, --season=<value>  Show XP for specific season
-  -v, --verbose         Show detailed error information
+  -j, --json             Output as JSON
+  -s, --season=<value>   Show XP for specific season
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   Show leaderboard rank for a user
@@ -1810,7 +2350,7 @@ EXAMPLES
   $ ethos xp rank 0xNowater --json
 ```
 
-_See code: [src/commands/xp/rank.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/xp/rank.ts)_
+_See code: [src/commands/xp/rank.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/xp/rank.ts)_
 
 ## `ethos xp seasons`
 
@@ -1818,11 +2358,12 @@ List all XP seasons
 
 ```
 USAGE
-  $ ethos xp seasons [-j] [-v]
+  $ ethos xp seasons [--account <value>] [-j] [-v]
 
 FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
+  -j, --json             Output as JSON
+  -v, --verbose          Show detailed error information
+      --account=<value>  Named account to use for this command (see: ethos account list)
 
 DESCRIPTION
   List all XP seasons
@@ -1833,5 +2374,5 @@ EXAMPLES
   $ ethos xp seasons --json
 ```
 
-_See code: [src/commands/xp/seasons.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.12/src/commands/xp/seasons.ts)_
+_See code: [src/commands/xp/seasons.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/xp/seasons.ts)_
 <!-- commandsstop -->

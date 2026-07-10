@@ -1,6 +1,7 @@
 import { Command, Flags, ux } from '@oclif/core';
 
 import { EchoClient } from './api/echo-client.js';
+import { getActiveApiKey, getEffectiveApiUrl } from './config/credentials.js';
 
 /**
  * Base class for Ethos CLI commands providing shared flags, API client, and error handling.
@@ -8,6 +9,9 @@ import { EchoClient } from './api/echo-client.js';
  */
 export abstract class BaseCommand extends Command {
   static baseFlags = {
+    account: Flags.string({
+      description: 'Named account to use for this command (see: ethos account list)',
+    }),
     json: Flags.boolean({
       char: 'j',
       default: false,
@@ -19,11 +23,15 @@ export abstract class BaseCommand extends Command {
       description: 'Show detailed error information',
     }),
   };
-private _client?: EchoClient;
+  private _client?: EchoClient;
+  private accountFlag?: string;
 
   protected get client(): EchoClient {
     if (!this._client) {
-      this._client = new EchoClient();
+      this._client = new EchoClient(
+        getEffectiveApiUrl(this.accountFlag),
+        getActiveApiKey(this.accountFlag),
+      );
     }
 
     return this._client;
@@ -38,7 +46,7 @@ private _client?: EchoClient;
    */
   protected handleError(error: unknown, verbose = false): never {
     if (error instanceof Error) {
-      const {message} = error;
+      const { message } = error;
       const suggestions: string[] = [];
 
       if ('suggestions' in error && Array.isArray(error.suggestions)) {
@@ -65,6 +73,12 @@ private _client?: EchoClient;
     }
 
     this.error(String(error), { exit: 1 });
+  }
+
+  public async init(): Promise<void> {
+    await super.init();
+    const { flags } = await this.parse();
+    this.accountFlag = typeof flags.account === 'string' ? flags.account : undefined;
   }
 
   /**

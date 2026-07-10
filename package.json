@@ -9,6 +9,7 @@
   "bugs": "https://github.com/trust-ethos/ethos-cli/issues",
   "dependencies": {
     "@inquirer/prompts": "^8.2.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@oclif/core": "^4",
     "@oclif/plugin-autocomplete": "^3.2.40",
     "@oclif/plugin-help": "^6",
@@ -64,6 +65,9 @@
     ],
     "topicSeparator": " ",
     "topics": {
+      "account": {
+        "description": "Manage named Ethos accounts"
+      },
       "auction": {
         "description": "Query validator NFT auctions"
       },
@@ -93,6 +97,9 @@
       },
       "slash": {
         "description": "Query reputation slashes and votes"
+      },
+      "trade": {
+        "description": "Trade reputation markets (quote, open, and close positions)"
       },
       "user": {
         "description": "Query user profiles and information"

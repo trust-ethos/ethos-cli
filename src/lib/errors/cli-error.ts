@@ -9,21 +9,24 @@ export class CLIError extends Error {
   }
 }
 
+export class AuthRequiredError extends CLIError {
+  constructor(message = 'Authentication required.') {
+    super(message, 'AUTH_REQUIRED', ['Run: ethos login']);
+    this.name = 'AuthRequiredError';
+  }
+}
+
 export class NetworkError extends CLIError {
   constructor(
     message: string,
     public readonly url?: string,
     public readonly statusCode?: number,
   ) {
-    super(
-      message,
-      'NETWORK_ERROR',
-      [
-        'Check your internet connection',
-        'Verify the API is accessible',
-        'Try again in a few moments',
-      ],
-    );
+    super(message, 'NETWORK_ERROR', [
+      'Check your internet connection',
+      'Verify the API is accessible',
+      'Try again in a few moments',
+    ]);
     this.name = 'NetworkError';
   }
 }
@@ -32,27 +35,22 @@ export class NotFoundError extends CLIError {
   public readonly identifier: string;
 
   constructor(resourceType: string, identifier: string) {
-    super(
-      `${resourceType} not found: ${identifier}`,
-      'NOT_FOUND',
-      [
-        `Try: ethos user search "${identifier}"`,
-        'For Twitter users, use their Twitter username (e.g., @username)',
-        'For ETH addresses, use the full 0x... address',
-      ],
-    );
+    super(`${resourceType} not found: ${identifier}`, 'NOT_FOUND', [
+      `Try: ethos user search "${identifier}"`,
+      'For Twitter users, use their Twitter username (e.g., @username)',
+      'For ETH addresses, use the full 0x... address',
+    ]);
     this.name = 'NotFoundError';
     this.identifier = identifier;
   }
 }
 
 export class ValidationError extends CLIError {
-  constructor(message: string, public readonly field?: string) {
-    super(
-      message,
-      'VALIDATION_ERROR',
-      ['Check your input and try again'],
-    );
+  constructor(
+    message: string,
+    public readonly field?: string,
+  ) {
+    super(message, 'VALIDATION_ERROR', ['Check your input and try again']);
     this.name = 'ValidationError';
   }
 }
@@ -63,14 +61,10 @@ export class APIError extends CLIError {
     public readonly statusCode?: number,
     public readonly response?: unknown,
   ) {
-    super(
-      message,
-      'API_ERROR',
-      [
-        'The API returned an error',
-        'Try again or contact support if the issue persists',
-      ],
-    );
+    super(message, 'API_ERROR', [
+      'The API returned an error',
+      'Try again or contact support if the issue persists',
+    ]);
     this.name = 'APIError';
   }
 }

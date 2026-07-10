@@ -1,5 +1,5 @@
 import { loadConfig } from '../config/index.js';
-import { APIError, NetworkError, NotFoundError } from '../errors/cli-error.js';
+import { APIError, AuthRequiredError, NetworkError, NotFoundError } from '../errors/cli-error.js';
 import { httpFetch } from '../http/fetch.js';
 import { type ParsedIdentifier, parseIdentifier } from '../validation/userkey.js';
 
@@ -97,7 +97,7 @@ export interface Review {
   subjectUser?: EthosUser;
   timestamp: number;
   type: 'review';
-  votes: { downvotes: number; upvotes: number; };
+  votes: { downvotes: number; upvotes: number };
 }
 
 export interface Slash {
@@ -153,7 +153,7 @@ export interface BrokerPost {
   tags: string[];
   title: string;
   type: BrokerPostType;
-  votes: { downvotes: number; upvotes: number; };
+  votes: { downvotes: number; upvotes: number };
 }
 
 export interface BrokerListParams {
@@ -180,8 +180,8 @@ export interface ProjectChain {
 
 export interface ProjectVotes {
   all: { totalVoters: number; totalVotes: number };
-  bearish: { percentage: number; total: number; };
-  bullish: { percentage: number; total: number; };
+  bearish: { percentage: number; total: number };
+  bullish: { percentage: number; total: number };
 }
 
 export interface Project {
@@ -270,7 +270,17 @@ export interface MarketHolder {
   voteType: 'distrust' | 'trust';
 }
 
-export type MarketOrderBy = 'createdAt' | 'distrustRatio' | 'marketCapChange24hPercent' | 'marketCapWei' | 'priceChange24hPercent' | 'score' | 'scoreDifferential' | 'trustRatio' | 'volume24hWei' | 'volumeTotalWei';
+export type MarketOrderBy =
+  | 'createdAt'
+  | 'distrustRatio'
+  | 'marketCapChange24hPercent'
+  | 'marketCapWei'
+  | 'priceChange24hPercent'
+  | 'score'
+  | 'scoreDifferential'
+  | 'trustRatio'
+  | 'volume24hWei'
+  | 'volumeTotalWei';
 
 export interface MarketListParams {
   filterQuery?: string;
@@ -357,10 +367,10 @@ export interface Auction {
   id: number;
   nftContract: string;
   nftTokenId: number;
-  pricePaid: null | string;  // wei
-  reservePrice: string;  // wei
+  pricePaid: null | string; // wei
+  reservePrice: string; // wei
   soldTime: null | string;
-  startPrice: string;  // wei
+  startPrice: string; // wei
   startTime: string;
   status: 'ENABLED' | 'ENDED' | 'PENDING' | 'SOLD';
 }
@@ -375,9 +385,9 @@ export interface Invitation {
   dateInvited: string;
   id: number;
   recipientAddress: string;
-  recipientScoreImpact: { impact: string; value: number; };
+  recipientScoreImpact: { impact: string; value: number };
   senderProfileId: number;
-  senderScoreImpact: { impact: string; value: number; };
+  senderScoreImpact: { impact: string; value: number };
   status: 'ACCEPTED' | 'INVITED';
 }
 
@@ -418,7 +428,7 @@ export interface ScoreResponse {
 export interface ScoreBreakdownElement {
   element: {
     name: string;
-    range?: { max: number; min: number; };
+    range?: { max: number; min: number };
     type: string;
   };
   error: boolean;
@@ -468,7 +478,7 @@ export interface Vouch {
   authorAddress: string;
   authorProfileId: number;
   authorUser?: null | VouchUser;
-  balance: string;  // bigint as string
+  balance: string; // bigint as string
   comment: string;
   deposited: string;
   id: number;
@@ -543,21 +553,178 @@ export interface VoteStats {
   };
 }
 
+// Write types
+export type ReviewScore = 'negative' | 'neutral' | 'positive';
+
+export type ReviewSubject =
+  | { account: string; accountType?: 'id' | 'username'; service: string }
+  | { address: string }
+  | { x: { id: string } | { username: string } };
+
+export interface AddReviewInput {
+  content?: string;
+  metadata?: Record<string, boolean | number | string>;
+  score: ReviewScore;
+  subject: ReviewSubject;
+  title: string;
+  waitForTxTimeoutSeconds?: number;
+}
+
+export interface AddReviewResult {
+  hash: string;
+  review?: unknown;
+  reviewSlug?: string;
+}
+
+export interface VouchV2Input {
+  amount: string;
+  target: string;
+  waitForTxTimeoutSeconds?: number;
+}
+
+export interface VouchV2Result {
+  hash: string;
+  processed: boolean;
+}
+
+export interface ActiveVouchV2Result {
+  vouchId: null | number;
+}
+
+export interface UnvouchV2Input {
+  isHealthy: boolean;
+  vouchId: number;
+  waitForTxTimeoutSeconds?: number;
+}
+
+export interface MarketV2OpenInput {
+  isPositive: boolean;
+  marketOnchainId: number;
+  minTokensOut: string;
+  paymentAmount: string;
+  waitForTxTimeoutSeconds?: number;
+}
+
+export interface MarketV2CloseInput {
+  isPositive: boolean;
+  marketOnchainId: number;
+  minCreditsOut: string;
+  positionTokenAmount: string;
+  waitForTxTimeoutSeconds?: number;
+}
+
+export interface MarketV2TxResult {
+  hash: string;
+  processed: boolean;
+}
+
+// Market (v2) read types. Bigint-valued fields are strings, matching the REST wire format.
+export interface MarketV2Subject {
+  avatarUrl?: null | string;
+  displayName?: string;
+  profileId: null | number;
+  score?: number;
+  username?: null | string;
+}
+
+export interface MarketV2 {
+  createdAt: string;
+  creatorAddress: string;
+  distrustPrice: string;
+  distrustSupply: string;
+  id: number;
+  marketOnchainId: number;
+  poolBacking: string;
+  priceChange24hPercent: number;
+  subject: MarketV2Subject;
+  trustPrice: string;
+  trustSupply: string;
+  volume24hCredits: string;
+  volumeTotalCredits: string;
+}
+
+export interface MarketV2ListParams {
+  filterQuery?: string;
+  limit?: number;
+}
+
+export interface MarketV2ListResponse {
+  values: MarketV2[];
+}
+
+export interface SimulateOpenParams {
+  isPositive: boolean;
+  paymentAmount: string;
+  slippagePercentage?: number;
+}
+
+export interface SimulateOpenResult {
+  effectivePrice: string;
+  minTokensOut: string;
+  priceImpactPct: number;
+  protocolFee: string;
+  tokensMinted: string;
+}
+
+export interface SimulateCloseParams {
+  isPositive: boolean;
+  positionTokenAmount: string;
+  sellerAddress?: string;
+  slippagePercentage?: number;
+}
+
+export interface SimulateCloseResult {
+  effectivePrice: string;
+  minCreditsOut: string;
+  netCreditsOut: string;
+  priceImpactPct: number;
+}
+
+export interface MarketV2Position {
+  balance: string;
+}
+
+interface RequestOptions {
+  body?: string;
+  headers?: Record<string, string>;
+  method?: 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';
+}
+
 export class EchoClient {
+  private static readonly DEFAULT_TIMEOUT_MS = 10_000;
+  private static readonly WRITE_TIMEOUT_MS = 20_000;
+  private readonly apiKey: null | string;
   private baseUrl: string;
   private debug: boolean;
 
-  constructor() {
-    const config = loadConfig();
-    this.baseUrl = config.apiUrl;
+  constructor(apiUrl?: string, apiKey?: null | string) {
+    this.baseUrl = apiUrl ?? loadConfig().apiUrl;
+    this.apiKey = apiKey ?? null;
     this.debug = process.env.DEBUG === 'ethos:*';
   }
 
-  async checkValidatorOwnership(userkey: string): Promise<NFT[]> {
-     return this.request<NFT[]>(`/api/v2/nfts/user/${encodeURIComponent(userkey)}/owns-validator`, 'Validator Check');
-   }
+  // Write methods (require a stored API key)
 
-   convertScoreToLevel(score: number): ScoreLevel {
+  /** Find the caller's active vouch for a target (null when none). */
+  async activeVouchV2(target: string): Promise<ActiveVouchV2Result> {
+    return this.getAuthed<ActiveVouchV2Result>(
+      `/api/v2/wallets/privy/vouches-v2/active?target=${encodeURIComponent(target)}`,
+      'Vouch',
+    );
+  }
+
+  async addReview(input: AddReviewInput): Promise<AddReviewResult> {
+    return this.postAuthed<AddReviewResult>('/api/v2/wallets/privy/post/review', input, 'Review');
+  }
+
+  async checkValidatorOwnership(userkey: string): Promise<NFT[]> {
+    return this.request<NFT[]>(
+      `/api/v2/nfts/user/${encodeURIComponent(userkey)}/owns-validator`,
+      'Validator Check',
+    );
+  }
+
+  convertScoreToLevel(score: number): ScoreLevel {
     if (score < 800) return 'untrusted';
     if (score < 1200) return 'questionable';
     if (score < 1600) return 'neutral';
@@ -565,11 +732,17 @@ export class EchoClient {
     return 'exemplary';
   }
 
-  async getActiveAuction(): Promise<Auction | null> {
-      return this.request<Auction | null>('/api/v2/auctions/active', 'Active Auction');
-    }
+  // Market (v2) read methods
 
-  async getActivities(userkey: string, types: ActivityType[] = ['review', 'vouch'], limit = 10): Promise<Activity[]> {
+  async getActiveAuction(): Promise<Auction | null> {
+    return this.request<Auction | null>('/api/v2/auctions/active', 'Active Auction');
+  }
+
+  async getActivities(
+    userkey: string,
+    types: ActivityType[] = ['review', 'vouch'],
+    limit = 10,
+  ): Promise<Activity[]> {
     const params = new URLSearchParams({ limit: String(limit), userkey });
     for (const type of types) {
       params.append('activityType', type);
@@ -579,17 +752,19 @@ export class EchoClient {
   }
 
   async getAuction(auctionId: number): Promise<Auction> {
-      return this.request<Auction>(`/api/v2/auctions/${auctionId}`, 'Auction');
-    }
+    return this.request<Auction>(`/api/v2/auctions/${auctionId}`, 'Auction');
+  }
 
-  async getAuctions(params: { limit?: number; offset?: number; status?: string } = {}): Promise<AuctionsResponse> {
-      const query = new URLSearchParams();
-      if (params.limit) query.set('limit', String(params.limit));
-      if (params.offset) query.set('offset', String(params.offset));
-      if (params.status) query.set('status', params.status);
-      const path = `/api/v2/auctions${query.toString() ? '?' + query.toString() : ''}`;
-      return this.request<AuctionsResponse>(path, 'Auctions');
-    }
+  async getAuctions(
+    params: { limit?: number; offset?: number; status?: string } = {},
+  ): Promise<AuctionsResponse> {
+    const query = new URLSearchParams();
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    if (params.status) query.set('status', params.status);
+    const path = `/api/v2/auctions${query.toString() ? '?' + query.toString() : ''}`;
+    return this.request<AuctionsResponse>(path, 'Auctions');
+  }
 
   async getBrokerPost(id: number): Promise<BrokerPost> {
     return this.request<BrokerPost>(`/api/v2/broker/posts/${id}`, 'Broker Post');
@@ -607,7 +782,10 @@ export class EchoClient {
     return this.request<BrokerListResponse>(path, 'Broker Posts');
   }
 
-  async getBrokerPostsByAuthor(profileId: number, params: { limit?: number; type?: BrokerPostType; } = {}): Promise<BrokerListResponse> {
+  async getBrokerPostsByAuthor(
+    profileId: number,
+    params: { limit?: number; type?: BrokerPostType } = {},
+  ): Promise<BrokerListResponse> {
     const query = new URLSearchParams();
     if (params.type) query.set('type', params.type);
     if (params.limit) query.set('limit', String(params.limit));
@@ -619,27 +797,49 @@ export class EchoClient {
     return this.request<FeaturedMarketsResponse>('/api/v2/markets/featured', 'Featured Markets');
   }
 
-  async getInvitations(params: { limit?: number; offset?: number; senderProfileId?: number; status?: 'ACCEPTED' | 'INVITED'; } = {}): Promise<InvitationsResponse> {
+  async getInvitations(
+    params: {
+      limit?: number;
+      offset?: number;
+      senderProfileId?: number;
+      status?: 'ACCEPTED' | 'INVITED';
+    } = {},
+  ): Promise<InvitationsResponse> {
     const query = new URLSearchParams();
     if (params.senderProfileId) query.set('senderProfileId', String(params.senderProfileId));
     if (params.status) query.set('status', params.status);
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
-    return this.request<InvitationsResponse>(`/api/v2/invitations${query.toString() ? '?' + query.toString() : ''}`, 'Invitations');
+    return this.request<InvitationsResponse>(
+      `/api/v2/invitations${query.toString() ? '?' + query.toString() : ''}`,
+      'Invitations',
+    );
   }
 
   async getLeaderboardRank(userkey: string): Promise<number> {
-    return this.request<number>(`/api/v2/xp/user/${encodeURIComponent(userkey)}/leaderboard-rank`, 'Leaderboard Rank');
+    return this.request<number>(
+      `/api/v2/xp/user/${encodeURIComponent(userkey)}/leaderboard-rank`,
+      'Leaderboard Rank',
+    );
   }
 
   async getMarketByTwitter(username: string): Promise<MarketUserByTwitter> {
-    return this.request<MarketUserByTwitter>(`/api/v2/markets/users/by/x/${encodeURIComponent(username)}`, 'Market User');
+    return this.request<MarketUserByTwitter>(
+      `/api/v2/markets/users/by/x/${encodeURIComponent(username)}`,
+      'Market User',
+    );
   }
 
-  async getMarketHolders(profileId: number, params: { limit?: number } = {}): Promise<MarketHoldersResponse> {
+  async getMarketHolders(
+    profileId: number,
+    params: { limit?: number } = {},
+  ): Promise<MarketHoldersResponse> {
     const query = new URLSearchParams();
     if (params.limit) query.set('limit', String(params.limit));
-    return this.request<MarketHoldersResponse>(`/api/v2/markets/${profileId}/holders${query.toString() ? '?' + query.toString() : ''}`, 'Market Holders');
+    return this.request<MarketHoldersResponse>(
+      `/api/v2/markets/${profileId}/holders${query.toString() ? '?' + query.toString() : ''}`,
+      'Market Holders',
+    );
   }
 
   async getMarketInfo(profileId: number): Promise<Market> {
@@ -656,69 +856,103 @@ export class EchoClient {
     if (params.orderBy) query.set('orderBy', params.orderBy);
     if (params.orderDirection) query.set('orderDirection', params.orderDirection);
     if (params.filterQuery) query.set('filterQuery', params.filterQuery);
-    return this.request<MarketListResponse>(`/api/v2/markets${query.toString() ? '?' + query.toString() : ''}`, 'Markets');
+    return this.request<MarketListResponse>(
+      `/api/v2/markets${query.toString() ? '?' + query.toString() : ''}`,
+      'Markets',
+    );
   }
 
-   async getMutualVouchers(viewerProfileId: number, targetProfileId: number, params: { limit?: number } = {}): Promise<{ total: number; values: VouchUser[]; }> {
+  async getMarketV2(marketOnchainId: number): Promise<MarketV2> {
+    return this.request<MarketV2>(`/api/v2/markets-v2/${marketOnchainId}`, 'Market');
+  }
+
+  async getMutualVouchers(
+    viewerProfileId: number,
+    targetProfileId: number,
+    params: { limit?: number } = {},
+  ): Promise<{ total: number; values: VouchUser[] }> {
     const query = new URLSearchParams();
     query.set('viewerProfileId', String(viewerProfileId));
     query.set('targetProfileId', String(targetProfileId));
     if (params.limit) query.set('limit', String(params.limit));
-    return this.request<{ total: number; values: VouchUser[]; }>(`/api/v2/vouches/mutual-vouchers?${query}`, 'Mutual Vouchers');
+    return this.request<{ total: number; values: VouchUser[] }>(
+      `/api/v2/vouches/mutual-vouchers?${query}`,
+      'Mutual Vouchers',
+    );
   }
 
-   async getNftsForUser(userkey: string, params: { limit?: number; offset?: number } = {}): Promise<NftsResponse> {
-     const query = new URLSearchParams();
-     if (params.limit) query.set('limit', String(params.limit));
-     if (params.offset) query.set('offset', String(params.offset));
-     const path = `/api/v2/nfts/user/${encodeURIComponent(userkey)}${query.toString() ? '?' + query.toString() : ''}`;
-     return this.request<NftsResponse>(path, 'User NFTs');
-   }
+  async getNftsForUser(
+    userkey: string,
+    params: { limit?: number; offset?: number } = {},
+  ): Promise<NftsResponse> {
+    const query = new URLSearchParams();
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    const path = `/api/v2/nfts/user/${encodeURIComponent(userkey)}${query.toString() ? '?' + query.toString() : ''}`;
+    return this.request<NftsResponse>(path, 'User NFTs');
+  }
 
-   getPrimaryUserkey(user: EthosUser): null | string {
+  getPrimaryUserkey(user: EthosUser): null | string {
     if (user.profileId) {
       return `profileId:${user.profileId}`;
     }
-    
-    const addressKey = user.userkeys?.find(uk => uk.startsWith('address:'));
+
+    const addressKey = user.userkeys?.find((uk) => uk.startsWith('address:'));
     if (addressKey) return addressKey;
-    
+
     return user.userkeys?.[0] || null;
   }
 
   async getProjectByUsername(username: string): Promise<Project> {
-    return this.request<Project>(`/api/v2/projects/username/${encodeURIComponent(username)}`, 'Project');
+    return this.request<Project>(
+      `/api/v2/projects/username/${encodeURIComponent(username)}`,
+      'Project',
+    );
   }
 
   async getProjectDetails(projectId: number): Promise<Project> {
     return this.request<Project>(`/api/v2/projects/${projectId}/details`, 'Project');
   }
 
-  async getProjects(params: { limit?: number; offset?: number; status?: string[]; } = {}): Promise<ProjectListResponse> {
+  async getProjects(
+    params: { limit?: number; offset?: number; status?: string[] } = {},
+  ): Promise<ProjectListResponse> {
     const query = new URLSearchParams();
     if (params.status) for (const s of params.status) query.append('status[]', s);
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
-    return this.request<ProjectListResponse>(`/api/v2/projects${query.toString() ? '?' + query.toString() : ''}`, 'Projects');
+    return this.request<ProjectListResponse>(
+      `/api/v2/projects${query.toString() ? '?' + query.toString() : ''}`,
+      'Projects',
+    );
   }
 
   async getProjectTeam(projectId: number): Promise<EthosUser[]> {
-     return this.request<EthosUser[]>(`/api/v2/projects/${projectId}/team`, 'Team');
-   }
+    return this.request<EthosUser[]>(`/api/v2/projects/${projectId}/team`, 'Team');
+  }
 
-  async getProjectVoters(projectId: number, params: { limit?: number; offset?: number; sentiment?: 'bearish' | 'bullish' } = {}): Promise<ProjectVotersResponse> {
+  async getProjectVoters(
+    projectId: number,
+    params: { limit?: number; offset?: number; sentiment?: 'bearish' | 'bullish' } = {},
+  ): Promise<ProjectVotersResponse> {
     const query = new URLSearchParams();
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
     if (params.sentiment) query.set('sentiment', params.sentiment);
-    return this.request<ProjectVotersResponse>(`/api/v2/projects/${projectId}/voters${query.toString() ? '?' + query.toString() : ''}`, 'Voters');
+    return this.request<ProjectVotersResponse>(
+      `/api/v2/projects/${projectId}/voters${query.toString() ? '?' + query.toString() : ''}`,
+      'Voters',
+    );
   }
 
   async getReview(reviewId: number): Promise<Review> {
     return this.request<Review>(`/api/v2/activities/review/${reviewId}`, 'Review');
   }
 
-  async getReviewsForUser(userkey: string, params: { limit?: number; offset?: number } = {}): Promise<Activity[]> {
+  async getReviewsForUser(
+    userkey: string,
+    params: { limit?: number; offset?: number } = {},
+  ): Promise<Activity[]> {
     const query = new URLSearchParams({ userkey });
     query.append('activityType', 'review');
     if (params.limit) query.set('limit', String(params.limit));
@@ -726,53 +960,70 @@ export class EchoClient {
     return this.request<Activity[]>(`/api/v2/activities/userkey?${query}`, 'Reviews');
   }
 
-   async getScoreBreakdownByAddress(address: string): Promise<ScoreBreakdownResponse> {
+  async getScoreBreakdownByAddress(address: string): Promise<ScoreBreakdownResponse> {
     const params = new URLSearchParams({ address });
     return this.request<ScoreBreakdownResponse>(`/api/v1/score/address?${params}`, 'Score');
   }
 
-   async getScoreBreakdownByUserkey(userkey: string): Promise<ScoreBreakdownResponse> {
+  async getScoreBreakdownByUserkey(userkey: string): Promise<ScoreBreakdownResponse> {
     const params = new URLSearchParams({ userkey });
     return this.request<ScoreBreakdownResponse>(`/api/v1/score/userkey?${params}`, 'Score');
   }
 
-   async getScoreStatus(userkey: string): Promise<ScoreStatus> {
+  async getScoreStatus(userkey: string): Promise<ScoreStatus> {
     const params = new URLSearchParams({ userkey });
     return this.request<ScoreStatus>(`/api/v2/score/status?${params}`, 'Score Status');
   }
 
-    async getSeasons(): Promise<SeasonsResponse> {
+  async getSeasons(): Promise<SeasonsResponse> {
     return this.request<SeasonsResponse>('/api/v2/xp/seasons', 'XP Seasons');
   }
 
-    async getSlashes(params: { author?: string; limit?: number; offset?: number; status?: 'closed' | 'open'; subject?: string; } = {}): Promise<SlashesResponse> {
-     const query = new URLSearchParams();
-     if (params.author) query.set('author', params.author);
-     if (params.subject) query.set('subject', params.subject);
-     if (params.status) query.set('status', params.status);
-     if (params.limit) query.set('limit', String(params.limit));
-     if (params.offset) query.set('offset', String(params.offset));
-     const path = `/api/v1/slashes${query.toString() ? '?' + query.toString() : ''}`;
-     return this.request<SlashesResponse>(path, 'Slashes');
-   }
+  async getSlashes(
+    params: {
+      author?: string;
+      limit?: number;
+      offset?: number;
+      status?: 'closed' | 'open';
+      subject?: string;
+    } = {},
+  ): Promise<SlashesResponse> {
+    const query = new URLSearchParams();
+    if (params.author) query.set('author', params.author);
+    if (params.subject) query.set('subject', params.subject);
+    if (params.status) query.set('status', params.status);
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    const path = `/api/v1/slashes${query.toString() ? '?' + query.toString() : ''}`;
+    return this.request<SlashesResponse>(path, 'Slashes');
+  }
 
-    async getSlashRoles(slashId: number, profileIds: number[]): Promise<Record<number, string>> {
-     const query = new URLSearchParams();
-     for (const id of profileIds) query.append('profileId', String(id));
-     return this.request<Record<number, string>>(`/api/v1/slashes/${slashId}/roles?${query.toString()}`, 'Slash Roles');
-   }
+  async getSlashRoles(slashId: number, profileIds: number[]): Promise<Record<number, string>> {
+    const query = new URLSearchParams();
+    for (const id of profileIds) query.append('profileId', String(id));
+    return this.request<Record<number, string>>(
+      `/api/v1/slashes/${slashId}/roles?${query.toString()}`,
+      'Slash Roles',
+    );
+  }
 
-    /** @deprecated Use getXpTotal instead */
-   async getTotalXp(userkey: string): Promise<number> {
-     return this.getXpTotal(userkey);
-   }
+  /** @deprecated Use getXpTotal instead */
+  async getTotalXp(userkey: string): Promise<number> {
+    return this.getXpTotal(userkey);
+  }
 
   async getUserByAddress(address: string): Promise<EthosUser> {
-    return this.request<EthosUser>(`/api/v2/user/by/address/${encodeURIComponent(address)}`, 'User');
+    return this.request<EthosUser>(
+      `/api/v2/user/by/address/${encodeURIComponent(address)}`,
+      'User',
+    );
   }
 
   async getUserByProfileId(profileId: string): Promise<EthosUser> {
-    return this.request<EthosUser>(`/api/v2/user/by/profile-id/${encodeURIComponent(profileId)}`, 'User');
+    return this.request<EthosUser>(
+      `/api/v2/user/by/profile-id/${encodeURIComponent(profileId)}`,
+      'User',
+    );
   }
 
   async getUserByTwitter(username: string): Promise<EthosUser> {
@@ -786,22 +1037,28 @@ export class EchoClient {
 
   async getValidatorByTokenId(tokenId: string): Promise<null | Validator> {
     const validators = await this.getValidators();
-    return validators.find(v => v.tokenId === tokenId) || null;
+    return validators.find((v) => v.tokenId === tokenId) || null;
   }
 
-  async getValidatorListings(params: { limit?: number; offset?: number } = {}): Promise<ValidatorListingsResponse> {
-      const query = new URLSearchParams();
-      if (params.limit) query.set('limit', String(params.limit));
-      if (params.offset) query.set('offset', String(params.offset));
-      const path = `/api/v2/nfts/validators/listings${query.toString() ? '?' + query.toString() : ''}`;
-      return this.request<ValidatorListingsResponse>(path, 'Validator Listings');
-    }
+  async getValidatorListings(
+    params: { limit?: number; offset?: number } = {},
+  ): Promise<ValidatorListingsResponse> {
+    const query = new URLSearchParams();
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    const path = `/api/v2/nfts/validators/listings${query.toString() ? '?' + query.toString() : ''}`;
+    return this.request<ValidatorListingsResponse>(path, 'Validator Listings');
+  }
 
   async getValidators(): Promise<Validator[]> {
     return this.request<Validator[]>('/api/v2/xp/validators', 'Validators');
   }
 
-  async getVotes(activityId: number, type: VoteType, params: { isUpvote?: boolean; limit?: number; offset?: number } = {}): Promise<VotesResponse> {
+  async getVotes(
+    activityId: number,
+    type: VoteType,
+    params: { isUpvote?: boolean; limit?: number; offset?: number } = {},
+  ): Promise<VotesResponse> {
     const query = new URLSearchParams();
     query.set('activityId', String(activityId));
     query.set('type', type);
@@ -828,22 +1085,63 @@ export class EchoClient {
     if (params.limit) body.limit = params.limit;
     if (params.offset) body.offset = params.offset;
 
-    const response = await this.request<{ data: VouchesResponse; ok: boolean; }>('/api/v1/vouches', 'Vouches', {
-      body: JSON.stringify(body),
-      method: 'POST',
-    });
+    const response = await this.request<{ data: VouchesResponse; ok: boolean }>(
+      '/api/v1/vouches',
+      'Vouches',
+      {
+        body: JSON.stringify(body),
+        method: 'POST',
+      },
+    );
     return response.data;
   }
 
   async getXpBySeason(userkey: string, seasonId: number): Promise<number> {
     return this.request<number>(
       `/api/v2/xp/user/${encodeURIComponent(userkey)}/season/${seasonId}`,
-      'XP for Season'
+      'XP for Season',
     );
   }
 
   async getXpTotal(userkey: string): Promise<number> {
     return this.request<number>(`/api/v2/xp/user/${encodeURIComponent(userkey)}`, 'XP Balance');
+  }
+
+  async listMarketsV2(params: MarketV2ListParams = {}): Promise<MarketV2ListResponse> {
+    const query = new URLSearchParams();
+    if (params.filterQuery) query.set('filterQuery', params.filterQuery);
+    if (params.limit) query.set('limit', String(params.limit));
+    const path = `/api/v2/markets-v2${query.toString() ? '?' + query.toString() : ''}`;
+    return this.request<MarketV2ListResponse>(path, 'Markets');
+  }
+
+  async marketV2Close(input: MarketV2CloseInput): Promise<MarketV2TxResult> {
+    return this.postAuthed<MarketV2TxResult>(
+      '/api/v2/wallets/privy/markets-v2/close-position',
+      input,
+      'Market Position',
+    );
+  }
+
+  async marketV2Open(input: MarketV2OpenInput): Promise<MarketV2TxResult> {
+    return this.postAuthed<MarketV2TxResult>(
+      '/api/v2/wallets/privy/markets-v2/open-position',
+      input,
+      'Market Position',
+    );
+  }
+
+  async marketV2Position(
+    marketOnchainId: number,
+    isPositive: boolean,
+    userAddress?: string,
+  ): Promise<MarketV2Position> {
+    const query = new URLSearchParams({ isPositive: String(isPositive) });
+    if (userAddress) query.set('userAddress', userAddress);
+    return this.request<MarketV2Position>(
+      `/api/v2/markets-v2/${marketOnchainId}/position?${query}`,
+      'Market Position',
+    );
   }
 
   async resolveUser(identifier: string): Promise<EthosUser> {
@@ -856,15 +1154,15 @@ export class EchoClient {
       case 'address': {
         return this.getUserByAddress(parsed.value);
       }
-      
+
       case 'ens': {
         return this.resolveEnsUser(parsed.value);
       }
-      
+
       case 'profileId': {
         return this.getUserByProfileId(parsed.value);
       }
-      
+
       default: {
         // Handles 'twitter' and any other cases
         return this.getUserByTwitter(parsed.value);
@@ -877,103 +1175,188 @@ export class EchoClient {
     return this.request<SearchResult>(`/api/v2/users/search?${params}`, 'Users');
   }
 
+  async simulateClose(
+    marketOnchainId: number,
+    q: SimulateCloseParams,
+  ): Promise<SimulateCloseResult> {
+    const query = new URLSearchParams({
+      isPositive: String(q.isPositive),
+      positionTokenAmount: q.positionTokenAmount,
+    });
+    if (q.sellerAddress) query.set('sellerAddress', q.sellerAddress);
+    if (q.slippagePercentage !== undefined)
+      query.set('slippagePercentage', String(q.slippagePercentage));
+    return this.request<SimulateCloseResult>(
+      `/api/v2/markets-v2/${marketOnchainId}/simulate-close-position?${query}`,
+      'Market Simulation',
+    );
+  }
+
+  async simulateOpen(marketOnchainId: number, q: SimulateOpenParams): Promise<SimulateOpenResult> {
+    const query = new URLSearchParams({
+      isPositive: String(q.isPositive),
+      paymentAmount: q.paymentAmount,
+    });
+    if (q.slippagePercentage !== undefined)
+      query.set('slippagePercentage', String(q.slippagePercentage));
+    return this.request<SimulateOpenResult>(
+      `/api/v2/markets-v2/${marketOnchainId}/simulate-open-position?${query}`,
+      'Market Simulation',
+    );
+  }
+
+  /** Withdraw the full balance of a vouch and archive it. */
+  async unvouchV2(input: UnvouchV2Input): Promise<VouchV2Result> {
+    return this.postAuthed<VouchV2Result>(
+      '/api/v2/wallets/privy/vouches-v2/unvouch',
+      input,
+      'Vouch',
+    );
+  }
+
+  async vouchV2(input: VouchV2Input): Promise<VouchV2Result> {
+    return this.postAuthed<VouchV2Result>('/api/v2/wallets/privy/vouches-v2', input, 'Vouch');
+  }
+
+  private async getAuthed<T>(path: string, resourceType: string): Promise<T> {
+    if (!this.apiKey) {
+      throw new AuthRequiredError();
+    }
+
+    return this.request<T>(path, resourceType);
+  }
+
   private log(message: string, data?: unknown): void {
     if (this.debug) {
       console.error(`[DEBUG] ${message}`, data || '');
     }
   }
 
-  private async request<T>(path: string, resourceType?: string, options?: Parameters<typeof fetch>[1]): Promise<T> {
-     const url = `${this.baseUrl}${path}`;
-     const controller = new AbortController();
-     const timeoutId = setTimeout(() => controller.abort(), 10_000);
+  private async postAuthed<T>(path: string, body: unknown, resourceType: string): Promise<T> {
+    if (!this.apiKey) {
+      throw new AuthRequiredError();
+    }
 
-     this.log(`Fetching ${url}`);
+    return this.request<T>(
+      path,
+      resourceType,
+      { body: JSON.stringify(body), method: 'POST' },
+      EchoClient.WRITE_TIMEOUT_MS,
+    );
+  }
 
-      try {
-        const response = await httpFetch(url, {
-          headers: { 
-            'Accept': 'application/json',
-            'X-Ethos-Client': 'ethos-cli',
-            ...(options?.body ? { 'Content-Type': 'application/json' } : {}),
-          },
-          signal: controller.signal,
-          ...options,
-        });
+  private async request<T>(
+    path: string,
+    resourceType?: string,
+    options?: RequestOptions,
+    timeoutMs: number = EchoClient.DEFAULT_TIMEOUT_MS,
+  ): Promise<T> {
+    const url = `${this.baseUrl}${path}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-       this.log(`Response status: ${response.status}`);
+    this.log(`Fetching ${url}`);
 
-        if (!response.ok) {
-          if (response.status === 404) {
-            const identifier = path.split('/').pop() || 'unknown';
-            throw new NotFoundError(resourceType || 'Resource', decodeURIComponent(identifier));
-          }
+    const { headers: optionHeaders, ...restOptions } = options ?? {};
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      'X-Ethos-Client': 'ethos-cli',
+      ...(restOptions.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(this.apiKey ? { 'x-ethos-api-key': this.apiKey } : {}),
+      ...optionHeaders,
+    };
 
-          let errorMessage = `API request failed with status ${response.status}`;
-          let errorBody;
+    try {
+      const response = await httpFetch(url, {
+        headers,
+        signal: controller.signal,
+        ...restOptions,
+      });
 
-          const responseText = await response.text();
-          try {
-            errorBody = JSON.parse(responseText);
-            errorMessage = errorBody.message || errorBody.error || errorMessage;
-          } catch {
-            if (responseText) errorMessage = responseText;
-          }
+      this.log(`Response status: ${response.status}`);
 
-          this.log('API Error', { body: errorBody, status: response.status });
-          throw new APIError(errorMessage, response.status, errorBody);
+      if (!response.ok) {
+        if (response.status === 404) {
+          const identifier = path.split('/').pop() || 'unknown';
+          throw new NotFoundError(resourceType || 'Resource', decodeURIComponent(identifier));
         }
 
-       const data = await response.json() as T;
-       this.log('Response data', data);
-       return data;
-     } catch (error) {
-       if (error instanceof NotFoundError || error instanceof APIError) {
-         throw error;
-       }
+        if (response.status === 401 || response.status === 403) {
+          throw new AuthRequiredError();
+        }
 
-       if (error instanceof Error) {
-         this.log('Network error', error.message);
+        let errorMessage = `API request failed with status ${response.status}`;
+        let errorBody;
 
-         if (error.name === 'AbortError') {
-           throw new NetworkError('Request timed out after 10 seconds', url);
-         }
+        const responseText = await response.text();
+        try {
+          errorBody = JSON.parse(responseText);
+          errorMessage = errorBody.message || errorBody.error || errorMessage;
+        } catch {
+          if (responseText) errorMessage = responseText;
+        }
 
-         if (error.message.includes('fetch failed') ||
-             error.message.includes('ECONNREFUSED') ||
-             error.message.includes('ENOTFOUND')) {
-           throw new NetworkError(`Cannot connect to API at ${this.baseUrl}`, url);
-         }
+        this.log('API Error', { body: errorBody, status: response.status });
+        throw new APIError(errorMessage, response.status, errorBody);
+      }
 
-         throw new NetworkError(error.message, url);
-       }
+      const data = (await response.json()) as T;
+      this.log('Response data', data);
+      return data;
+    } catch (error) {
+      if (
+        error instanceof NotFoundError ||
+        error instanceof APIError ||
+        error instanceof AuthRequiredError
+      ) {
+        throw error;
+      }
 
-       throw error;
-     } finally {
-       clearTimeout(timeoutId);
-     }
-   }
+      if (error instanceof Error) {
+        this.log('Network error', error.message);
+
+        if (error.name === 'AbortError') {
+          throw new NetworkError(`Request timed out after ${timeoutMs / 1000} seconds`, url);
+        }
+
+        if (
+          error.message.includes('fetch failed') ||
+          error.message.includes('ECONNREFUSED') ||
+          error.message.includes('ENOTFOUND')
+        ) {
+          throw new NetworkError(`Cannot connect to API at ${this.baseUrl}`, url);
+        }
+
+        throw new NetworkError(error.message, url);
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
 
   private async resolveEnsUser(ensName: string): Promise<EthosUser> {
     const searchResult = await this.searchUsers(ensName, 5);
-    
-    const exactMatch = searchResult.values.find(u => 
-      u.displayName?.toLowerCase() === ensName.toLowerCase() ||
-      u.username?.toLowerCase() === ensName.toLowerCase()
+
+    const exactMatch = searchResult.values.find(
+      (u) =>
+        u.displayName?.toLowerCase() === ensName.toLowerCase() ||
+        u.username?.toLowerCase() === ensName.toLowerCase(),
     );
-    
+
     if (exactMatch) return exactMatch;
-    
-    const addressMatch = searchResult.values.find(u =>
-      u.userkeys?.some(uk => uk.startsWith('address:'))
+
+    const addressMatch = searchResult.values.find((u) =>
+      u.userkeys?.some((uk) => uk.startsWith('address:')),
     );
-    
+
     if (addressMatch) return addressMatch;
-    
+
     if (searchResult.values.length > 0) {
       return searchResult.values[0];
     }
-    
+
     throw new NotFoundError('User', ensName);
   }
 }
