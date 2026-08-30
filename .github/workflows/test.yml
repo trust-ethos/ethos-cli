@@ -6,6 +6,13 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Least privilege for the automatic GITHUB_TOKEN. Without this block the token
+# inherits the repository default, which may still be read/write for all scopes;
+# every job here only needs to read the checked-out code, so a compromised
+# dependency or build step cannot push commits, publish packages, or edit issues.
+permissions:
+  contents: read
+
 jobs:
   lint-and-typecheck:
     runs-on: ubuntu-latest
@@ -54,9 +61,19 @@ jobs:
         run: docker build -t ethos-local-test -f test/e2e/Dockerfile.local-test test/e2e/
       
       - name: Run update system E2E tests
+        env:
+          # The tarball path is derived from package.json (name/version) inside
+          # the checked-out branch, which on a pull_request run is code from the
+          # contributor's fork. Inline "${{ }}" interpolation is textual
+          # substitution performed before bash parses this script, so a crafted
+          # version string could close the quote and append shell commands.
+          # Passing both values via the environment and quoting them on use
+          # means bash treats them as data, never as syntax.
+          WORKSPACE: ${{ github.workspace }}
+          TARBALL: ${{ steps.find-tarball.outputs.tarball }}
         run: |
           docker run --rm \
-            -v "${{ github.workspace }}/${{ steps.find-tarball.outputs.tarball }}:/tmp/ethos-local.tar.gz:ro" \
-            -v "${{ github.workspace }}/test/e2e/test-update-local.sh:/home/testuser/test-update-local.sh:ro" \
+            -v "$WORKSPACE/$TARBALL:/tmp/ethos-local.tar.gz:ro" \
+            -v "$WORKSPACE/test/e2e/test-update-local.sh:/home/testuser/test-update-local.sh:ro" \
             ethos-local-test \
             bash /home/testuser/test-update-local.sh /tmp/ethos-local.tar.gz
