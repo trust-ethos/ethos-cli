@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import { arch, homedir, platform } from 'node:os';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -37,18 +37,6 @@ export interface GitHubRelease {
   tag_name: string;
 }
 
-/**
- * Hosts that are allowed to serve release tarballs.
- *
- * The download URL reaches us from two places we do not fully control: the GitHub
- * releases API response and the on-disk version cache in ~/.ethos/updates. Either
- * can be tampered with (a spoofed/compromised API response, or any local process
- * that can write to the user's home directory). Because the downloaded archive is
- * extracted and then symlinked as the CLI that the user executes, an attacker who
- * controls the URL controls code execution. Restricting the URL to HTTPS on
- * GitHub's own release-serving hosts is the minimum check that must pass before we
- * hand the value to a child process.
- */
 const TRUSTED_RELEASE_HOSTS = new Set([
   'api.github.com',
   'github.com',
@@ -56,11 +44,6 @@ const TRUSTED_RELEASE_HOSTS = new Set([
   'release-assets.githubusercontent.com',
 ]);
 
-/**
- * Returns true only for an absolute HTTPS URL served by a trusted GitHub host.
- * Plain HTTP is rejected outright: without TLS the archive can be swapped in
- * transit, and we have no checksum to fall back on.
- */
 export function isTrustedReleaseUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
@@ -70,13 +53,6 @@ export function isTrustedReleaseUrl(url: string): boolean {
   }
 }
 
-/**
- * Returns true for a plain semver-ish version string.
- *
- * The version comes from the release tag name and is used to build filesystem
- * paths, so it must not contain path separators, traversal sequences, or shell
- * metacharacters.
- */
 export function isSafeVersionString(version: string): boolean {
   return /^[\w][\w.+-]{0,63}$/.test(version) && !version.includes('..');
 }
@@ -127,7 +103,13 @@ export function refreshEthosBinSymlink(): void {
 function loadCache(): null | VersionCache {
   try {
     if (existsSync(CACHE_FILE)) {
-      return JSON.parse(readFileSync(CACHE_FILE, 'utf8')) as VersionCache;
+      const data = JSON.parse(readFileSync(CACHE_FILE, 'utf8')) as unknown;
+      if (
+        typeof (data as VersionCache)?.checkedAt === 'number' &&
+        typeof (data as VersionCache)?.latestVersion === 'string'
+      ) {
+        return data as VersionCache;
+      }
     }
   } catch {}
 
@@ -159,9 +141,6 @@ export function compareVersions(a: string, b: string): number {
 }
 
 async function fetchLatestRelease(): Promise<GitHubRelease | null> {
-  // This runs on every CLI invocation from the init hook. Without a timeout a
-  // hung or throttled connection keeps the process alive (and the socket open)
-  // long after the user's command has produced its output.
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10_000);
 
@@ -231,17 +210,6 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
   };
 }
 
-/**
- * Source of the detached background updater.
- *
- * All variable data is read from the environment rather than interpolated into
- * this string. Interpolating the download URL or version into the script body
- * would let a single quote character in either value terminate the surrounding
- * string literal and append arbitrary JavaScript, which `node -e` would then
- * execute with the user's privileges. Since the URL originates from the GitHub
- * API response or the local (writable) version cache, that was a real code
- * execution path, not a theoretical one.
- */
 const BACKGROUND_UPDATER_SCRIPT = `
   const https = require('https');
   const fs = require('fs');
@@ -253,9 +221,6 @@ const BACKGROUND_UPDATER_SCRIPT = `
   const pendingFile = process.env.ETHOS_UPDATE_PENDING_FILE;
   const version = process.env.ETHOS_UPDATE_VERSION;
 
-  // Kept in sync with TRUSTED_RELEASE_HOSTS in src/lib/update/index.ts. Redirect
-  // targets must be re-validated: GitHub redirects release downloads to its CDN,
-  // and an attacker-controlled redirect would otherwise bypass the initial check.
   const TRUSTED_HOSTS = new Set([
     'api.github.com',
     'github.com',
@@ -281,8 +246,6 @@ const BACKGROUND_UPDATER_SCRIPT = `
 
     const file = fs.createWriteStream(dest);
 
-    // Always https: isTrusted() has already rejected any other protocol, so an
-    // http:// download (which is tamper-able in transit) can never be reached.
     https.get(current, (response) => {
       if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
         response.resume();
@@ -305,8 +268,6 @@ const BACKGROUND_UPDATER_SCRIPT = `
         file.close();
         try {
           fs.mkdirSync(extractDir, { recursive: true });
-          // execFileSync with an argument array: no shell is involved, so the
-          // paths cannot be reinterpreted as commands.
           execFileSync('tar', ['-xzf', tarball, '-C', extractDir, '--strip-components=1'], { stdio: 'ignore' });
           fs.unlinkSync(tarball);
           fs.writeFileSync(pendingFile, JSON.stringify({ version, path: extractDir }));
@@ -324,8 +285,6 @@ const BACKGROUND_UPDATER_SCRIPT = `
 `;
 
 export function downloadUpdateInBackground(downloadUrl: string, version: string): void {
-  // Fail closed before spawning anything. A rejected URL or version means the
-  // release metadata (or the cache holding it) is not something we should act on.
   if (!isTrustedReleaseUrl(downloadUrl) || !isSafeVersionString(version)) return;
 
   ensureDir(UPDATE_DIR);
@@ -349,16 +308,6 @@ export function downloadUpdateInBackground(downloadUrl: string, version: string)
   child.unref();
 }
 
-/**
- * Returns true when `candidate` resolves to a directory inside VERSIONS_DIR.
- *
- * pending.json lives in the user's home directory and is therefore writable by
- * any process running as the user. `applyPendingUpdate` turns the path it names
- * into the ~/.ethos/current symlink, which is what the `ethos` launcher executes,
- * so an unvalidated path is a straight code-execution primitive. Confining it to
- * the versions directory means only content this updater downloaded and extracted
- * can be promoted to "current".
- */
 function isManagedVersionPath(candidate: string): boolean {
   const resolvedRoot = resolve(VERSIONS_DIR);
   const resolvedCandidate = resolve(candidate);
@@ -386,11 +335,19 @@ export function getPendingUpdate(): null | { path: string; version: string; } {
   return null;
 }
 
+function removeIfPresent(path: string): void {
+  try {
+    lstatSync(path);
+  } catch {
+    return;
+  }
+  rmSync(path, { force: true, recursive: false });
+}
+
 export function applyPendingUpdate(): boolean {
   const pending = getPendingUpdate();
   if (!pending) return false;
   
-  // Check managed install FIRST (bundled node path contains 'node')
   const isManagedInstall = process.execPath.startsWith(ETHOS_HOME);
   if (!isManagedInstall) {
     try { unlinkSync(PENDING_FILE); } catch {}
@@ -398,13 +355,14 @@ export function applyPendingUpdate(): boolean {
   }
   
   try {
-    if (existsSync(CURRENT_LINK)) unlinkSync(CURRENT_LINK);
+    removeIfPresent(CURRENT_LINK);
     symlinkSync(pending.path, CURRENT_LINK);
     refreshEthosBinSymlink();
     unlinkSync(PENDING_FILE);
     cleanupOldVersions(pending.version);
     return true;
   } catch {
+    try { unlinkSync(PENDING_FILE); } catch {}
     return false;
   }
 }
@@ -445,7 +403,6 @@ export interface InstallInfo {
 export function detectInstallMethod(): InstallInfo {
   const {execPath} = process;
   
-  // Check managed install FIRST (curl installer puts binaries in ~/.ethos/)
   if (execPath.startsWith(ETHOS_HOME)) {
     return {
       method: 'curl',
@@ -454,7 +411,6 @@ export function detectInstallMethod(): InstallInfo {
     };
   }
   
-  // Dev mode: running via system node/bun (not bundled)
   if (execPath.includes('bun') || execPath.includes('/node')) {
     return {
       method: 'dev',
