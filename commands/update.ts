@@ -16,11 +16,11 @@ import {
 
 export default class Update extends Command {
   static description = 'Update the CLI to the latest version';
-static examples = [
+  static examples = [
     '<%= config.bin %> <%= command.id %>',
     '<%= config.bin %> <%= command.id %> --force',
   ];
-static flags = {
+  static flags = {
     force: Flags.boolean({ char: 'f', description: 'Force update even if already on latest' }),
   };
 
@@ -77,10 +77,6 @@ static flags = {
       return;
     }
 
-    // The URL comes from the GitHub releases response or the local version cache,
-    // and the version from the release tag. Both end up in a child process
-    // invocation and in filesystem paths, so reject anything that is not an HTTPS
-    // GitHub release URL / plain version string before going any further.
     if (!isTrustedReleaseUrl(downloadUrl)) {
       this.log(pc.red('Refusing to download: release URL is not a trusted HTTPS GitHub URL.'));
       return;
@@ -100,10 +96,6 @@ static flags = {
       const extractDir = join(installPath, 'versions', `v${version}`);
       const currentLink = join(installPath, 'current');
 
-      // execFileSync with an argument array and native fs calls instead of a
-      // single interpolated shell string. Double quotes in a shell command do not
-      // prevent command substitution, so the previous `curl -fsSL "${downloadUrl}"`
-      // executed anything a `$(...)` or backtick sequence in the URL contained.
       execFileSync('curl', ['-fsSL', downloadUrl, '-o', tarball], { stdio: 'inherit' });
       mkdirSync(extractDir, { recursive: true });
       execFileSync('tar', ['-xzf', tarball, '-C', extractDir, '--strip-components=1'], { stdio: 'ignore' });
