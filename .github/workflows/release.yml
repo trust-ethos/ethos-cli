@@ -4,6 +4,17 @@ on:
   push:
     branches: [main]
 
+# Default the automatic GITHUB_TOKEN to read-only for every job in this
+# workflow. Without this block each job inherits the repository/organisation
+# default, which for older repositories is still read/write on all scopes -
+# meaning the "check-version" and "update-homebrew" jobs (which declare no
+# permissions of their own) would run with a token able to push commits, edit
+# releases and mutate issues even though they only need to read code. Jobs that
+# genuinely need more (release, build-binaries, publish-release) keep their own
+# narrower job-level "permissions:" blocks, which override this default.
+permissions:
+  contents: read
+
 jobs:
   check-version:
     runs-on: ubuntu-latest
@@ -72,12 +83,19 @@ jobs:
         env:
           NPM_CONFIG_PROVENANCE: true
           NODE_AUTH_TOKEN: ""
+          # The version string is produced by grep/sed over package.json in a
+          # previous job, so it is data of unverified shape. Passing it through
+          # the environment and quoting it keeps it out of the shell command
+          # that GitHub Actions assembles from this run block: an expression
+          # interpolated inline is substituted before bash parses the script,
+          # so a crafted package.json version could otherwise inject commands.
+          VERSION: ${{ needs.check-version.outputs.version }}
         run: |
           unset NODE_AUTH_TOKEN
           rm -f ~/.npmrc || true
           rm -f "$NPM_CONFIG_USERCONFIG" || true
-          if npm view @trust-ethos/cli@${{ needs.check-version.outputs.version }} > /dev/null 2>&1; then
-            echo "Version ${{ needs.check-version.outputs.version }} already published, skipping"
+          if npm view "@trust-ethos/cli@$VERSION" > /dev/null 2>&1; then
+            echo "Version $VERSION already published, skipping"
           else
             npm publish --access public
           fi
