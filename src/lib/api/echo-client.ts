@@ -20,10 +20,10 @@ export interface EthosUser {
     review: {
       received: { negative: number; neutral: number; positive: number };
     };
-    vouch: {
-      given: { amountWeiTotal: string; count: number };
-      received: { amountWeiTotal: string; count: number };
-    };
+    vouchTotals: Array<{
+      count: { given: number; received: number };
+      token: { id: string };
+    }>;
   };
   status: string;
   userkeys: string[];
@@ -52,17 +52,8 @@ export interface SeasonsResponse {
   seasons: Season[];
 }
 
-export interface ActivityAuthor {
-  avatar: null | string;
-  name: string;
-  profileId: null | number;
-  score: number;
-  userkey: string;
-  username: null | string;
-}
-
 export interface Activity {
-  author: ActivityAuthor;
+  authorUser: EthosUser;
   data: {
     comment?: string;
     id: number;
@@ -70,7 +61,7 @@ export interface Activity {
     score?: 'negative' | 'neutral' | 'positive';
   };
   link: string;
-  subject: ActivityAuthor;
+  subjectUser: EthosUser;
   timestamp: number;
   type: 'review' | 'unvouch' | 'vouch';
 }
@@ -78,8 +69,7 @@ export interface Activity {
 export type ActivityType = 'review' | 'vouch';
 
 export interface Review {
-  author: ActivityAuthor;
-  authorUser?: EthosUser;
+  authorUser: EthosUser;
   data: {
     archived: boolean;
     author: string;
@@ -93,8 +83,7 @@ export interface Review {
   };
   link: string;
   replySummary: { count: number; participated: boolean };
-  subject: ActivityAuthor;
-  subjectUser?: EthosUser;
+  subjectUser: EthosUser;
   timestamp: number;
   type: 'review';
   votes: { downvotes: number; upvotes: number; };

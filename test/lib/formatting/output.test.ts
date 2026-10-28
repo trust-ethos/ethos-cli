@@ -106,10 +106,9 @@ describe('formatUser', () => {
       review: {
         received: { positive: 10, neutral: 2, negative: 1 },
       },
-      vouch: {
-        given: { amountWeiTotal: '1000000000000000000', count: 5 },
-        received: { amountWeiTotal: '2000000000000000000', count: 8 },
-      },
+      vouchTotals: [
+        { count: { given: 5, received: 8 }, token: { id: 'eth' } },
+      ],
     },
   };
 
@@ -233,10 +232,7 @@ describe('formatUser', () => {
       ...baseUser,
       stats: {
         ...baseUser.stats!,
-        vouch: {
-          given: { amountWeiTotal: '0', count: 0 },
-          received: { amountWeiTotal: '0', count: 0 },
-        },
+        vouchTotals: [],
       },
     };
     const result = formatUser(userNoVouches);
@@ -523,21 +519,35 @@ describe('formatActivities', () => {
       score: 'positive',
       metadata: JSON.stringify({ description: 'Test metadata' }),
     },
-    author: {
-      userkey: 'twitter:author',
+    authorUser: {
+      avatarUrl: null,
+      description: null,
+      displayName: 'Author Name',
+      id: 1,
+      influenceFactor: 1,
+      influenceFactorPercentile: 50,
       profileId: 1,
-      name: 'Author Name',
-      username: 'author',
-      avatar: null,
       score: 100,
+      status: 'ACTIVE',
+      userkeys: ['service:x.com:username:author'],
+      username: 'author',
+      xpStreakDays: 0,
+      xpTotal: 0,
     },
-    subject: {
-      userkey: 'twitter:subject',
+    subjectUser: {
+      avatarUrl: null,
+      description: null,
+      displayName: 'Subject Name',
+      id: 2,
+      influenceFactor: 1,
+      influenceFactorPercentile: 50,
       profileId: 2,
-      name: 'Subject Name',
-      username: 'subject',
-      avatar: null,
       score: 200,
+      status: 'ACTIVE',
+      userkeys: ['service:x.com:username:subject'],
+      username: 'subject',
+      xpStreakDays: 0,
+      xpTotal: 0,
     },
     link: 'https://ethos.network/activity/1',
   };
@@ -673,19 +683,19 @@ describe('formatActivities', () => {
     expect(result).toContain('Review');
   });
 
-  test('uses author name when username not available', () => {
+  test('uses author display name when username not available', () => {
     const activity = {
       ...baseActivity,
-      author: { ...baseActivity.author, username: null },
+      authorUser: { ...baseActivity.authorUser, username: null },
     };
     const result = formatActivities([activity]);
     expect(result).toContain('Author Name');
   });
 
-  test('uses subject name when username not available', () => {
+  test('uses subject display name when username not available', () => {
     const activity = {
       ...baseActivity,
-      subject: { ...baseActivity.subject, username: null },
+      subjectUser: { ...baseActivity.subjectUser, username: null },
     };
     const result = formatActivities([activity]);
     expect(result).toContain('Subject Name');
