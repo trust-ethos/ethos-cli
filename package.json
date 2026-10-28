@@ -64,6 +64,9 @@
     ],
     "topicSeparator": " ",
     "topics": {
+      "auth": {
+        "description": "Authenticate with Ethos (login, logout, status)"
+      },
       "auction": {
         "description": "Query validator NFT auctions"
       },
