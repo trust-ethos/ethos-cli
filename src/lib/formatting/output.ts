@@ -6,6 +6,20 @@ export function output<T>(data: T): string {
   return JSON.stringify(data, null, 2);
 }
 
+export function formatUserName(user: Pick<EthosUser, 'displayName' | 'username'>): string {
+  return user.username ? `@${user.username}` : user.displayName;
+}
+
+export function sumVouchCounts(stats: NonNullable<EthosUser['stats']>): { given: number; received: number } {
+  const totals = { given: 0, received: 0 };
+  for (const { count } of stats.vouchTotals ?? []) {
+    totals.given += count.given;
+    totals.received += count.received;
+  }
+
+  return totals;
+}
+
 function pluralize(count: number, singular: string, plural?: string): string {
   return count === 1 ? singular : (plural || `${singular}s`);
 }
@@ -55,9 +69,9 @@ export function formatUser(user: EthosUser): string {
       lines.push(`${pc.dim('Reviews Received:')} ${pc.green(`${reviews.positive} positive`)}, ${reviews.neutral} neutral, ${pc.red(`${reviews.negative} negative`)}`);
     }
 
-    const vouches = user.stats.vouch;
-    if (vouches.received.count > 0 || vouches.given.count > 0) {
-      lines.push(`${pc.dim('Vouches:')} ${vouches.received.count} received, ${vouches.given.count} given`);
+    const vouches = sumVouchCounts(user.stats);
+    if (vouches.received > 0 || vouches.given > 0) {
+      lines.push(`${pc.dim('Vouches:')} ${vouches.received} received, ${vouches.given} given`);
     }
   }
 
@@ -227,8 +241,8 @@ export function formatActivities(activities: Activity[], username?: string): str
     
     lines.push(`${typeIcon} ${pc.bold(typeLabel)} ${pc.dim(`• ${date}`)}`);
     
-    const authorName = activity.author.username ? `@${activity.author.username}` : activity.author.name;
-    const subjectName = activity.subject.username ? `@${activity.subject.username}` : activity.subject.name;
+    const authorName = formatUserName(activity.authorUser);
+    const subjectName = formatUserName(activity.subjectUser);
     lines.push(`   ${pc.dim('From:')} ${authorName} ${pc.dim('→')} ${subjectName}`);
     
     if (activity.data.comment) {
@@ -316,8 +330,8 @@ export function formatReview(review: Review): string {
   const scoreColor = REVIEW_SCORE_COLORS[score] || pc.white;
   const scoreIcon = REVIEW_SCORE_ICONS[score] || '📝';
   
-  const authorName = review.author?.username ? `@${review.author.username}` : review.author?.name || `Profile #${review.data.authorProfileId}`;
-  const subjectName = review.subject?.username ? `@${review.subject.username}` : review.subject?.name || review.data.subject;
+  const authorName = formatUserName(review.authorUser) || `Profile #${review.data.authorProfileId}`;
+  const subjectName = formatUserName(review.subjectUser) || review.data.subject;
   
   const lines = [
     pc.bold(`${scoreIcon} Review #${review.data.id}`),
@@ -361,8 +375,8 @@ export function formatReviews(activities: Activity[], total?: number): string {
     const scoreColor = REVIEW_SCORE_COLORS[score] || pc.white;
     const scoreIcon = REVIEW_SCORE_ICONS[score] || '📝';
     
-    const authorName = r.author?.username ? `@${r.author.username}` : r.author?.name || 'Unknown';
-    const subjectName = r.subject?.username ? `@${r.subject.username}` : r.subject?.name || 'Unknown';
+    const authorName = formatUserName(r.authorUser) || 'Unknown';
+    const subjectName = formatUserName(r.subjectUser) || 'Unknown';
     const date = new Date(r.timestamp * 1000).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 
     lines.push(`${scoreIcon} ${pc.bold('#' + r.data.id)} ${authorName} → ${subjectName} ${scoreColor(`[${score.toUpperCase()}]`)}`);

@@ -2,7 +2,7 @@ import { Args } from '@oclif/core';
 import pc from 'picocolors';
 
 import { BaseCommand } from '../../lib/base-command.js';
-import { output } from '../../lib/formatting/output.js';
+import { formatUserName, output, sumVouchCounts } from '../../lib/formatting/output.js';
 
 type ScoreLevel = 'exemplary' | 'neutral' | 'questionable' | 'reputable' | 'untrusted';
 
@@ -90,16 +90,16 @@ static flags = {
           lines.push(`${pc.dim('Reviews:')} ${pc.green(`+${reviews.positive}`)} / ${reviews.neutral} / ${pc.red(`-${reviews.negative}`)}`);
         }
 
-        const vouches = user.stats.vouch;
-        lines.push(`${pc.dim('Vouches:')} ${vouches.received.count} received, ${vouches.given.count} given`);
+        const vouches = sumVouchCounts(user.stats);
+        lines.push(`${pc.dim('Vouches:')} ${vouches.received} received, ${vouches.given} given`);
       }
 
       if (activities.length > 0) {
         lines.push('', pc.bold('Recent Activity'));
         for (const activity of activities.slice(0, 5)) {
           const typeIcon = activity.type === 'vouch' ? '🤝' : activity.type === 'review' ? '📝' : '❌';
-          const authorName = activity.author.username ? `@${activity.author.username}` : activity.author.name;
-          const subjectName = activity.subject.username ? `@${activity.subject.username}` : activity.subject.name;
+          const authorName = formatUserName(activity.authorUser);
+          const subjectName = formatUserName(activity.subjectUser);
           const date = new Date(activity.timestamp * 1000).toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
           lines.push(`  ${typeIcon} ${authorName} → ${subjectName} ${pc.dim(`(${date})`)}`);
         }

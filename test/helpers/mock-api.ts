@@ -23,10 +23,9 @@ export const mockUser: EthosUser = {
     review: {
       received: { negative: 2, neutral: 3, positive: 10 },
     },
-    vouch: {
-      given: { amountWeiTotal: '1000000000000000000', count: 5 },
-      received: { amountWeiTotal: '2000000000000000000', count: 8 },
-    },
+    vouchTotals: [
+      { count: { given: 5, received: 8 }, token: { id: 'eth' } },
+    ],
   },
 };
 
@@ -65,20 +64,13 @@ export const mockActivities: Activity[] = [
       comment: 'Great work!',
       score: 'positive',
     },
-    author: {
-      userkey: 'address:0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
-      profileId: 456,
-      name: 'Test User',
-      username: 'testuser',
-      avatar: 'https://example.com/avatar.png',
-      score: 1500,
-    },
-    subject: {
-      userkey: 'address:0x1234567890123456789012345678901234567890',
+    authorUser: mockUser,
+    subjectUser: {
+      ...mockUser,
+      id: 789,
       profileId: 789,
-      name: 'Another User',
+      displayName: 'Another User',
       username: 'anotheruser',
-      avatar: 'https://example.com/avatar2.png',
       score: 2000,
     },
     link: 'https://ethos.network/review/1',
