@@ -548,6 +548,14 @@ export interface EchoClientOptions {
   apiUrl?: string;
 }
 
+/**
+ * Whether echo refused the key itself: 401 when it is invalid, expired or revoked, and 404 from
+ * `/api-keys/me` when it was revoked between auth and the read.
+ */
+export function isRejectedApiKey(error: unknown): boolean {
+  return error instanceof APIError && (error.statusCode === 401 || error.statusCode === 404);
+}
+
 function apiKeyHeader(apiKey: string): Record<string, string> {
   return { 'X-Ethos-Api-Key': apiKey };
 }
@@ -589,7 +597,7 @@ export class EchoClient {
 
   /** Looks up the key it is called with. Only the API-key calls send the key, public reads never do. */
   async getApiKeyMe(apiKey: string): Promise<ApiKeyInfo> {
-    return this.request<ApiKeyInfo>('/api/v2/api-keys/me', 'API key', { headers: apiKeyHeader(apiKey) });
+    return this.apiKeyRequest<ApiKeyInfo>({ headers: apiKeyHeader(apiKey) });
   }
 
   async getAuction(auctionId: number): Promise<Auction> {
@@ -888,15 +896,25 @@ export class EchoClient {
 
   /** Revokes the key it is called with. */
   async revokeApiKeyMe(apiKey: string): Promise<{ ok: boolean }> {
-    return this.request<{ ok: boolean }>('/api/v2/api-keys/me', 'API key', {
-      headers: apiKeyHeader(apiKey),
-      method: 'DELETE',
-    });
+    return this.apiKeyRequest<{ ok: boolean }>({ headers: apiKeyHeader(apiKey), method: 'DELETE' });
   }
 
   async searchUsers(query: string, limit = 10): Promise<SearchResult> {
     const params = new URLSearchParams({ limit: String(limit), query });
     return this.request<SearchResult>(`/api/v2/users/search?${params}`, 'Users');
+  }
+
+  /** `request` for `/api-keys/me`, whose 404 is about the key, not a user to search for. */
+  private async apiKeyRequest<T>(options: Parameters<typeof fetch>[1]): Promise<T> {
+    try {
+      return await this.request<T>('/api/v2/api-keys/me', 'API key', options);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw new APIError('This API key was revoked or has expired.', 404);
+      }
+
+      throw error;
+    }
   }
 
   private log(message: string, data?: unknown): void {

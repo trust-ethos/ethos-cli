@@ -63,14 +63,17 @@ describe('whoami', () => {
     expect(api.calls).toHaveLength(0);
   });
 
-  test('says the key is no longer valid on a 401', async () => {
-    saveCredential(API_URL, { ...keyInfo, token: 'file-key' });
-    meStatus = 401;
+  for (const status of [401, 404]) {
+    test(`says the key is no longer valid on a ${status}`, async () => {
+      saveCredential(API_URL, { ...keyInfo, token: 'file-key' });
+      meStatus = status;
 
-    const { error } = await runCommand(['whoami']);
+      const { error } = await runCommand(['whoami']);
 
-    expect(log.text()).toContain('no longer valid');
-    expect(log.text()).toContain('ethos login');
-    expect(error?.oclif?.exit).toBe(1);
-  });
+      expect(log.text()).toContain('no longer valid');
+      expect(log.text()).toContain('ethos login');
+      expect(log.text()).not.toContain('user search');
+      expect(error?.oclif?.exit).toBe(1);
+    });
+  }
 });

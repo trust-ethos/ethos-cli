@@ -6,10 +6,10 @@ import { CLIError } from '../errors/cli-error.js';
 const MAX_BODY_BYTES = 16 * 1024;
 
 const SUCCESS_PAGE = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Signed in</title></head>
+<html lang="en"><head><meta charset="utf-8"><title>Key sent</title></head>
 <body style="font-family: system-ui, sans-serif; text-align: center; margin-top: 20vh">
-<h1>You’re signed in</h1>
-<p>Your terminal is signed in to Ethos. You can close this tab.</p>
+<h1>Key sent to your terminal</h1>
+<p>Your terminal checks the key and says whether you’re signed in. You can close this tab.</p>
 </body></html>`;
 
 export interface CallbackServer {

@@ -2,9 +2,9 @@ import { password } from '@inquirer/prompts';
 import { randomBytes } from 'node:crypto';
 import { hostname } from 'node:os';
 
-import { EchoClient } from '../api/echo-client.js';
+import { EchoClient, isRejectedApiKey } from '../api/echo-client.js';
 import { getStoredCredential, normalizeApiUrl, saveCredential } from '../config/credentials.js';
-import { APIError, CLIError } from '../errors/cli-error.js';
+import { CLIError } from '../errors/cli-error.js';
 import { startCallbackServer } from './callback-server.js';
 import { openUrl } from './open-url.js';
 import { buildLoginUrl, getWebUrl } from './web-url.js';
@@ -28,7 +28,7 @@ export async function runLogin(options: LoginOptions): Promise<void> {
   try {
     info = await client.getApiKeyMe(token);
   } catch (error) {
-    if (error instanceof APIError && error.statusCode === 401) {
+    if (isRejectedApiKey(error)) {
       throw new CLIError('That key isn’t valid, or it has expired or been revoked.', 'INVALID_KEY', [
         'Run: ethos login',
       ]);

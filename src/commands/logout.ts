@@ -1,9 +1,8 @@
 import { Command, Flags } from '@oclif/core';
 
-import { EchoClient } from '../lib/api/echo-client.js';
+import { EchoClient, isRejectedApiKey } from '../lib/api/echo-client.js';
 import { deleteCredential, getStoredCredential } from '../lib/config/credentials.js';
 import { loadConfig } from '../lib/config/index.js';
-import { APIError } from '../lib/errors/cli-error.js';
 import { formatError } from '../lib/formatting/error.js';
 
 export default class Logout extends Command {
@@ -35,7 +34,7 @@ static flags = {
     } catch (error) {
       if (!(error instanceof Error)) throw error;
       // The key is already invalid, expired or revoked, so only the local copy is left to remove.
-      if (error instanceof APIError && error.statusCode === 401) alreadyInvalid = true;
+      if (isRejectedApiKey(error)) alreadyInvalid = true;
       else failure = error;
     }
 
