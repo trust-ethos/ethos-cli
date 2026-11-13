@@ -8,15 +8,19 @@ export interface EthosConfig {
   apiUrl: string;
 }
 
-const CONFIG_PATH = join(homedir(), '.config', 'ethos', 'config.json');
+// Resolved on each call, and ETHOS_CONFIG_DIR moves the directory, so tests never touch the real one.
+function configPath(): string {
+  const dir = process.env.ETHOS_CONFIG_DIR || join(homedir(), '.config', 'ethos');
+  return join(dir, 'config.json');
+}
 
 export function loadConfig(): EthosConfig {
-  if (!existsSync(CONFIG_PATH)) {
+  if (!existsSync(configPath())) {
     return { apiUrl: DEFAULT_API_URL };
   }
 
   try {
-    const content = readFileSync(CONFIG_PATH, 'utf8');
+    const content = readFileSync(configPath(), 'utf8');
     const parsed = JSON.parse(content);
     return { 
       apiUrl: parsed.apiUrl || DEFAULT_API_URL,
@@ -30,14 +34,14 @@ export function saveConfig(config: Partial<EthosConfig>): void {
   const current = loadConfig();
   const updated = { ...current, ...config };
   
-  const dir = dirname(CONFIG_PATH);
+  const dir = dirname(configPath());
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
   }
   
-  writeFileSync(CONFIG_PATH, JSON.stringify(updated, null, 2) + '\n');
+  writeFileSync(configPath(), JSON.stringify(updated, null, 2) + '\n');
 }
 
 export function getConfigPath(): string {
-  return CONFIG_PATH;
+  return configPath();
 }

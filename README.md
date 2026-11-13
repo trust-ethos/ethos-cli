@@ -105,6 +105,20 @@ ethos xp rank 0xNowater
 ethos xp rank vitalik.eth --json
 ```
 
+### Account Commands
+
+**Sign in, check who you are, sign out**
+
+```bash
+ethos login                            # Opens your browser, stores an API key
+ethos login --no-browser               # Prints the page to open, then paste the key
+ethos whoami                           # Profile, scopes, expiry and where the key comes from
+ethos whoami --json
+ethos logout                           # Revokes the stored key and removes it
+```
+
+Keys are stored per API in `~/.config/ethos/credentials.json` (mode 0600). Set `ETHOS_API_KEY` to use a key without storing it; it takes precedence over the stored one.
+
 ## Identifier Formats
 
 The CLI intelligently detects identifier types:
@@ -248,7 +262,7 @@ $ npm install -g @trust-ethos/cli
 $ ethos COMMAND
 running command...
 $ ethos (--version)
-@trust-ethos/cli/0.0.16 darwin-arm64 node-v22.22.0
+@trust-ethos/cli/0.0.19 darwin-arm64 node-v24.22.3
 $ ethos --help [COMMAND]
 USAGE
   $ ethos COMMAND
@@ -270,6 +284,8 @@ USAGE
 * [`ethos listing info IDENTIFIER`](#ethos-listing-info-identifier)
 * [`ethos listing list`](#ethos-listing-list)
 * [`ethos listing voters PROJECTID`](#ethos-listing-voters-projectid)
+* [`ethos login`](#ethos-login)
+* [`ethos logout`](#ethos-logout)
 * [`ethos market featured`](#ethos-market-featured)
 * [`ethos market holders IDENTIFIER`](#ethos-market-holders-identifier)
 * [`ethos market info IDENTIFIER`](#ethos-market-info-identifier)
@@ -290,13 +306,11 @@ USAGE
 * [`ethos slash votes ID`](#ethos-slash-votes-id)
 * [`ethos u IDENTIFIER`](#ethos-u-identifier)
 * [`ethos ui IDENTIFIER`](#ethos-ui-identifier)
-* [`ethos up IDENTIFIER`](#ethos-up-identifier)
 * [`ethos update`](#ethos-update)
 * [`ethos us IDENTIFIER`](#ethos-us-identifier)
 * [`ethos user activity IDENTIFIER`](#ethos-user-activity-identifier)
 * [`ethos user info IDENTIFIER`](#ethos-user-info-identifier)
 * [`ethos user invitations IDENTIFIER`](#ethos-user-invitations-identifier)
-* [`ethos user profile IDENTIFIER`](#ethos-user-profile-identifier)
 * [`ethos user search QUERY`](#ethos-user-search-query)
 * [`ethos user summary IDENTIFIER`](#ethos-user-summary-identifier)
 * [`ethos validator info TOKENID`](#ethos-validator-info-tokenid)
@@ -308,6 +322,7 @@ USAGE
 * [`ethos vouch list [IDENTIFIER]`](#ethos-vouch-list-identifier)
 * [`ethos vouch mutual TARGET VIEWER`](#ethos-vouch-mutual-target-viewer)
 * [`ethos vouch votes ID`](#ethos-vouch-votes-id)
+* [`ethos whoami`](#ethos-whoami)
 * [`ethos xp rank IDENTIFIER`](#ethos-xp-rank-identifier)
 * [`ethos xp seasons`](#ethos-xp-seasons)
 
@@ -332,7 +347,7 @@ EXAMPLES
   $ ethos auction active --json
 ```
 
-_See code: [src/commands/auction/active.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/auction/active.ts)_
+_See code: [src/commands/auction/active.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/auction/active.ts)_
 
 ## `ethos auction info ID`
 
@@ -358,7 +373,7 @@ EXAMPLES
   $ ethos auction info 1 --json
 ```
 
-_See code: [src/commands/auction/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/auction/info.ts)_
+_See code: [src/commands/auction/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/auction/info.ts)_
 
 ## `ethos auction list`
 
@@ -387,7 +402,7 @@ EXAMPLES
   $ ethos auction list --json
 ```
 
-_See code: [src/commands/auction/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/auction/list.ts)_
+_See code: [src/commands/auction/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/auction/list.ts)_
 
 ## `ethos autocomplete [SHELL]`
 
@@ -444,7 +459,7 @@ EXAMPLES
   $ ethos broker info 123 --json
 ```
 
-_See code: [src/commands/broker/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/broker/info.ts)_
+_See code: [src/commands/broker/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/broker/info.ts)_
 
 ## `ethos broker list`
 
@@ -479,7 +494,7 @@ EXAMPLES
   $ ethos broker list --type sell --limit 5 --json
 ```
 
-_See code: [src/commands/broker/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/broker/list.ts)_
+_See code: [src/commands/broker/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/broker/list.ts)_
 
 ## `ethos config get`
 
@@ -501,7 +516,7 @@ EXAMPLES
   $ ethos config get --json
 ```
 
-_See code: [src/commands/config/get.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/config/get.ts)_
+_See code: [src/commands/config/get.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/config/get.ts)_
 
 ## `ethos config path`
 
@@ -518,7 +533,7 @@ EXAMPLES
   $ ethos config path
 ```
 
-_See code: [src/commands/config/path.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/config/path.ts)_
+_See code: [src/commands/config/path.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/config/path.ts)_
 
 ## `ethos config set VALUE`
 
@@ -540,7 +555,7 @@ EXAMPLES
   $ ethos config set apiUrl=https://api.dev.ethos.network
 ```
 
-_See code: [src/commands/config/set.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/config/set.ts)_
+_See code: [src/commands/config/set.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/config/set.ts)_
 
 ## `ethos find QUERY`
 
@@ -620,7 +635,7 @@ EXAMPLES
   $ ethos listing info uniswap --json
 ```
 
-_See code: [src/commands/listing/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/listing/info.ts)_
+_See code: [src/commands/listing/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/listing/info.ts)_
 
 ## `ethos listing list`
 
@@ -649,7 +664,7 @@ EXAMPLES
   $ ethos listing list --limit 20 --json
 ```
 
-_See code: [src/commands/listing/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/listing/list.ts)_
+_See code: [src/commands/listing/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/listing/list.ts)_
 
 ## `ethos listing voters PROJECTID`
 
@@ -681,7 +696,53 @@ EXAMPLES
   $ ethos listing voters 123 --limit 20 --json
 ```
 
-_See code: [src/commands/listing/voters.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/listing/voters.ts)_
+_See code: [src/commands/listing/voters.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/listing/voters.ts)_
+
+## `ethos login`
+
+Sign in to Ethos and store an API key for this machine
+
+```
+USAGE
+  $ ethos login [--no-browser] [--timeout <value>] [-v]
+
+FLAGS
+  -v, --verbose          Show detailed error information
+      --no-browser       Print the sign-in page instead of opening it, then paste the key it shows
+      --timeout=<value>  [default: 300] Seconds to wait for the browser to finish signing in
+
+DESCRIPTION
+  Sign in to Ethos and store an API key for this machine
+
+EXAMPLES
+  $ ethos login
+
+  $ ethos login --no-browser
+
+  $ ethos login --timeout 600
+```
+
+_See code: [src/commands/login.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/login.ts)_
+
+## `ethos logout`
+
+Revoke the stored API key and remove it from this machine
+
+```
+USAGE
+  $ ethos logout [-v]
+
+FLAGS
+  -v, --verbose  Show detailed error information
+
+DESCRIPTION
+  Revoke the stored API key and remove it from this machine
+
+EXAMPLES
+  $ ethos logout
+```
+
+_See code: [src/commands/logout.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/logout.ts)_
 
 ## `ethos market featured`
 
@@ -704,7 +765,7 @@ EXAMPLES
   $ ethos market featured --json
 ```
 
-_See code: [src/commands/market/featured.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/market/featured.ts)_
+_See code: [src/commands/market/featured.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/market/featured.ts)_
 
 ## `ethos market holders IDENTIFIER`
 
@@ -733,7 +794,7 @@ EXAMPLES
   $ ethos market holders vitalik.eth --json
 ```
 
-_See code: [src/commands/market/holders.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/market/holders.ts)_
+_See code: [src/commands/market/holders.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/market/holders.ts)_
 
 ## `ethos market info IDENTIFIER`
 
@@ -764,7 +825,7 @@ EXAMPLES
   $ ethos market info vitalik --json
 ```
 
-_See code: [src/commands/market/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/market/info.ts)_
+_See code: [src/commands/market/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/market/info.ts)_
 
 ## `ethos market list`
 
@@ -800,7 +861,7 @@ EXAMPLES
   $ ethos market list --search "vitalik" --json
 ```
 
-_See code: [src/commands/market/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/market/list.ts)_
+_See code: [src/commands/market/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/market/list.ts)_
 
 ## `ethos mi IDENTIFIER`
 
@@ -893,7 +954,7 @@ EXAMPLES
   $ ethos nft list vitalik.eth --json
 ```
 
-_See code: [src/commands/nft/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/nft/list.ts)_
+_See code: [src/commands/nft/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/nft/list.ts)_
 
 ## `ethos rank IDENTIFIER`
 
@@ -952,7 +1013,7 @@ EXAMPLES
   $ ethos review info 1139 --json
 ```
 
-_See code: [src/commands/review/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/review/info.ts)_
+_See code: [src/commands/review/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/review/info.ts)_
 
 ## `ethos review list IDENTIFIER`
 
@@ -985,7 +1046,7 @@ EXAMPLES
   $ ethos review list vitalik.eth --json
 ```
 
-_See code: [src/commands/review/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/review/list.ts)_
+_See code: [src/commands/review/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/review/list.ts)_
 
 ## `ethos review votes ID`
 
@@ -1020,7 +1081,7 @@ EXAMPLES
   $ ethos review votes 123 --json
 ```
 
-_See code: [src/commands/review/votes.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/review/votes.ts)_
+_See code: [src/commands/review/votes.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/review/votes.ts)_
 
 ## `ethos ri ID`
 
@@ -1106,7 +1167,7 @@ EXAMPLES
   $ ethos score status 0xNowater --json
 ```
 
-_See code: [src/commands/score/status.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/score/status.ts)_
+_See code: [src/commands/score/status.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/score/status.ts)_
 
 ## `ethos skill install`
 
@@ -1128,7 +1189,7 @@ EXAMPLES
   $ ethos skill install --yes
 ```
 
-_See code: [src/commands/skill/install.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/skill/install.ts)_
+_See code: [src/commands/skill/install.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/skill/install.ts)_
 
 ## `ethos slash info ID`
 
@@ -1154,7 +1215,7 @@ EXAMPLES
   $ ethos slash info 123 --json
 ```
 
-_See code: [src/commands/slash/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/slash/info.ts)_
+_See code: [src/commands/slash/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/slash/info.ts)_
 
 ## `ethos slash list`
 
@@ -1188,7 +1249,7 @@ EXAMPLES
   $ ethos slash list --limit 5 --json
 ```
 
-_See code: [src/commands/slash/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/slash/list.ts)_
+_See code: [src/commands/slash/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/slash/list.ts)_
 
 ## `ethos slash votes ID`
 
@@ -1223,7 +1284,7 @@ EXAMPLES
   $ ethos slash votes 195 --json
 ```
 
-_See code: [src/commands/slash/votes.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/slash/votes.ts)_
+_See code: [src/commands/slash/votes.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/slash/votes.ts)_
 
 ## `ethos u IDENTIFIER`
 
@@ -1289,35 +1350,6 @@ EXAMPLES
   $ ethos ui 0xNowater --json
 ```
 
-## `ethos up IDENTIFIER`
-
-Display rich user profile dashboard with score history and activity
-
-```
-USAGE
-  $ ethos up IDENTIFIER [-j] [-v]
-
-ARGUMENTS
-  IDENTIFIER  Twitter username, ETH address, or ENS name
-
-FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
-
-DESCRIPTION
-  Display rich user profile dashboard with score history and activity
-
-ALIASES
-  $ ethos up
-
-EXAMPLES
-  $ ethos up 0xNowater
-
-  $ ethos up vitalik.eth
-
-  $ ethos up 0xNowater --json
-```
-
 ## `ethos update`
 
 Update the CLI to the latest version
@@ -1338,7 +1370,7 @@ EXAMPLES
   $ ethos update --force
 ```
 
-_See code: [src/commands/update.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/update.ts)_
+_See code: [src/commands/update.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/update.ts)_
 
 ## `ethos us IDENTIFIER`
 
@@ -1400,7 +1432,7 @@ EXAMPLES
   $ ethos user activity 0xNowater --json
 ```
 
-_See code: [src/commands/user/activity.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/user/activity.ts)_
+_See code: [src/commands/user/activity.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/user/activity.ts)_
 
 ## `ethos user info IDENTIFIER`
 
@@ -1434,7 +1466,7 @@ EXAMPLES
   $ ethos user info 0xNowater --json
 ```
 
-_See code: [src/commands/user/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/user/info.ts)_
+_See code: [src/commands/user/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/user/info.ts)_
 
 ## `ethos user invitations IDENTIFIER`
 
@@ -1466,38 +1498,7 @@ EXAMPLES
   $ ethos user invitations vitalik.eth --json
 ```
 
-_See code: [src/commands/user/invitations.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/user/invitations.ts)_
-
-## `ethos user profile IDENTIFIER`
-
-Display rich user profile dashboard with score history and activity
-
-```
-USAGE
-  $ ethos user profile IDENTIFIER [-j] [-v]
-
-ARGUMENTS
-  IDENTIFIER  Twitter username, ETH address, or ENS name
-
-FLAGS
-  -j, --json     Output as JSON
-  -v, --verbose  Show detailed error information
-
-DESCRIPTION
-  Display rich user profile dashboard with score history and activity
-
-ALIASES
-  $ ethos up
-
-EXAMPLES
-  $ ethos user profile 0xNowater
-
-  $ ethos user profile vitalik.eth
-
-  $ ethos user profile 0xNowater --json
-```
-
-_See code: [src/commands/user/profile.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/user/profile.ts)_
+_See code: [src/commands/user/invitations.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/user/invitations.ts)_
 
 ## `ethos user search QUERY`
 
@@ -1531,7 +1532,7 @@ EXAMPLES
   $ ethos user search web3 --limit 5
 ```
 
-_See code: [src/commands/user/search.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/user/search.ts)_
+_See code: [src/commands/user/search.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/user/search.ts)_
 
 ## `ethos user summary IDENTIFIER`
 
@@ -1562,7 +1563,7 @@ EXAMPLES
   $ ethos user summary vitalik.eth --json
 ```
 
-_See code: [src/commands/user/summary.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/user/summary.ts)_
+_See code: [src/commands/user/summary.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/user/summary.ts)_
 
 ## `ethos validator info TOKENID`
 
@@ -1588,7 +1589,7 @@ EXAMPLES
   $ ethos validator info 42 --json
 ```
 
-_See code: [src/commands/validator/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/validator/info.ts)_
+_See code: [src/commands/validator/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/validator/info.ts)_
 
 ## `ethos validator list`
 
@@ -1618,7 +1619,7 @@ EXAMPLES
   $ ethos validator list --json
 ```
 
-_See code: [src/commands/validator/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/validator/list.ts)_
+_See code: [src/commands/validator/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/validator/list.ts)_
 
 ## `ethos validator sales`
 
@@ -1643,7 +1644,7 @@ EXAMPLES
   $ ethos validator sales --limit 20 --json
 ```
 
-_See code: [src/commands/validator/sales.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/validator/sales.ts)_
+_See code: [src/commands/validator/sales.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/validator/sales.ts)_
 
 ## `ethos vi ID`
 
@@ -1736,7 +1737,7 @@ EXAMPLES
   $ ethos vouch info 123 --json
 ```
 
-_See code: [src/commands/vouch/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/vouch/info.ts)_
+_See code: [src/commands/vouch/info.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/vouch/info.ts)_
 
 ## `ethos vouch list [IDENTIFIER]`
 
@@ -1775,7 +1776,7 @@ EXAMPLES
   $ ethos vouch list --limit 20 --json
 ```
 
-_See code: [src/commands/vouch/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/vouch/list.ts)_
+_See code: [src/commands/vouch/list.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/vouch/list.ts)_
 
 ## `ethos vouch mutual TARGET VIEWER`
 
@@ -1805,7 +1806,7 @@ EXAMPLES
   $ ethos vouch mutual 0xNowater VitalikButerin --json
 ```
 
-_See code: [src/commands/vouch/mutual.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/vouch/mutual.ts)_
+_See code: [src/commands/vouch/mutual.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/vouch/mutual.ts)_
 
 ## `ethos vouch votes ID`
 
@@ -1840,7 +1841,30 @@ EXAMPLES
   $ ethos vouch votes 182 --json
 ```
 
-_See code: [src/commands/vouch/votes.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/vouch/votes.ts)_
+_See code: [src/commands/vouch/votes.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/vouch/votes.ts)_
+
+## `ethos whoami`
+
+Show the profile and API key this CLI is signed in with
+
+```
+USAGE
+  $ ethos whoami [-j] [-v]
+
+FLAGS
+  -j, --json     Output as JSON
+  -v, --verbose  Show detailed error information
+
+DESCRIPTION
+  Show the profile and API key this CLI is signed in with
+
+EXAMPLES
+  $ ethos whoami
+
+  $ ethos whoami --json
+```
+
+_See code: [src/commands/whoami.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/whoami.ts)_
 
 ## `ethos xp rank IDENTIFIER`
 
@@ -1872,7 +1896,7 @@ EXAMPLES
   $ ethos xp rank 0xNowater --json
 ```
 
-_See code: [src/commands/xp/rank.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/xp/rank.ts)_
+_See code: [src/commands/xp/rank.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/xp/rank.ts)_
 
 ## `ethos xp seasons`
 
@@ -1895,5 +1919,5 @@ EXAMPLES
   $ ethos xp seasons --json
 ```
 
-_See code: [src/commands/xp/seasons.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.16/src/commands/xp/seasons.ts)_
+_See code: [src/commands/xp/seasons.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/xp/seasons.ts)_
 <!-- commandsstop -->
