@@ -532,13 +532,33 @@ export interface VoteStats {
   };
 }
 
+export interface ApiKeyInfo {
+  address: string;
+  createdAt: string;
+  expiresAt: string;
+  id: number;
+  lastUsedAt: null | string;
+  name: string;
+  profileId: number;
+  scopes: string[];
+}
+
+export interface EchoClientOptions {
+  /** Overrides the API URL from the config file. */
+  apiUrl?: string;
+}
+
+function apiKeyHeader(apiKey: string): Record<string, string> {
+  return { 'X-Ethos-Api-Key': apiKey };
+}
+
 export class EchoClient {
   private baseUrl: string;
   private debug: boolean;
 
-  constructor() {
+  constructor(options: EchoClientOptions = {}) {
     const config = loadConfig();
-    this.baseUrl = config.apiUrl;
+    this.baseUrl = options.apiUrl ?? config.apiUrl;
     this.debug = process.env.DEBUG === 'ethos:*';
   }
 
@@ -546,7 +566,7 @@ export class EchoClient {
      return this.request<NFT[]>(`/api/v2/nfts/user/${encodeURIComponent(userkey)}/owns-validator`, 'Validator Check');
    }
 
-   convertScoreToLevel(score: number): ScoreLevel {
+  convertScoreToLevel(score: number): ScoreLevel {
     if (score < 800) return 'untrusted';
     if (score < 1200) return 'questionable';
     if (score < 1600) return 'neutral';
@@ -558,13 +578,18 @@ export class EchoClient {
       return this.request<Auction | null>('/api/v2/auctions/active', 'Active Auction');
     }
 
-  async getActivities(userkey: string, types: ActivityType[] = ['review', 'vouch'], limit = 10): Promise<Activity[]> {
+   async getActivities(userkey: string, types: ActivityType[] = ['review', 'vouch'], limit = 10): Promise<Activity[]> {
     const params = new URLSearchParams({ limit: String(limit), userkey });
     for (const type of types) {
       params.append('activityType', type);
     }
 
     return this.request<Activity[]>(`/api/v2/activities/userkey?${params}`, 'Activities');
+  }
+
+  /** Looks up the key it is called with. Only the API-key calls send the key, public reads never do. */
+  async getApiKeyMe(apiKey: string): Promise<ApiKeyInfo> {
+    return this.request<ApiKeyInfo>('/api/v2/api-keys/me', 'API key', { headers: apiKeyHeader(apiKey) });
   }
 
   async getAuction(auctionId: number): Promise<Auction> {
@@ -648,7 +673,7 @@ export class EchoClient {
     return this.request<MarketListResponse>(`/api/v2/markets${query.toString() ? '?' + query.toString() : ''}`, 'Markets');
   }
 
-   async getMutualVouchers(viewerProfileId: number, targetProfileId: number, params: { limit?: number } = {}): Promise<{ total: number; values: VouchUser[]; }> {
+  async getMutualVouchers(viewerProfileId: number, targetProfileId: number, params: { limit?: number } = {}): Promise<{ total: number; values: VouchUser[]; }> {
     const query = new URLSearchParams();
     query.set('viewerProfileId', String(viewerProfileId));
     query.set('targetProfileId', String(targetProfileId));
@@ -675,7 +700,7 @@ export class EchoClient {
     return user.userkeys?.[0] || null;
   }
 
-  async getProjectByUsername(username: string): Promise<Project> {
+   async getProjectByUsername(username: string): Promise<Project> {
     return this.request<Project>(`/api/v2/projects/username/${encodeURIComponent(username)}`, 'Project');
   }
 
@@ -715,7 +740,7 @@ export class EchoClient {
     return this.request<Activity[]>(`/api/v2/activities/userkey?${query}`, 'Reviews');
   }
 
-   async getScoreBreakdownByAddress(address: string): Promise<ScoreBreakdownResponse> {
+  async getScoreBreakdownByAddress(address: string): Promise<ScoreBreakdownResponse> {
     const params = new URLSearchParams({ address });
     return this.request<ScoreBreakdownResponse>(`/api/v1/score/address?${params}`, 'Score');
   }
@@ -730,7 +755,7 @@ export class EchoClient {
     return this.request<ScoreStatus>(`/api/v2/score/status?${params}`, 'Score Status');
   }
 
-    async getSeasons(): Promise<SeasonsResponse> {
+   async getSeasons(): Promise<SeasonsResponse> {
     return this.request<SeasonsResponse>('/api/v2/xp/seasons', 'XP Seasons');
   }
 
@@ -756,7 +781,7 @@ export class EchoClient {
      return this.getXpTotal(userkey);
    }
 
-  async getUserByAddress(address: string): Promise<EthosUser> {
+    async getUserByAddress(address: string): Promise<EthosUser> {
     return this.request<EthosUser>(`/api/v2/user/by/address/${encodeURIComponent(address)}`, 'User');
   }
 
@@ -861,6 +886,14 @@ export class EchoClient {
     }
   }
 
+  /** Revokes the key it is called with. */
+  async revokeApiKeyMe(apiKey: string): Promise<{ ok: boolean }> {
+    return this.request<{ ok: boolean }>('/api/v2/api-keys/me', 'API key', {
+      headers: apiKeyHeader(apiKey),
+      method: 'DELETE',
+    });
+  }
+
   async searchUsers(query: string, limit = 10): Promise<SearchResult> {
     const params = new URLSearchParams({ limit: String(limit), query });
     return this.request<SearchResult>(`/api/v2/users/search?${params}`, 'Users');
@@ -880,14 +913,16 @@ export class EchoClient {
      this.log(`Fetching ${url}`);
 
       try {
+        const { headers: extraHeaders, ...rest } = options ?? {};
         const response = await httpFetch(url, {
           headers: { 
             'Accept': 'application/json',
             'X-Ethos-Client': 'ethos-cli',
             ...(options?.body ? { 'Content-Type': 'application/json' } : {}),
+            ...(extraHeaders as Record<string, string> | undefined),
           },
           signal: controller.signal,
-          ...options,
+          ...rest,
         });
 
        this.log(`Response status: ${response.status}`);

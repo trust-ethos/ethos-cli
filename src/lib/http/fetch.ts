@@ -19,11 +19,13 @@
  *    - Tests mock at the API client layer, not HTTP layer
  *
  * This named export provides a single entry point for fetch usage, making it grep-able
- * and mockable if HTTP-layer testing is ever needed.
+ * and mockable if HTTP-layer testing is ever needed. It looks up globalThis.fetch on each call,
+ * so the auth tests can replace it with a stub.
  *
  * Sources:
  * - Bun test mocking docs: https://bun.sh/docs/test/mocks
  * - Bun fetch implementation: https://bun.sh/docs/api/fetch
  * - Pattern from Bun docs: mock.module() for API client mocking, not fetch interception
  */
-export const httpFetch: typeof globalThis.fetch = globalThis.fetch;
+export const httpFetch = ((...args: Parameters<typeof globalThis.fetch>) =>
+  globalThis.fetch(...args)) as typeof globalThis.fetch;
