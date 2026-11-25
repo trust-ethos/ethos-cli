@@ -58,7 +58,7 @@ export async function runLogin(options: LoginOptions): Promise<ApiKeyInfo> {
     `Signed in as profile ${info.profileId} (${info.address}), scopes ${info.scopes.join(', ') || 'none'}, expires ${formatDate(info.expiresAt)}`,
   );
   if (process.env.ETHOS_API_KEY?.trim()) {
-    options.log('ETHOS_API_KEY is set in your environment, and whoami and logout use it instead. Unset it to use this key.');
+    options.log('ETHOS_API_KEY is set in your environment, and whoami reads it instead of this key. Unset it to use this key.');
   }
 
   return info;

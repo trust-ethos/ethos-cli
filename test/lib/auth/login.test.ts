@@ -131,7 +131,7 @@ describe('login', () => {
 
     await runLogin(options);
 
-    expect(logs.at(-1)).toContain('ETHOS_API_KEY');
+    expect(logs.at(-1)).toContain('ETHOS_API_KEY is set in your environment, and whoami reads it instead');
   });
 
   test('saves nothing and fails when the key does not verify', async () => {

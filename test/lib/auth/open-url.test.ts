@@ -6,7 +6,7 @@ describe('startDetached', () => {
   test('resolves true while the launcher is still running', async () => {
     const started = Date.now();
 
-    expect(await startDetached('sleep', ['5'])).toBe(true);
+    expect(await startDetached(process.execPath, ['-e', 'setTimeout(() => {}, 5000)'])).toBe(true);
     expect(Date.now() - started).toBeLessThan(2000);
   });
 
