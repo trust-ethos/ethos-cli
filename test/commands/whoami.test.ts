@@ -63,6 +63,18 @@ describe('whoami', () => {
     expect(api.calls).toHaveLength(0);
   });
 
+  test('tells the person to replace or unset ETHOS_API_KEY when that key is refused', async () => {
+    saveCredential(API_URL, { ...keyInfo, token: 'file-key' });
+    process.env.ETHOS_API_KEY = 'env-key';
+    meStatus = 401;
+
+    const { error } = await runCommand(['whoami']);
+
+    expect(log.text()).toContain('ETHOS_API_KEY');
+    expect(log.text()).toContain('unset');
+    expect(error?.oclif?.exit).toBe(1);
+  });
+
   for (const status of [401, 404]) {
     test(`says the key is no longer valid on a ${status}`, async () => {
       saveCredential(API_URL, { ...keyInfo, token: 'file-key' });

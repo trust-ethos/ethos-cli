@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { chmodSync, existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
 import {
@@ -13,6 +13,8 @@ import { useTempHome } from '../../helpers/auth.js';
 
 const PROD = 'https://api.ethos.network';
 const DEV = 'https://api.dev.ethos.network';
+// Mode bits are POSIX only.
+const posixTest = test.skipIf(process.platform === 'win32');
 
 function credential(token: string): StoredCredential {
   return { address: '0xabc', expiresAt: '2027-02-01T00:00:00.000Z', id: 1, profileId: 42, scopes: ['read'], token };
@@ -29,7 +31,7 @@ describe('credentials store', () => {
     temp.cleanup();
   });
 
-  test('writes credentials.json beside config.json with mode 0600 in a 0700 directory', () => {
+  posixTest('writes credentials.json beside config.json with mode 0600 in a 0700 directory', () => {
     saveCredential(PROD, credential('prod-key'));
 
     const path = getCredentialsPath();
@@ -38,9 +40,9 @@ describe('credentials store', () => {
     expect(statSync(dirname(path)).mode & 0o777).toBe(0o700);
   });
 
-  test('tightens the mode of a file that already existed', () => {
+  posixTest('tightens the mode of a file that already existed', () => {
     saveCredential(PROD, credential('prod-key'));
-    Bun.spawnSync(['chmod', '644', getCredentialsPath()]);
+    chmodSync(getCredentialsPath(), 0o644);
 
     saveCredential(PROD, credential('new-key'));
 
@@ -68,9 +70,16 @@ describe('credentials store', () => {
     expect(existsSync(getCredentialsPath())).toBe(false);
   });
 
+  test('leaves no temporary file beside credentials.json', () => {
+    saveCredential(PROD, credential('prod-key'));
+    saveCredential(DEV, credential('dev-key'));
+
+    expect(readdirSync(dirname(getCredentialsPath()))).toEqual(['credentials.json']);
+  });
+
   test('treats a corrupt file as empty', () => {
     saveCredential(PROD, credential('prod-key'));
-    Bun.write(getCredentialsPath(), 'not json');
+    writeFileSync(getCredentialsPath(), 'not json');
 
     expect(getStoredCredential(PROD)).toBeUndefined();
   });

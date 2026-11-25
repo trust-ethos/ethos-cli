@@ -1,6 +1,6 @@
 import { runCommand } from '@oclif/test';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { existsSync } from 'node:fs';
+import { existsSync, rmSync } from 'node:fs';
 
 import { getCredentialsPath, getStoredCredential, saveCredential } from '../../src/lib/config/credentials.js';
 import { API_URL, captureLog, keyInfo, mockFetch, useTempHome } from '../helpers/auth.js';
@@ -76,6 +76,30 @@ describe('logout', () => {
     expect(error).toBeUndefined();
     expect(log.text()).toContain('ETHOS_API_KEY');
     expect(process.env.ETHOS_API_KEY).toBe('env-key');
+    expect(api.calls).toHaveLength(0);
+  });
+
+  test('--json reports a revoked key', async () => {
+    const { error } = await runCommand(['logout', '--json']);
+
+    expect(error).toBeUndefined();
+    expect(JSON.parse(log.text())).toEqual({ envKeySet: false, status: 'revoked' });
+  });
+
+  test('--json reports a key the API had already refused', async () => {
+    status = 401;
+
+    await runCommand(['logout', '--json']);
+
+    expect(JSON.parse(log.text())).toEqual({ envKeySet: false, status: 'alreadyInvalid' });
+  });
+
+  test('--json reports when nothing is stored', async () => {
+    rmSync(getCredentialsPath());
+
+    await runCommand(['logout', '--json']);
+
+    expect(JSON.parse(log.text())).toEqual({ envKeySet: false, status: 'notSignedIn' });
     expect(api.calls).toHaveLength(0);
   });
 });

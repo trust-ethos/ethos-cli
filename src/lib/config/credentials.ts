@@ -1,4 +1,4 @@
-import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 import { getConfigPath } from './index.js';
@@ -75,7 +75,14 @@ function writeCredentials(file: CredentialsFile): void {
   const dir = dirname(path);
   if (!existsSync(dir)) mkdirSync(dir, { mode: 0o700, recursive: true });
 
-  writeFileSync(path, JSON.stringify(file, null, 2) + '\n', { mode: 0o600 });
-  // writeFileSync only applies the mode when it creates the file.
-  chmodSync(path, 0o600);
+  // A new 0600 file renamed over the old one: a reader never sees half a file, and the key is
+  // never written into a file whose mode is looser.
+  const temp = `${path}.${process.pid}.tmp`;
+  try {
+    writeFileSync(temp, JSON.stringify(file, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
+    renameSync(temp, path);
+  } catch (error) {
+    rmSync(temp, { force: true });
+    throw error;
+  }
 }

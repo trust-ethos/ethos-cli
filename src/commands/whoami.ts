@@ -36,7 +36,11 @@ static flags = {
     }
 
     if (isRejectedApiKey(failure)) {
-      this.log(`The key from ${resolved.source} is no longer valid. Run: ethos login`);
+      this.log(
+        resolved.source === 'env'
+          ? 'The key in ETHOS_API_KEY is no longer valid. Replace it, or unset it and run: ethos login'
+          : 'The stored key is no longer valid. Run: ethos login',
+      );
       this.exit(1);
     }
 

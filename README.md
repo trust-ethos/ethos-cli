@@ -704,9 +704,10 @@ Sign in to Ethos and store an API key for this machine
 
 ```
 USAGE
-  $ ethos login [--no-browser] [--timeout <value>] [-v]
+  $ ethos login [-j] [--no-browser] [--timeout <value>] [-v]
 
 FLAGS
+  -j, --json             Output the signed-in key as JSON; instructions go to stderr
   -v, --verbose          Show detailed error information
       --no-browser       Print the sign-in page instead of opening it, then paste the key it shows
       --timeout=<value>  [default: 300] Seconds to wait for the browser to finish signing in
@@ -720,6 +721,8 @@ EXAMPLES
   $ ethos login --no-browser
 
   $ ethos login --timeout 600
+
+  $ ethos login --json
 ```
 
 _See code: [src/commands/login.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/login.ts)_
@@ -730,9 +733,10 @@ Revoke the stored API key and remove it from this machine
 
 ```
 USAGE
-  $ ethos logout [-v]
+  $ ethos logout [-j] [-v]
 
 FLAGS
+  -j, --json     Output as JSON
   -v, --verbose  Show detailed error information
 
 DESCRIPTION
@@ -740,6 +744,8 @@ DESCRIPTION
 
 EXAMPLES
   $ ethos logout
+
+  $ ethos logout --json
 ```
 
 _See code: [src/commands/logout.ts](https://github.com/trust-ethos/ethos-cli/blob/v0.0.19/src/commands/logout.ts)_

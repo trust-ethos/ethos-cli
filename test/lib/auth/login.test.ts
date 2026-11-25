@@ -113,6 +113,27 @@ describe('login', () => {
     expect(api.calls[0].headers['X-Ethos-Api-Key']).toBe('pasted-key');
   });
 
+  test('--no-browser takes a pasted key for an API with no known sign-in page', async () => {
+    const customApi = 'https://api.example.test';
+    const { logs, options } = loginOptions({ apiUrl: customApi, noBrowser: true, promptKey: async () => 'pasted-key' });
+
+    await runLogin(options);
+
+    expect(logs[0]).toContain(customApi);
+    expect(logs[0]).not.toContain('/cli/login');
+    expect(getStoredCredential(customApi)?.token).toBe('pasted-key');
+    expect(api.calls[0].url).toBe(`${customApi}/api/v2/api-keys/me`);
+  });
+
+  test('says when ETHOS_API_KEY will still win over the new key', async () => {
+    process.env.ETHOS_API_KEY = 'env-key';
+    const { logs, options } = loginOptions({ noBrowser: true, promptKey: async () => 'new-key' });
+
+    await runLogin(options);
+
+    expect(logs.at(-1)).toContain('ETHOS_API_KEY');
+  });
+
   test('saves nothing and fails when the key does not verify', async () => {
     const { options } = loginOptions({ noBrowser: true, promptKey: async () => 'bad-key' });
 

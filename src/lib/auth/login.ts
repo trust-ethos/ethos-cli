@@ -2,7 +2,7 @@ import { password } from '@inquirer/prompts';
 import { randomBytes } from 'node:crypto';
 import { hostname } from 'node:os';
 
-import { EchoClient, isRejectedApiKey } from '../api/echo-client.js';
+import { type ApiKeyInfo, EchoClient, isRejectedApiKey } from '../api/echo-client.js';
 import { getStoredCredential, normalizeApiUrl, saveCredential } from '../config/credentials.js';
 import { CLIError } from '../errors/cli-error.js';
 import { startCallbackServer } from './callback-server.js';
@@ -19,7 +19,8 @@ export interface LoginOptions {
   timeoutSeconds: number;
 }
 
-export async function runLogin(options: LoginOptions): Promise<void> {
+/** Signs in, saves the key for this API, and returns what the API says about it. */
+export async function runLogin(options: LoginOptions): Promise<ApiKeyInfo> {
   const apiUrl = normalizeApiUrl(options.apiUrl);
   const token = options.noBrowser ? await readKeyFromPrompt(apiUrl, options) : await readKeyFromBrowser(apiUrl, options);
   const client = new EchoClient({ apiUrl });
@@ -55,6 +56,11 @@ export async function runLogin(options: LoginOptions): Promise<void> {
   options.log(
     `Signed in as profile ${info.profileId} (${info.address}), scopes ${info.scopes.join(', ') || 'none'}, expires ${formatDate(info.expiresAt)}`,
   );
+  if (process.env.ETHOS_API_KEY?.trim()) {
+    options.log('ETHOS_API_KEY is set in your environment, and commands use it instead. Unset it to use this key.');
+  }
+
+  return info;
 }
 
 export function formatDate(iso: string): string {
@@ -63,8 +69,12 @@ export function formatDate(iso: string): string {
 }
 
 async function readKeyFromPrompt(apiUrl: string, options: LoginOptions): Promise<string> {
-  const url = buildLoginUrl(getWebUrl(apiUrl), { host: options.hostname ?? hostname() });
-  options.log(`Open this page, sign in, and copy the key it shows:\n${url}\n`);
+  const webUrl = findWebUrl(apiUrl);
+  options.log(
+    webUrl
+      ? `Open this page, sign in, and copy the key it shows:\n${buildLoginUrl(webUrl, { host: options.hostname ?? hostname() })}\n`
+      : `Paste an API key for ${apiUrl}.`,
+  );
 
   const promptKey = options.promptKey ?? (() => password({ message: 'Paste the key' }));
   const token = (await promptKey()).trim();
@@ -73,6 +83,16 @@ async function readKeyFromPrompt(apiUrl: string, options: LoginOptions): Promise
   }
 
   return token;
+}
+
+/** The sign-in page's site, or undefined for an API with none: a pasted key works for any API. */
+function findWebUrl(apiUrl: string): string | undefined {
+  try {
+    return getWebUrl(apiUrl);
+  } catch (error) {
+    if (error instanceof CLIError && error.code === 'UNKNOWN_WEB_URL') return undefined;
+    throw error;
+  }
 }
 
 async function readKeyFromBrowser(apiUrl: string, options: LoginOptions): Promise<string> {
