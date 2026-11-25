@@ -6,7 +6,7 @@ import { getConfigPath } from './index.js';
 export interface StoredCredential {
   address: string;
   expiresAt: string;
-  id: number;
+  id: string;
   profileId: number;
   scopes: string[];
   token: string;
@@ -49,10 +49,15 @@ export function saveCredential(apiUrl: string, credential: StoredCredential): vo
   writeCredentials({ ...readCredentials(), [normalizeApiUrl(apiUrl)]: credential });
 }
 
-/** Removes one API's entry and leaves the others. Deletes the file once it is empty. */
-export function deleteCredential(apiUrl: string): void {
+/**
+ * Removes one API's entry and leaves the others. Deletes the file once it is empty. With `token`,
+ * only while the entry still holds that key, so a key a login saved in the meantime stays.
+ */
+export function deleteCredential(apiUrl: string, token?: string): void {
   const rest = readCredentials();
-  delete rest[normalizeApiUrl(apiUrl)];
+  const key = normalizeApiUrl(apiUrl);
+  if (token !== undefined && rest[key]?.token !== token) return;
+  delete rest[key];
   if (Object.keys(rest).length === 0) {
     rmSync(getCredentialsPath(), { force: true });
     return;

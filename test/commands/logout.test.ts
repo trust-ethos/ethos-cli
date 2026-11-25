@@ -56,6 +56,15 @@ describe('logout', () => {
     expect(getStoredCredential(DEV_URL)?.token).toBe('dev-key');
   });
 
+  test('keeps the entry on a 404, which an API without the route also answers', async () => {
+    status = 404;
+
+    const { error } = await runCommand(['logout']);
+
+    expect(error?.oclif?.exit).toBe(1);
+    expect(getStoredCredential(API_URL)?.token).toBe('file-key');
+  });
+
   test('keeps the entry when the server cannot be reached', async () => {
     status = 500;
 

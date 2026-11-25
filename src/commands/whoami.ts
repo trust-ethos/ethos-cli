@@ -2,11 +2,10 @@ import { Command, Flags } from '@oclif/core';
 import pc from 'picocolors';
 
 import { type ApiKeyInfo, EchoClient, isRejectedApiKey } from '../lib/api/echo-client.js';
-import { formatDate } from '../lib/auth/login.js';
 import { resolveCredential } from '../lib/config/credentials.js';
 import { loadConfig } from '../lib/config/index.js';
 import { formatError } from '../lib/formatting/error.js';
-import { output } from '../lib/formatting/output.js';
+import { formatDate, output } from '../lib/formatting/output.js';
 
 export default class Whoami extends Command {
   static description = 'Show the profile and API key this CLI is signed in with';

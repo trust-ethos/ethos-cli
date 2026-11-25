@@ -32,8 +32,6 @@ export async function startCallbackServer(state: string): Promise<CallbackServer
   const tokenPromise = new Promise<string>((resolve) => {
     deliver = resolve;
   });
-  // The caller may close before anyone awaits, so keep an early rejection quiet.
-  tokenPromise.catch(() => {});
 
   const server = createServer((request, response) => {
     if (request.method !== 'POST' || request.url !== '/callback') {

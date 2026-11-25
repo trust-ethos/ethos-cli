@@ -5,6 +5,7 @@ import { hostname } from 'node:os';
 import { type ApiKeyInfo, EchoClient, isRejectedApiKey } from '../api/echo-client.js';
 import { getStoredCredential, normalizeApiUrl, saveCredential } from '../config/credentials.js';
 import { CLIError } from '../errors/cli-error.js';
+import { formatDate } from '../formatting/output.js';
 import { startCallbackServer } from './callback-server.js';
 import { openUrl } from './open-url.js';
 import { buildLoginUrl, getWebUrl } from './web-url.js';
@@ -57,15 +58,10 @@ export async function runLogin(options: LoginOptions): Promise<ApiKeyInfo> {
     `Signed in as profile ${info.profileId} (${info.address}), scopes ${info.scopes.join(', ') || 'none'}, expires ${formatDate(info.expiresAt)}`,
   );
   if (process.env.ETHOS_API_KEY?.trim()) {
-    options.log('ETHOS_API_KEY is set in your environment, and commands use it instead. Unset it to use this key.');
+    options.log('ETHOS_API_KEY is set in your environment, and whoami and logout use it instead. Unset it to use this key.');
   }
 
   return info;
-}
-
-export function formatDate(iso: string): string {
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? iso : date.toISOString().slice(0, 10);
 }
 
 async function readKeyFromPrompt(apiUrl: string, options: LoginOptions): Promise<string> {

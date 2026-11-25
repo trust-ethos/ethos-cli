@@ -1,3 +1,4 @@
+import { normalizeApiUrl } from '../config/credentials.js';
 import { loadConfig } from '../config/index.js';
 import { APIError, NetworkError, NotFoundError } from '../errors/cli-error.js';
 import { httpFetch } from '../http/fetch.js';
@@ -536,7 +537,7 @@ export interface ApiKeyInfo {
   address: string;
   createdAt: string;
   expiresAt: string;
-  id: number;
+  id: string;
   lastUsedAt: null | string;
   name: string;
   profileId: number;
@@ -549,11 +550,11 @@ export interface EchoClientOptions {
 }
 
 /**
- * Whether echo refused the key itself: 401 when it is invalid, expired or revoked, and 404 from
- * `/api-keys/me` when it was revoked between auth and the read.
+ * Whether echo refused the key itself: 401 when it is invalid, expired or revoked. A 404 is not
+ * counted, since an API without `/api-keys/me` answers 404 too, and logout would then drop a live key.
  */
 export function isRejectedApiKey(error: unknown): boolean {
-  return error instanceof APIError && (error.statusCode === 401 || error.statusCode === 404);
+  return error instanceof APIError && error.statusCode === 401;
 }
 
 function apiKeyHeader(apiKey: string): Record<string, string> {
@@ -565,8 +566,7 @@ export class EchoClient {
   private debug: boolean;
 
   constructor(options: EchoClientOptions = {}) {
-    const config = loadConfig();
-    this.baseUrl = options.apiUrl ?? config.apiUrl;
+    this.baseUrl = normalizeApiUrl(options.apiUrl ?? loadConfig().apiUrl);
     this.debug = process.env.DEBUG === 'ethos:*';
   }
 
@@ -910,7 +910,7 @@ export class EchoClient {
       return await this.request<T>('/api/v2/api-keys/me', 'API key', options);
     } catch (error) {
       if (error instanceof NotFoundError) {
-        throw new APIError('This API key was revoked or has expired.', 404);
+        throw new APIError(`${this.baseUrl} has no /api/v2/api-keys/me, or the key was revoked just now.`, 404);
       }
 
       throw error;

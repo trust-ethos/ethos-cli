@@ -2,6 +2,7 @@ import { runCommand } from '@oclif/test';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
 import { getCredentialsPath, saveCredential } from '../../src/lib/config/credentials.js';
+import { saveConfig } from '../../src/lib/config/index.js';
 import { API_URL, captureLog, keyInfo, mockFetch, useTempHome } from '../helpers/auth.js';
 
 describe('whoami', () => {
@@ -75,17 +76,36 @@ describe('whoami', () => {
     expect(error?.oclif?.exit).toBe(1);
   });
 
-  for (const status of [401, 404]) {
-    test(`says the key is no longer valid on a ${status}`, async () => {
-      saveCredential(API_URL, { ...keyInfo, token: 'file-key' });
-      meStatus = status;
+  test('says the key is no longer valid on a 401', async () => {
+    saveCredential(API_URL, { ...keyInfo, token: 'file-key' });
+    meStatus = 401;
 
-      const { error } = await runCommand(['whoami']);
+    const { error } = await runCommand(['whoami']);
 
-      expect(log.text()).toContain('no longer valid');
-      expect(log.text()).toContain('ethos login');
-      expect(log.text()).not.toContain('user search');
-      expect(error?.oclif?.exit).toBe(1);
-    });
-  }
+    expect(log.text()).toContain('no longer valid');
+    expect(log.text()).toContain('ethos login');
+    expect(error?.oclif?.exit).toBe(1);
+  });
+
+  test('does not call the key invalid on a 404, which an API without the route also answers', async () => {
+    saveCredential(API_URL, { ...keyInfo, token: 'file-key' });
+    meStatus = 404;
+
+    const { error } = await runCommand(['whoami']);
+
+    expect(log.text()).not.toContain('no longer valid');
+    expect(log.text()).toContain('/api/v2/api-keys/me');
+    expect(log.text()).not.toContain('user search');
+    expect(error?.oclif?.exit).toBe(1);
+  });
+
+  test('a trailing slash in the API URL still finds the key and calls one URL', async () => {
+    saveCredential(API_URL, { ...keyInfo, token: 'file-key' });
+    saveConfig({ apiUrl: `${API_URL}/` });
+
+    const { error } = await runCommand(['whoami']);
+
+    expect(error).toBeUndefined();
+    expect(api.calls[0].url).toBe(`${API_URL}/api/v2/api-keys/me`);
+  });
 });

@@ -78,7 +78,7 @@ describe('login', () => {
     expect(getStoredCredential(API_URL)).toEqual({
       address: keyInfo.address,
       expiresAt: keyInfo.expiresAt,
-      id: 7,
+      id: 'key-7',
       profileId: 42,
       scopes: ['read'],
       token: 'new-key',

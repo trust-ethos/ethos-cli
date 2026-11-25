@@ -17,7 +17,7 @@ const DEV = 'https://api.dev.ethos.network';
 const posixTest = test.skipIf(process.platform === 'win32');
 
 function credential(token: string): StoredCredential {
-  return { address: '0xabc', expiresAt: '2027-02-01T00:00:00.000Z', id: 1, profileId: 42, scopes: ['read'], token };
+  return { address: '0xabc', expiresAt: '2027-02-01T00:00:00.000Z', id: 'key-1', profileId: 42, scopes: ['read'], token };
 }
 
 describe('credentials store', () => {
@@ -68,6 +68,16 @@ describe('credentials store', () => {
 
     deleteCredential(DEV);
     expect(existsSync(getCredentialsPath())).toBe(false);
+  });
+
+  test('with a token, deletes the entry only while it still holds that key', () => {
+    saveCredential(PROD, credential('new-key'));
+
+    deleteCredential(PROD, 'old-key');
+    expect(getStoredCredential(PROD)?.token).toBe('new-key');
+
+    deleteCredential(PROD, 'new-key');
+    expect(getStoredCredential(PROD)).toBeUndefined();
   });
 
   test('leaves no temporary file beside credentials.json', () => {

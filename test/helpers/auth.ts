@@ -13,7 +13,7 @@ export const keyInfo: ApiKeyInfo = {
   address: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
   createdAt: '2026-11-01T00:00:00.000Z',
   expiresAt: '2027-02-01T00:00:00.000Z',
-  id: 7,
+  id: 'key-7',
   lastUsedAt: null,
   name: 'ethos-cli on laptop',
   profileId: 42,

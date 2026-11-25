@@ -1,3 +1,4 @@
+import { normalizeApiUrl } from '../config/credentials.js';
 import { CLIError } from '../errors/cli-error.js';
 
 const WEB_URLS: Record<string, string> = {
@@ -9,7 +10,7 @@ const LOCAL_WEB_URL = 'http://localhost:8082';
 
 /** Maps the CLI's API URL to the web app that hosts `/cli/login`. */
 export function getWebUrl(apiUrl: string): string {
-  const normalized = apiUrl.replace(/\/+$/, '');
+  const normalized = normalizeApiUrl(apiUrl);
   const known = WEB_URLS[normalized];
   if (known) return known;
 

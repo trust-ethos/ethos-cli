@@ -34,7 +34,7 @@ export default class Logout extends Command {
     } catch (error) {
       if (!(error instanceof Error)) throw error;
       this.log(formatError(error, flags.verbose));
-      this.log('The stored key was kept. Try again when the API is reachable.');
+      this.log('The stored key was kept. Try again once the API answers.');
       this.exit(1);
     }
 
@@ -60,7 +60,7 @@ export default class Logout extends Command {
       status = 'alreadyInvalid';
     }
 
-    deleteCredential(apiUrl);
+    deleteCredential(apiUrl, stored.token);
     return status;
   }
 }
