@@ -1,0 +1,48 @@
+{
+  "$schema": "https://fleet.beta.ethos.network/schema/fleet.json",
+  "name": "ethos-cli",
+  "title": "Ethos CLI",
+  "description": "The official Ethos command-line tool (`ethos`): query profiles, scores, XP, reviews, vouches, markets, validators and more from Ethos's public API. Also installs an ethos-cli skill for AI coding agents.",
+  "status": "active",
+  "owner": "seth@ethos.network",
+  "repo": "trust-ethos/ethos-cli",
+  "urls": [
+    "https://www.npmjs.com/package/@trust-ethos/cli",
+    "https://github.com/trust-ethos/ethos-cli"
+  ],
+  "access": "public",
+  "services": [
+    {
+      "name": "ethos-api",
+      "purpose": "Every command reads Ethos's public API: api.ethos.network, or api.dev.ethos.network with ETHOS_ENV=dev. `ethos login` signs in through app.ethos.network and stores the API key it mints in ~/.ethos/credentials.json",
+      "billing": "free"
+    },
+    {
+      "name": "npm",
+      "purpose": "Publishes @trust-ethos/cli by trusted publishing (OIDC) from the release workflow, so no npm token",
+      "console": "https://www.npmjs.com/package/@trust-ethos/cli",
+      "billing": "free"
+    },
+    {
+      "name": "homebrew-tap",
+      "purpose": "The release workflow updates Formula/ethos.rb in trust-ethos/homebrew-tap",
+      "console": "https://github.com/trust-ethos/homebrew-tap",
+      "billing": "free",
+      "secret": "HOMEBREW_TAP_TOKEN"
+    }
+  ],
+  "secrets": [
+    {
+      "name": "HOMEBREW_TAP_TOKEN",
+      "from": "A GitHub Actions secret on this repo: a token that can push to trust-ethos/homebrew-tap, used only by the release workflow",
+      "service": "homebrew-tap"
+    }
+  ],
+  "health": false,
+  "notes": "A CLI people install, not a deployed service, so Fleet has nothing to health-check. Released by .github/workflows/release.yml on a push to main when package.json's version has no tag yet: a draft GitHub release, npm publish, tarballs for macOS, Linux and Windows, and the Homebrew formula. Install with the curl script in the README, `npm install -g @trust-ethos/cli` or `brew install trust-ethos/tap/ethos`. ETHOS_ENV, ETHOS_API_URL, ETHOS_DEBUG and ETHOS_OUTPUT (.env.sample) are optional settings, not secrets. ETHOS_API_KEY is each user's own key, overriding the one `ethos login` stored; the repo holds none.",
+  "tags": [
+    "cli",
+    "public",
+    "npm"
+  ]
+}
