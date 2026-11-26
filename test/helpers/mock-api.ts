@@ -1,5 +1,11 @@
 import { mock } from 'bun:test';
+import * as echoClientModule from '../../src/lib/api/echo-client.js';
 import type { EthosUser, SearchResult, SeasonsResponse, Activity } from '../../src/lib/api/echo-client.js';
+
+// mock.module replaces the module for the whole `bun test` process, so keep a copy of the real
+// exports: the mocks below extend the real client, and every other export stays real, so test
+// files that run later (the login tests call getApiKeyMe and isRejectedApiKey) still work.
+const realEchoClient = { ...echoClientModule };
 
 export const mockUser: EthosUser = {
   id: 123,
@@ -79,7 +85,7 @@ export const mockActivities: Activity[] = [
 
 export const mockRankIndex = 41;
 
-class MockEchoClient {
+class MockEchoClient extends realEchoClient.EchoClient {
   async resolveUser() {
     return mockUser;
   }
@@ -125,7 +131,7 @@ class MockEchoClient {
   }
 }
 
-class MockEchoClientNotFound {
+class MockEchoClientNotFound extends realEchoClient.EchoClient {
   async resolveUser() {
     const error = new Error('User not found');
     (error as any).code = 'NOT_FOUND';
@@ -187,7 +193,7 @@ class MockEchoClientNotFound {
   }
 }
 
-class MockEchoClientNetworkError {
+class MockEchoClientNetworkError extends realEchoClient.EchoClient {
   async resolveUser() {
     const error = new Error('Cannot connect to API');
     (error as any).code = 'NETWORK_ERROR';
@@ -255,18 +261,21 @@ class MockEchoClientNetworkError {
 
 export function mockEchoClientSuccess() {
   mock.module('../../src/lib/api/echo-client.js', () => ({
+    ...realEchoClient,
     EchoClient: MockEchoClient,
   }));
 }
 
 export function mockEchoClientNotFound() {
   mock.module('../../src/lib/api/echo-client.js', () => ({
+    ...realEchoClient,
     EchoClient: MockEchoClientNotFound,
   }));
 }
 
 export function mockEchoClientNetworkError() {
   mock.module('../../src/lib/api/echo-client.js', () => ({
+    ...realEchoClient,
     EchoClient: MockEchoClientNetworkError,
   }));
 }
