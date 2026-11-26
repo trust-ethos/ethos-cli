@@ -14,7 +14,7 @@
   "services": [
     {
       "name": "ethos-api",
-      "purpose": "Every command reads Ethos's public API: api.ethos.network, or api.dev.ethos.network with ETHOS_ENV=dev. `ethos login` signs in through app.ethos.network and stores the API key it mints in ~/.ethos/credentials.json",
+      "purpose": "Every command reads Ethos's public API: api.ethos.network, or api.dev.ethos.network with ETHOS_ENV=dev. `ethos login` signs in through app.ethos.network and stores the API key it mints in ~/.config/ethos/credentials.json",
       "billing": "free"
     },
     {
