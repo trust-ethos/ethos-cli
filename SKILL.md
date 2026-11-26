@@ -104,6 +104,15 @@ ethos auction active             # Current auction
 ethos auction info <id>          # Auction details
 ```
 
+### Account
+```bash
+ethos login                      # Sign in via browser, store an API key
+ethos login --no-browser         # Print the page, paste the key
+ethos whoami                     # Profile, scopes, expiry, key source
+ethos logout                     # Revoke and remove the stored key
+```
+`ETHOS_API_KEY` overrides the stored key.
+
 ### Configuration
 ```bash
 ethos config get                 # Show config

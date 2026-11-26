@@ -24,7 +24,7 @@ bun test                             # Test
 ```
 ethos-cli/
 ├── src/
-│   ├── commands/           # 37 commands across 13 topics
+│   ├── commands/           # login, logout, whoami + 37 commands across 13 topics
 │   │   ├── auction/        # active, info, list
 │   │   ├── broker/         # info, list
 │   │   ├── config/         # get, path, set
@@ -41,7 +41,9 @@ ethos-cli/
 │   ├── lib/
 │   │   ├── api/
 │   │   │   └── echo-client.ts   # API wrapper (~970 lines, all types + methods)
+│   │   ├── auth/                # login flow: callback server, browser opener, web URL
 │   │   ├── config/
+│   │   │   ├── credentials.ts   # ~/.config/ethos/credentials.json (0600, keyed by API URL)
 │   │   │   └── index.ts         # ~/.config/ethos/config.json
 │   │   ├── errors/
 │   │   │   └── cli-error.ts     # CLIError, NetworkError, NotFoundError, APIError

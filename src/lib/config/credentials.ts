@@ -1,0 +1,93 @@
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+
+import { getConfigPath } from './index.js';
+
+export interface StoredCredential {
+  address: string;
+  expiresAt: string;
+  id: string;
+  profileId: number;
+  scopes: string[];
+  token: string;
+}
+
+export type CredentialsFile = Record<string, StoredCredential>;
+
+export interface ResolvedCredential {
+  credential: Partial<StoredCredential> & Pick<StoredCredential, 'token'>;
+  /** `env` for ETHOS_API_KEY, otherwise the path of the credentials file. */
+  source: string;
+}
+
+export function getCredentialsPath(): string {
+  return join(dirname(getConfigPath()), 'credentials.json');
+}
+
+/** Keys are stored per API, so `https://api.ethos.network/` and `https://api.ethos.network` are one entry. */
+export function normalizeApiUrl(apiUrl: string): string {
+  return apiUrl.replace(/\/+$/, '');
+}
+
+export function readCredentials(): CredentialsFile {
+  const path = getCredentialsPath();
+  if (!existsSync(path)) return {};
+
+  try {
+    const parsed: unknown = JSON.parse(readFileSync(path, 'utf8'));
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as CredentialsFile) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function getStoredCredential(apiUrl: string): StoredCredential | undefined {
+  return readCredentials()[normalizeApiUrl(apiUrl)];
+}
+
+export function saveCredential(apiUrl: string, credential: StoredCredential): void {
+  writeCredentials({ ...readCredentials(), [normalizeApiUrl(apiUrl)]: credential });
+}
+
+/**
+ * Removes one API's entry and leaves the others. Deletes the file once it is empty. With `token`,
+ * only while the entry still holds that key, so a key a login saved in the meantime stays.
+ */
+export function deleteCredential(apiUrl: string, token?: string): void {
+  const rest = readCredentials();
+  const key = normalizeApiUrl(apiUrl);
+  if (token !== undefined && rest[key]?.token !== token) return;
+  delete rest[key];
+  if (Object.keys(rest).length === 0) {
+    rmSync(getCredentialsPath(), { force: true });
+    return;
+  }
+
+  writeCredentials(rest);
+}
+
+/** The key a command should use: ETHOS_API_KEY wins over the stored one. */
+export function resolveCredential(apiUrl: string): ResolvedCredential | undefined {
+  const envKey = process.env.ETHOS_API_KEY?.trim();
+  if (envKey) return { credential: { token: envKey }, source: 'env' };
+
+  const stored = getStoredCredential(apiUrl);
+  return stored ? { credential: stored, source: getCredentialsPath() } : undefined;
+}
+
+function writeCredentials(file: CredentialsFile): void {
+  const path = getCredentialsPath();
+  const dir = dirname(path);
+  if (!existsSync(dir)) mkdirSync(dir, { mode: 0o700, recursive: true });
+
+  // A new 0600 file renamed over the old one: a reader never sees half a file, and the key is
+  // never written into a file whose mode is looser.
+  const temp = `${path}.${process.pid}.tmp`;
+  try {
+    writeFileSync(temp, JSON.stringify(file, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
+    renameSync(temp, path);
+  } catch (error) {
+    rmSync(temp, { force: true });
+    throw error;
+  }
+}

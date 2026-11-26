@@ -1,3 +1,4 @@
+import { normalizeApiUrl } from '../config/credentials.js';
 import { loadConfig } from '../config/index.js';
 import { APIError, NetworkError, NotFoundError } from '../errors/cli-error.js';
 import { httpFetch } from '../http/fetch.js';
@@ -532,13 +533,40 @@ export interface VoteStats {
   };
 }
 
+export interface ApiKeyInfo {
+  address: string;
+  createdAt: string;
+  expiresAt: string;
+  id: string;
+  lastUsedAt: null | string;
+  name: string;
+  profileId: number;
+  scopes: string[];
+}
+
+export interface EchoClientOptions {
+  /** Overrides the API URL from the config file. */
+  apiUrl?: string;
+}
+
+/**
+ * Whether echo refused the key itself: 401 when it is invalid, expired or revoked. A 404 is not
+ * counted, since an API without `/api-keys/me` answers 404 too, and logout would then drop a live key.
+ */
+export function isRejectedApiKey(error: unknown): boolean {
+  return error instanceof APIError && error.statusCode === 401;
+}
+
+function apiKeyHeader(apiKey: string): Record<string, string> {
+  return { 'X-Ethos-Api-Key': apiKey };
+}
+
 export class EchoClient {
   private baseUrl: string;
   private debug: boolean;
 
-  constructor() {
-    const config = loadConfig();
-    this.baseUrl = config.apiUrl;
+  constructor(options: EchoClientOptions = {}) {
+    this.baseUrl = normalizeApiUrl(options.apiUrl ?? loadConfig().apiUrl);
     this.debug = process.env.DEBUG === 'ethos:*';
   }
 
@@ -565,6 +593,11 @@ export class EchoClient {
     }
 
     return this.request<Activity[]>(`/api/v2/activities/userkey?${params}`, 'Activities');
+  }
+
+  /** Looks up the key it is called with. Only the API-key calls send the key, public reads never do. */
+  async getApiKeyMe(apiKey: string): Promise<ApiKeyInfo> {
+    return this.apiKeyRequest<ApiKeyInfo>({ headers: apiKeyHeader(apiKey) });
   }
 
   async getAuction(auctionId: number): Promise<Auction> {
@@ -861,9 +894,27 @@ export class EchoClient {
     }
   }
 
+  /** Revokes the key it is called with. */
+  async revokeApiKeyMe(apiKey: string): Promise<{ ok: boolean }> {
+    return this.apiKeyRequest<{ ok: boolean }>({ headers: apiKeyHeader(apiKey), method: 'DELETE' });
+  }
+
   async searchUsers(query: string, limit = 10): Promise<SearchResult> {
     const params = new URLSearchParams({ limit: String(limit), query });
     return this.request<SearchResult>(`/api/v2/users/search?${params}`, 'Users');
+  }
+
+  /** `request` for `/api-keys/me`, whose 404 is about the key, not a user to search for. */
+  private async apiKeyRequest<T>(options: Parameters<typeof fetch>[1]): Promise<T> {
+    try {
+      return await this.request<T>('/api/v2/api-keys/me', 'API key', options);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw new APIError(`${this.baseUrl} has no /api/v2/api-keys/me, or the key was revoked just now.`, 404);
+      }
+
+      throw error;
+    }
   }
 
   private log(message: string, data?: unknown): void {
@@ -880,14 +931,16 @@ export class EchoClient {
      this.log(`Fetching ${url}`);
 
       try {
+        const { headers: extraHeaders, ...rest } = options ?? {};
         const response = await httpFetch(url, {
           headers: { 
             'Accept': 'application/json',
             'X-Ethos-Client': 'ethos-cli',
             ...(options?.body ? { 'Content-Type': 'application/json' } : {}),
+            ...(extraHeaders as Record<string, string> | undefined),
           },
           signal: controller.signal,
-          ...options,
+          ...rest,
         });
 
        this.log(`Response status: ${response.status}`);

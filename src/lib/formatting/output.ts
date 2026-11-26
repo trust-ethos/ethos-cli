@@ -991,3 +991,9 @@ export function formatValidators(validators: Validator[], total: number): string
 
   return lines.join('\n');
 }
+
+/** An ISO time as its UTC date, yyyy-mm-dd; anything unparseable as it came. */
+export function formatDate(iso: string): string {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? iso : date.toISOString().slice(0, 10);
+}
